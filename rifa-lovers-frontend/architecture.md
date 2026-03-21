@@ -361,6 +361,51 @@ src/
 │       └── protected-route.tsx
 │
 ├── features/                         # Módulos por dominio de negocio
+│   ├── landing/
+│   │   ├── components/
+│   │   │   ├── hero-model-viewer.tsx
+│   │   │   ├── model-annotations.tsx
+│   │   │   └── ticket-selector.tsx
+│   │   ├── sections/
+│   │   │   ├── hero-section.tsx
+│   │   │   ├── live-ticker-section.tsx
+│   │   │   ├── steps-section.tsx
+│   │   │   ├── winners-section.tsx
+│   │   │   ├── impact-section.tsx
+│   │   │   ├── testimonials-section.tsx
+│   │   │   ├── pricing-section.tsx
+│   │   │   ├── faq-section.tsx
+│   │   │   └── cta-section.tsx
+│   │   └── pages/
+│   │       └── landing.page.tsx
+│   │
+│   ├── impact/
+│   │   ├── sections/
+│   │   │   ├── impact-hero-section.tsx
+│   │   │   ├── impact-steps-section.tsx
+│   │   │   ├── impact-stats-section.tsx
+│   │   │   └── impact-milestones-section.tsx
+│   │   └── pages/
+│   │       └── impact.page.tsx
+│   │
+│   ├── about/
+│   │   ├── sections/
+│   │   │   ├── about-hero-section.tsx
+│   │   │   ├── about-values-section.tsx
+│   │   │   └── about-team-section.tsx
+│   │   └── pages/
+│   │       └── about.page.tsx
+│   │
+│   ├── contact/
+│   │   ├── components/
+│   │   │   └── contact-form.tsx
+│   │   ├── sections/
+│   │   │   ├── contact-hero-section.tsx
+│   │   │   ├── contact-faq-section.tsx
+│   │   │   └── contact-community-section.tsx
+│   │   └── pages/
+│   │       └── contact.page.tsx
+│   │
 │   ├── auth/
 │   │   ├── components/
 │   │   │   ├── login-form.tsx

@@ -12,9 +12,9 @@ import type {
 } from '@/types/domain.types'
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: 'Sorteos', href: '/#hero' },
+  { label: 'Sorteos', href: '/' },
   { label: 'Cómo Funciona', href: '/#como-funciona' },
-  { label: 'Impacto Social', href: '/#impacto' },
+  { label: 'Impacto Social', href: '/impacto' },
   { label: 'Nosotros', href: '/nosotros' },
   { label: 'Contacto', href: '/contacto' },
 ]

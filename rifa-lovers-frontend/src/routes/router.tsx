@@ -1,15 +1,44 @@
-import { lazy, Suspense } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router'
-import { PageLayout } from '@/components/shared/layout/page-layout'
-import { Spinner } from '@/components/ui/spinner'
+import { PageWithSuspense } from './route-wrappers'
 
 const LazyLandingPage = lazy(() => import('@/features/landing/pages/landing.page'))
 const LazyImpactPage = lazy(() => import('@/features/impact/pages/impact.page'))
 const LazyAboutPage = lazy(() => import('@/features/about/pages/about.page'))
 const LazyContactPage = lazy(() => import('@/features/contact/pages/contact.page'))
 
-function LoadingFallback() {
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <Spinner size="lg" />
-    </d
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: (
+      <PageWithSuspense>
+        <LazyLandingPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/impacto',
+    element: (
+      <PageWithSuspense>
+        <LazyImpactPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/nosotros',
+    element: (
+      <PageWithSuspense>
+        <LazyAboutPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/contacto',
+    element: (
+      <PageWithSuspense>
+        <LazyContactPage />
+      </PageWithSuspense>
+    ),
+  },
+])

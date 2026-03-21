@@ -91,7 +91,10 @@ export function AuroraCanvas({ className }: { className?: string }) {
     let animId = 0
     let lastTime = performance.now()
 
+    let running = true
+
     function loop(now: number) {
+      if (!running) return
       const dt = now - lastTime
       lastTime = now
       const r = canvas!.getBoundingClientRect()
@@ -101,6 +104,18 @@ export function AuroraCanvas({ className }: { className?: string }) {
     }
 
     animId = requestAnimationFrame(loop)
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        running = false
+        cancelAnimationFrame(animId)
+      } else {
+        running = true
+        lastTime = performance.now()
+        animId = requestAnimationFrame(loop)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     const onResize = () => {
       resizeCanvas(canvas)
@@ -112,7 +127,9 @@ export function AuroraCanvas({ className }: { className?: string }) {
     window.addEventListener('resize', onResize)
 
     return () => {
+      running = false
       cancelAnimationFrame(animId)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       window.removeEventListener('resize', onResize)
     }
   }, [])

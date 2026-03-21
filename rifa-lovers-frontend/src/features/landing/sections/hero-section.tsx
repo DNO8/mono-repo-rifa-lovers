@@ -1,22 +1,15 @@
 import { useRef, useEffect } from 'react'
 import { Star, ArrowRight, Eye, Hand } from 'lucide-react'
-import gsap from 'gsap'
+import { gsap } from '@/lib/gsap'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { SplitText } from '@/components/shared/split-text'
 import { ACTIVE_RAFFLE } from '@/lib/constants'
-import { useSplitText } from '@/hooks/use-split-text'
 import { HeroModelViewer } from '../components/hero-model-viewer'
 import { TicketSelector } from '../components/ticket-selector'
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
-  const headingRef = useSplitText<HTMLHeadingElement>({
-    type: 'words',
-    stagger: 0.06,
-    duration: 0.7,
-    y: 30,
-    delay: 0.3,
-  })
 
   useEffect(() => {
     const el = sectionRef.current
@@ -53,12 +46,17 @@ export function HeroSection() {
             </Badge>
           </div>
 
-          <h1
-            ref={headingRef}
+          <SplitText
+            as="h1"
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.08] tracking-tight text-text-primary mb-5"
+            type="words"
+            stagger={0.06}
+            duration={0.7}
+            y={30}
+            delay={0.3}
           >
             Tu suerte crea impacto real.
-          </h1>
+          </SplitText>
 
           <p
             data-gsap

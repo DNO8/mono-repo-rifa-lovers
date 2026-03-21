@@ -1,8 +1,5 @@
 import { useRef, useEffect, type CSSProperties } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-gsap.registerPlugin(ScrollTrigger)
+import { gsap } from '@/lib/gsap'
 
 interface SplitTextProps {
   children: string

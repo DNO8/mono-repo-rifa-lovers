@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Ticket, Zap } from 'lucide-react'
 import { LIVE_ACTIVITIES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -24,7 +24,7 @@ function TickerItem({ name, ticketCount, timeAgo, city }: {
 
 export function LiveTickerSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [isPaused, setIsPaused] = useState(false)
+  const isPaused = useRef(false)
 
   useEffect(() => {
     const el = scrollRef.current
@@ -37,7 +37,7 @@ export function LiveTickerSection() {
     const speed = 0.5
 
     const animate = () => {
-      if (!isPaused) {
+      if (!isPaused.current) {
         scrollPos += speed
         if (scrollPos >= el.scrollWidth / 2) {
           scrollPos = 0
@@ -49,15 +49,15 @@ export function LiveTickerSection() {
 
     animId = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(animId)
-  }, [isPaused])
+  }, [])
 
   const doubledActivities = [...LIVE_ACTIVITIES, ...LIVE_ACTIVITIES]
 
   return (
     <section
       className="py-4 overflow-hidden border-y border-border-light bg-bg-muted/50"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => { isPaused.current = true }}
+      onMouseLeave={() => { isPaused.current = false }}
     >
       <div className="flex items-center gap-2 mb-3 px-4 md:px-8 mx-auto max-w-[1200px]">
         <div className="size-5 rounded-full bg-success/10 flex items-center justify-center animate-pulse-subtle">

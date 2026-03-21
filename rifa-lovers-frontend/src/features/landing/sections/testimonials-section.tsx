@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Star, Trophy, MapPin } from 'lucide-react'
-import gsap from 'gsap'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { TESTIMONIALS } from '@/lib/constants'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
+import { useCarousel } from '@/hooks/use-carousel'
 import { SplitText } from '@/components/shared/split-text'
 import { cn } from '@/lib/utils'
 import type { Testimonial } from '@/types/domain.types'
@@ -67,84 +66,9 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 
 export function TestimonialsSection() {
   const sectionRef = useGsapScroll<HTMLElement>()
-  const trackRef = useRef<HTMLDivElement>(null)
-  const [current, setCurrent] = useState(0)
-  const [isPaused, setIsPaused] = useState(false)
-  const total = TESTIMONIALS.length
-  const isDragging = useRef(false)
-  const startX = useRef(0)
-  const trackX = useRef(0)
-
-  const getSnapX = useCallback((index: number) => {
-    const track = trackRef.current
-    if (!track) return 0
-    const card = track.children[index] as HTMLElement | undefined
-    if (!card) return 0
-    return -(card.offsetLeft - (track.parentElement!.offsetWidth / 2 - card.offsetWidth / 2))
-  }, [])
-
-  const snapTo = useCallback((index: number) => {
-    const x = getSnapX(index)
-    gsap.to(trackRef.current, { x, duration: 0.5, ease: 'power3.out' })
-    trackX.current = x
-    setCurrent(index)
-  }, [getSnapX])
-
-  const goNext = useCallback(() => snapTo((current + 1) % total), [current, total, snapTo])
-  const goPrev = useCallback(() => snapTo((current - 1 + total) % total), [current, total, snapTo])
-
-  // Auto-advance
-  useEffect(() => {
-    if (isPaused) return
-    const id = setInterval(() => {
-      setCurrent((p) => {
-        const next = (p + 1) % total
-        const x = getSnapX(next)
-        gsap.to(trackRef.current, { x, duration: 0.5, ease: 'power3.out' })
-        trackX.current = x
-        return next
-      })
-    }, 5000)
-    return () => clearInterval(id)
-  }, [isPaused, total, getSnapX])
-
-  // Initial position
-  useEffect(() => {
-    if (trackRef.current) {
-      const x = getSnapX(0)
-      gsap.set(trackRef.current, { x })
-      trackX.current = x
-    }
-  }, [getSnapX])
-
-  // Drag handlers
-  const onPointerDown = (e: React.PointerEvent) => {
-    isDragging.current = true
-    startX.current = e.clientX
-    setIsPaused(true)
-    gsap.killTweensOf(trackRef.current)
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-  }
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!isDragging.current) return
-    const dx = e.clientX - startX.current
-    gsap.set(trackRef.current, { x: trackX.current + dx })
-  }
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (!isDragging.current) return
-    isDragging.current = false
-    const dx = e.clientX - startX.current
-    const threshold = 60
-
-    let next = current
-    if (dx < -threshold && current < total - 1) next = current + 1
-    else if (dx > threshold && current > 0) next = current - 1
-
-    snapTo(next)
-    setIsPaused(false)
-  }
+  const {
+    trackRef, current, setIsPaused, snapTo, goNext, goPrev, dragHandlers,
+  } = useCarousel({ total: TESTIMONIALS.length, autoAdvanceMs: 5000 })
 
   return (
     <section
@@ -152,7 +76,7 @@ export function TestimonialsSection() {
       id="testimonios"
       className="px-4 md:px-8 py-16 md:py-24 overflow-hidden"
       onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => { setIsPaused(false) }}
+      onMouseLeave={() => setIsPaused(false)}
     >
       <div className="mx-auto max-w-[1200px]">
         {/* Header */}
@@ -172,10 +96,7 @@ export function TestimonialsSection() {
         {/* Draggable Carousel */}
         <div
           className="relative overflow-hidden cursor-grab active:cursor-grabbing"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
+          {...dragHandlers}
         >
           <div ref={trackRef} className="flex gap-5 will-change-transform">
             {TESTIMONIALS.map((t) => (

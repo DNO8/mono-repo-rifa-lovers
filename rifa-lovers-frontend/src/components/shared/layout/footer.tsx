@@ -1,11 +1,5 @@
-
-const FOOTER_NAV = [
-  { label: 'Sorteos', href: '/#hero' },
-  { label: 'Cómo Funciona', href: '/#como-funciona' },
-  { label: 'Impacto Social', href: '/#impacto' },
-  { label: 'Nosotros', href: '/nosotros' },
-  { label: 'Contacto', href: '/contacto' },
-]
+import { Link } from 'react-router'
+import { NAV_ITEMS } from '@/lib/constants'
 
 const LEGAL_LINKS = [
   { label: 'Términos y Condiciones', href: '/terminos' },
@@ -19,10 +13,10 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <a href="/" className="flex items-center gap-2 mb-3">
+            <Link to="/" className="flex items-center gap-2 mb-3">
               <img src="/images/logos/logo-color.webp" alt="RifaLovers" className="h-7 w-auto" />
               <span className="font-bold text-lg text-text-primary">RifaLovers</span>
-            </a>
+            </Link>
             <p className="text-sm text-text-secondary max-w-xs">
               Tu suerte crea impacto real. Participa, gana y transforma vidas.
             </p>
@@ -32,14 +26,14 @@ export function Footer() {
           <div>
             <h4 className="font-semibold text-text-primary text-sm mb-3">Navegación</h4>
             <ul className="space-y-2">
-              {FOOTER_NAV.map((item) => (
+              {NAV_ITEMS.map((item) => (
                 <li key={item.href}>
-                  <a
-                    href={item.href}
+                  <Link
+                    to={item.href}
                     className="text-sm text-text-secondary hover:text-primary transition-colors"
                   >
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -51,12 +45,12 @@ export function Footer() {
             <ul className="space-y-2">
               {LEGAL_LINKS.map((item) => (
                 <li key={item.href}>
-                  <a
-                    href={item.href}
+                  <Link
+                    to={item.href}
                     className="text-sm text-text-secondary hover:text-primary transition-colors"
                   >
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

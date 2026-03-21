@@ -13,18 +13,16 @@ const STEP_ICONS: IconMap = {
   Award,
 }
 
-export function StepsSection() {
+export function ImpactStepsSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.15 })
 
   return (
     <section
       ref={sectionRef}
-      id="como-funciona"
       data-gsap-stagger
       className="px-4 md:px-8 py-16 md:py-24"
     >
       <div className="mx-auto max-w-[1200px]">
-        {/* Header */}
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="subtle" className="mb-4">Cómo funciona</Badge>
           <SplitText
@@ -34,11 +32,10 @@ export function StepsSection() {
             stagger={0.05}
             duration={0.6}
           >
-            4 pasos para ganar y dar
+            Tu participación genera impacto en 4 pasos
           </SplitText>
         </div>
 
-        {/* Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {STEPS.map((step) => (
             <StepCard key={step.id} step={step} iconMap={STEP_ICONS} />

@@ -1,13 +1,13 @@
 import { useRef } from 'react'
+import { Link } from 'react-router'
 import { ArrowRight, GraduationCap, Tablet, Heart } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { SplitText } from '@/components/shared/split-text'
-import { MetricCard } from '@/components/shared/metric-card'
 import { MilestoneCard } from '@/components/shared/milestone-card'
-import { MILESTONES, IMPACT_METRICS } from '@/lib/constants'
 import { ConfettiCanvas, type ConfettiRef } from '@/components/shared/confetti-canvas'
+import { MILESTONES } from '@/lib/constants'
 import type { IconMap } from '@/types/ui.types'
 
 const MILESTONE_ICONS: IconMap = {
@@ -16,7 +16,7 @@ const MILESTONE_ICONS: IconMap = {
   Heart,
 }
 
-export function ImpactSection() {
+export function ImpactMilestonesSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.12 })
   const confettiRef = useRef<ConfettiRef>(null)
 
@@ -29,16 +29,14 @@ export function ImpactSection() {
   return (
     <section
       ref={sectionRef}
-      id="impacto"
       data-gsap-stagger
       className="px-4 md:px-8 py-16 md:py-24 relative"
     >
       <ConfettiCanvas ref={confettiRef} />
 
       <div className="mx-auto max-w-[1200px]">
-        {/* Header */}
         <div className="text-center mb-12 md:mb-16">
-          <Badge variant="subtle" className="mb-4">Impacto Social</Badge>
+          <Badge variant="subtle" className="mb-4">Metas colectivas</Badge>
           <SplitText
             as="h2"
             className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
@@ -46,18 +44,13 @@ export function ImpactSection() {
             stagger={0.05}
             duration={0.6}
           >
-            Esto es lo que ya logramos juntos
+            Hitos que cambian vidas
           </SplitText>
+          <p className="text-text-secondary mt-4 max-w-xl mx-auto">
+            Cada meta cumplida es una promesa honrada. Juntos desbloqueamos impacto real.
+          </p>
         </div>
 
-        {/* Metrics */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-8 mb-12 md:mb-16">
-          {IMPACT_METRICS.map((metric) => (
-            <MetricCard key={metric.id} metric={metric} />
-          ))}
-        </div>
-
-        {/* Milestones */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
           {MILESTONES.map((milestone) => (
             <MilestoneCard
@@ -69,12 +62,13 @@ export function ImpactSection() {
           ))}
         </div>
 
-        {/* CTA */}
         <div className="text-center">
-          <Button variant="primary" size="lg">
-            Participar ahora
-            <ArrowRight className="size-4" />
-          </Button>
+          <Link to="/">
+            <Button variant="primary" size="lg">
+              Participar y desbloquear metas
+              <ArrowRight className="size-4" />
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

@@ -1,4 +1,5 @@
-import { forwardRef, type ButtonHTMLAttributes } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import type { ButtonHTMLAttributes, Ref } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -34,22 +35,20 @@ export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   loading?: boolean
+  ref?: Ref<HTMLButtonElement>
 }
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, loading, disabled, children, ...props }, ref) => {
-    return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        disabled={disabled || loading}
-        {...props}
-      >
-        {loading ? <Loader2 className="size-4 animate-spin" /> : children}
-      </button>
-    )
-  }
-)
-Button.displayName = 'Button'
+function Button({ className, variant, size, loading, disabled, children, ref, ...props }: ButtonProps) {
+  return (
+    <button
+      className={cn(buttonVariants({ variant, size, className }))}
+      ref={ref}
+      disabled={disabled || loading}
+      {...props}
+    >
+      {loading ? <Loader2 className="size-4 animate-spin" /> : children}
+    </button>
+  )
+}
 
 export { Button, buttonVariants }

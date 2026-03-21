@@ -1,4 +1,5 @@
-import { forwardRef, type HTMLAttributes } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import type { HTMLAttributes, Ref } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
@@ -23,31 +24,30 @@ const cardVariants = cva('rounded-[var(--radius-xl)] transition-all', {
 
 export interface CardProps
   extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof cardVariants> {}
+    VariantProps<typeof cardVariants> {
+  ref?: Ref<HTMLDivElement>
+}
 
-const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant, ...props }, ref) => (
+function Card({ className, variant, ref, ...props }: CardProps) {
+  return (
     <div
       ref={ref}
       className={cn(cardVariants({ variant }), 'p-6', className)}
       {...props}
     />
   )
-)
-Card.displayName = 'Card'
+}
 
-const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('mb-4', className)} {...props} />
-  )
-)
-CardHeader.displayName = 'CardHeader'
+interface CardSubProps extends HTMLAttributes<HTMLDivElement> {
+  ref?: Ref<HTMLDivElement>
+}
 
-const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn(className)} {...props} />
-  )
-)
-CardContent.displayName = 'CardContent'
+function CardHeader({ className, ref, ...props }: CardSubProps) {
+  return <div ref={ref} className={cn('mb-4', className)} {...props} />
+}
+
+function CardContent({ className, ref, ...props }: CardSubProps) {
+  return <div ref={ref} className={cn(className)} {...props} />
+}
 
 export { Card, CardHeader, CardContent, cardVariants }

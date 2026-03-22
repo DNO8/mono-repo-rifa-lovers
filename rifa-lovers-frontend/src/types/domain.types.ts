@@ -93,3 +93,48 @@ export interface LiveActivity {
   timeAgo: string
   city: string
 }
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  avatar?: string
+}
+
+export interface Order {
+  id: string
+  raffleId: string
+  raffleName: string
+  ticketCount: number
+  bonusTickets: number
+  total: number
+  status: 'pending' | 'completed' | 'cancelled'
+  createdAt: string
+}
+
+export interface DashboardSummary {
+  totalTickets: number
+  points: number
+  activeRaffle: Raffle | null
+  history: Order[]
+}
+
+export interface CheckoutPayload {
+  raffleId: string
+  ticketCount: number
+}
+
+export interface AuthResponse {
+  user: User
+  token: string
+}
+
+export interface Hotspot {
+  id: string
+  label: string
+  spec: string
+  position: [number, number, number]
+  side: 'left' | 'right'
+  icon: import('./ui.types').LucideIconComponent
+  color: string
+}

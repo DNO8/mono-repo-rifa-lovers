@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { Minus, Plus, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ProgressBar } from '@/components/ui/progress-bar'
 import { ACTIVE_RAFFLE } from '@/lib/constants'
+import { useAuthStore } from '@/stores/auth.store'
 import { cn } from '@/lib/utils'
 
 const QUICK_PICKS = [1, 3, 5, 10]
@@ -15,12 +17,23 @@ function getBonusTickets(count: number): number {
 }
 
 export function TicketSelector() {
+  const navigate = useNavigate()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [count, setCount] = useState(1)
   const bonus = getBonusTickets(count)
   const total = count * ACTIVE_RAFFLE.ticketPrice
 
   const increment = () => setCount((c) => Math.min(c + 1, 50))
   const decrement = () => setCount((c) => Math.max(c - 1, 1))
+
+  const handleBuy = () => {
+    const checkoutUrl = `/checkout?raffle=${ACTIVE_RAFFLE.id}&tickets=${count}`
+    if (isAuthenticated) {
+      navigate(checkoutUrl)
+    } else {
+      navigate(`/login?redirect=${encodeURIComponent(checkoutUrl)}`)
+    }
+  }
 
   return (
     <Card variant="glass" className="p-5 md:p-6">
@@ -96,7 +109,7 @@ export function TicketSelector() {
       </div>
 
       {/* CTA */}
-      <Button variant="primary" size="lg" className="w-full">
+      <Button variant="primary" size="lg" className="w-full" onClick={handleBuy}>
         <ShoppingCart className="size-4" />
         Comprar {count + bonus} {count + bonus === 1 ? 'ticket' : 'tickets'}
       </Button>

@@ -1,4 +1,4 @@
-import { useRef, useImperativeHandle, forwardRef, useEffect } from 'react'
+import { useRef, useImperativeHandle, useEffect } from 'react'
 
 interface ConfettiParticle {
   x: number
@@ -82,8 +82,7 @@ interface ConfettiState {
   running: boolean
 }
 
-export const ConfettiCanvas = forwardRef<ConfettiRef, { className?: string }>(
-  ({ className }, ref) => {
+export function ConfettiCanvas({ className, ref }: { className?: string; ref?: React.Ref<ConfettiRef> }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const stateRef = useRef<ConfettiState>({ particles: [], animId: 0, running: false })
 
@@ -153,5 +152,3 @@ export const ConfettiCanvas = forwardRef<ConfettiRef, { className?: string }>(
       />
     )
   }
-)
-ConfettiCanvas.displayName = 'ConfettiCanvas'

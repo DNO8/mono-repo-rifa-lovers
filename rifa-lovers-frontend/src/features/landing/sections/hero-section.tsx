@@ -34,7 +34,7 @@ export function HeroSection() {
     <section
       ref={sectionRef}
       id="hero"
-      className="relative px-4 md:px-8 pt-24 md:pt-32 pb-16 md:pb-24"
+      className="relative px-4 md:px-8 pt-24 md:pt-15 pb-16 md:pb-24"
     >
       <div className="mx-auto max-w-[1400px]">
         {/* Top: Badge + Heading + Subtitle centered */}

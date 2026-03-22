@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { Menu, X, Smile } from 'lucide-react'
+import { Menu, X, Smile, User, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { NAV_ITEMS, SMILE_COUNT } from '@/lib/constants'
+import { useAuthStore } from '@/stores/auth.store'
 import { cn } from '@/lib/utils'
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-light">
@@ -37,9 +39,21 @@ export function Header() {
             <Smile className="size-3.5" />
             +{SMILE_COUNT.toLocaleString('es-CL')} Sonrisas
           </Badge>
-          <Button variant="primary" size="sm" className="hidden sm:inline-flex">
-            Participar
-          </Button>
+          {isAuthenticated ? (
+            <Link to="/dashboard" className="hidden sm:inline-flex">
+              <Button variant="secondary" size="sm">
+                <User className="size-3.5" />
+                Mi cuenta
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/login" className="hidden sm:inline-flex">
+              <Button variant="primary" size="sm">
+                <LogIn className="size-3.5" />
+                Ingresar
+              </Button>
+            </Link>
+          )}
 
           {/* Mobile toggle */}
           <button
@@ -70,10 +84,22 @@ export function Header() {
               {item.label}
             </Link>
           ))}
-          <div className="mt-2 px-4">
-            <Button variant="primary" size="md" className="w-full">
-              Participar
-            </Button>
+          <div className="mt-2 px-4 space-y-2">
+            {isAuthenticated ? (
+              <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                <Button variant="secondary" size="md" className="w-full">
+                  <User className="size-4" />
+                  Mi cuenta
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/login" onClick={() => setMobileOpen(false)}>
+                <Button variant="primary" size="md" className="w-full">
+                  <LogIn className="size-4" />
+                  Ingresar
+                </Button>
+              </Link>
+            )}
           </div>
         </nav>
       </div>

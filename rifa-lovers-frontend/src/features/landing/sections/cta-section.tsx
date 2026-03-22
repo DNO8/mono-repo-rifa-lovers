@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
@@ -33,13 +34,17 @@ export function CTASection() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button variant="primary" size="lg">
-            Participar Ahora
-            <ArrowRight className="size-4" />
-          </Button>
-          <Button variant="ghost" size="lg">
-            Ver sorteos activos
-          </Button>
+          <Link to="/#pricing">
+            <Button variant="primary" size="lg">
+              Participar Ahora
+              <ArrowRight className="size-4" />
+            </Button>
+          </Link>
+          <Link to="/">
+            <Button variant="ghost" size="lg">
+              Ver sorteos activos
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

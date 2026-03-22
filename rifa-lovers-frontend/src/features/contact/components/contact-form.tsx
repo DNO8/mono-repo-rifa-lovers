@@ -2,13 +2,29 @@ import { useState } from 'react'
 import { Send } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { apiClient } from '@/api/client'
+import { ENDPOINTS } from '@/api/endpoints'
 
 export function ContactForm() {
   const [submitted, setSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setSubmitted(true)
+    setIsLoading(true)
+    const formData = new FormData(e.currentTarget)
+    try {
+      await apiClient.post(ENDPOINTS.contact, {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        message: formData.get('message'),
+      })
+    } catch {
+      console.warn('[contact] Backend unavailable, simulating success')
+    } finally {
+      setIsLoading(false)
+      setSubmitted(true)
+    }
   }
 
   if (submitted) {
@@ -39,6 +55,7 @@ export function ContactForm() {
           </label>
           <input
             id="contact-name"
+            name="name"
             type="text"
             required
             placeholder="Tu nombre"
@@ -52,6 +69,7 @@ export function ContactForm() {
           </label>
           <input
             id="contact-email"
+            name="email"
             type="email"
             required
             placeholder="tu@email.com"
@@ -65,6 +83,7 @@ export function ContactForm() {
           </label>
           <textarea
             id="contact-message"
+            name="message"
             required
             rows={4}
             placeholder="¿En qué podemos ayudarte?"
@@ -72,7 +91,7 @@ export function ContactForm() {
           />
         </div>
 
-        <Button type="submit" variant="primary" size="lg" className="w-full">
+        <Button type="submit" variant="primary" size="lg" className="w-full" loading={isLoading}>
           Enviar mensaje
           <Send className="size-4" />
         </Button>

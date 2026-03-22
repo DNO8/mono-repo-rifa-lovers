@@ -1,13 +1,26 @@
+import { useNavigate } from 'react-router'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PRICING_TIERS } from '@/lib/constants'
+import { ACTIVE_RAFFLE, PRICING_TIERS } from '@/lib/constants'
+import { useAuthStore } from '@/stores/auth.store'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { cn } from '@/lib/utils'
 
 export function PricingSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.15 })
+  const navigate = useNavigate()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
+  const handleSelect = (tickets: number) => {
+    const checkoutUrl = `/checkout?raffle=${ACTIVE_RAFFLE.id}&tickets=${tickets}`
+    if (isAuthenticated) {
+      navigate(checkoutUrl)
+    } else {
+      navigate(`/login?redirect=${encodeURIComponent(checkoutUrl)}`)
+    }
+  }
 
   return (
     <section
@@ -85,6 +98,7 @@ export function PricingSection() {
                 variant={tier.popular ? 'primary' : 'secondary'}
                 size="lg"
                 className="w-full"
+                onClick={() => handleSelect(tier.tickets)}
               >
                 {tier.cta}
                 <ArrowRight className="size-4" />

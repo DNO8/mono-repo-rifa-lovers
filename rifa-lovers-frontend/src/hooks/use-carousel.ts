@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { gsap } from '@/lib/gsap'
 
 interface UseCarouselOptions {
@@ -14,47 +14,50 @@ export function useCarousel({ total, autoAdvanceMs = 5000 }: UseCarouselOptions)
   const startX = useRef(0)
   const trackX = useRef(0)
 
-  const getSnapX = useCallback((index: number) => {
-    const track = trackRef.current
-    if (!track) return 0
+  const getSnapX = (track: HTMLDivElement, index: number) => {
     const card = track.children[index] as HTMLElement | undefined
     if (!card) return 0
     return -(card.offsetLeft - (track.parentElement!.offsetWidth / 2 - card.offsetWidth / 2))
-  }, [])
+  }
 
-  const snapTo = useCallback((index: number) => {
-    const x = getSnapX(index)
-    gsap.to(trackRef.current, { x, duration: 0.5, ease: 'power3.out' })
+  const snapTo = (index: number) => {
+    const track = trackRef.current
+    if (!track) return
+    const x = getSnapX(track, index)
+    gsap.to(track, { x, duration: 0.5, ease: 'power3.out' })
     trackX.current = x
     setCurrent(index)
-  }, [getSnapX])
+  }
 
-  const goNext = useCallback(() => snapTo((current + 1) % total), [current, total, snapTo])
-  const goPrev = useCallback(() => snapTo((current - 1 + total) % total), [current, total, snapTo])
+  const goNext = () => snapTo((current + 1) % total)
+  const goPrev = () => snapTo((current - 1 + total) % total)
 
   // Auto-advance
   useEffect(() => {
     if (isPaused || autoAdvanceMs <= 0) return
     const id = setInterval(() => {
+      const track = trackRef.current
+      if (!track) return
       setCurrent((p) => {
         const next = (p + 1) % total
-        const x = getSnapX(next)
-        gsap.to(trackRef.current, { x, duration: 0.5, ease: 'power3.out' })
+        const x = getSnapX(track, next)
+        gsap.to(track, { x, duration: 0.5, ease: 'power3.out' })
         trackX.current = x
         return next
       })
     }, autoAdvanceMs)
     return () => clearInterval(id)
-  }, [isPaused, total, getSnapX, autoAdvanceMs])
+  }, [isPaused, total, autoAdvanceMs])
 
   // Initial position
   useEffect(() => {
-    if (trackRef.current) {
-      const x = getSnapX(0)
-      gsap.set(trackRef.current, { x })
+    const track = trackRef.current
+    if (track) {
+      const x = getSnapX(track, 0)
+      gsap.set(track, { x })
       trackX.current = x
     }
-  }, [getSnapX])
+  }, [])
 
   // Drag handlers
   const onPointerDown = (e: React.PointerEvent) => {

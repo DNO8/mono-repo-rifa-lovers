@@ -1,8 +1,9 @@
-import { Suspense, useRef, useMemo, useCallback } from 'react'
+import { Suspense, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, Environment, ContactShadows, OrbitControls, Center } from '@react-three/drei'
 import * as THREE from 'three'
 import { Spinner } from '@/components/ui/spinner'
+import { useModelDrag } from '@/hooks/use-model-drag'
 import { ModelAnnotations } from './model-annotations'
 
 const MODEL_PATH = '/models/custom_gaming_pc.glb'
@@ -13,14 +14,12 @@ function PCModel({ userRotation, paused }: { userRotation: React.RefObject<numbe
   const idleRotation = useRef(0)
 
   // Clone scene to avoid shared-state issues & compute uniform scale
-  const { cloned, scaleFactor } = useMemo(() => {
-    const cloned = scene.clone(true)
-    const box = new THREE.Box3().setFromObject(cloned)
-    const size = new THREE.Vector3()
-    box.getSize(size)
-    const maxDim = Math.max(size.x, size.y, size.z)
-    return { cloned, scaleFactor: 3 / maxDim }
-  }, [scene])
+  const cloned = scene.clone(true)
+  const box = new THREE.Box3().setFromObject(cloned)
+  const size = new THREE.Vector3()
+  box.getSize(size)
+  const maxDim = Math.max(size.x, size.y, size.z)
+  const scaleFactor = 3 / maxDim
 
   // Pivot group at origin rotates Y only → model spins in place
   useFrame((_, delta) => {
@@ -54,47 +53,12 @@ function LoadingFallback3D() {
 }
 
 export function HeroModelViewer() {
-  const dragRef = useRef({ active: false, startX: 0, rotation: 0 })
-  const userRotation = useRef(0)
-  const paused = useRef(false)
-  const resumeTimer = useRef<ReturnType<typeof setTimeout>>(null)
-  const wrapperRef = useRef<HTMLDivElement>(null)
-
-  const scheduleResume = useCallback(() => {
-    if (resumeTimer.current) clearTimeout(resumeTimer.current)
-    resumeTimer.current = setTimeout(() => {
-      paused.current = false
-    }, 5000)
-  }, [])
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragRef.current.active = true
-    dragRef.current.startX = e.clientX
-    dragRef.current.rotation = userRotation.current
-    paused.current = true
-    if (resumeTimer.current) clearTimeout(resumeTimer.current)
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  }
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragRef.current.active) return
-    const dx = e.clientX - dragRef.current.startX
-    userRotation.current = dragRef.current.rotation + dx * 0.01
-  }
-
-  const onPointerUp = () => {
-    dragRef.current.active = false
-    scheduleResume()
-  }
+  const { userRotation, paused, pointerHandlers } = useModelDrag()
 
   return (
     <div
-      ref={wrapperRef}
-      className="relative mx-auto w-full max-w-[360px] h-[280px] sm:max-w-[400px] sm:h-[320px] md:max-w-[480px] md:h-[400px] cursor-grab active:cursor-grabbing"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      className="relative mx-auto w-full max-w-[480px] h-[320px] sm:max-w-[560px] sm:h-[380px] md:max-w-[680px] md:h-[460px] cursor-grab active:cursor-grabbing"
+      {...pointerHandlers}
     >
       <Suspense fallback={<LoadingFallback3D />}>
         <Canvas
@@ -115,6 +79,8 @@ export function HeroModelViewer() {
             enableRotate={false}
             enablePan={false}
             enableZoom
+            enableDamping
+            dampingFactor={0.08}
             minDistance={1}
             maxDistance={8}
             target={[0, 0.1, 0]}

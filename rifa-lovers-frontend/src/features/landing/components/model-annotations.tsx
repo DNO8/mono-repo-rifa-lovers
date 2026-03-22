@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Html } from '@react-three/drei'
 import { Cpu, MemoryStick, HardDrive, Zap, Fan } from 'lucide-react'
+import { useMediaQuery } from '@/hooks/use-media-query'
 import type { Hotspot } from '@/types/domain.types'
 
 const HOTSPOTS: Hotspot[] = [
@@ -51,24 +52,44 @@ const HOTSPOTS: Hotspot[] = [
   },
 ]
 
-/* ── SVG layout constants ── */
-const LINE_W = 48
-const CARD_W = 180
-const CARD_H = 44
-const CARD_R = 8
-const SVG_W = LINE_W + CARD_W
+/* ── SVG layout sizes ── */
+interface AnnotationSize {
+  lineW: number
+  cardW: number
+  cardH: number
+  cardR: number
+  svgW: number
+  iconSize: string
+  iconBox: string
+  labelSize: string
+  specSize: string
+  dotSize: string
+  dotOffset: string
+}
+
+const SIZE_DESKTOP: AnnotationSize = {
+  lineW: 48, cardW: 180, cardH: 44, cardR: 8, svgW: 228,
+  iconSize: 'size-4', iconBox: 'size-7', labelSize: 'text-[11px]', specSize: 'text-[10px]',
+  dotSize: 'size-3', dotOffset: '14px',
+}
+
+const SIZE_MOBILE: AnnotationSize = {
+  lineW: 24, cardW: 110, cardH: 44, cardR: 6, svgW: 134,
+  iconSize: 'size-3', iconBox: 'size-5', labelSize: 'text-[9px]', specSize: 'text-[8px]',
+  dotSize: 'size-2.5', dotOffset: '10px',
+}
 
 /**
  * Rounded-rect path starting from the connector-line side.
  * isRight → starts left-center, clockwise.
  * !isRight → starts right-center, counter-clockwise.
  */
-function cardBorderPath(isRight: boolean): string {
+function cardBorderPath(isRight: boolean, s: AnnotationSize): string {
   if (isRight) {
-    const x = LINE_W
-    const w = CARD_W
-    const h = CARD_H
-    const r = CARD_R
+    const x = s.lineW
+    const w = s.cardW
+    const h = s.cardH
+    const r = s.cardR
     return [
       `M${x},${h / 2}`,
       `V${r}`, `Q${x},0,${x + r},0`,
@@ -78,9 +99,9 @@ function cardBorderPath(isRight: boolean): string {
       `Z`,
     ].join('')
   }
-  const w = CARD_W
-  const h = CARD_H
-  const r = CARD_R
+  const w = s.cardW
+  const h = s.cardH
+  const r = s.cardR
   return [
     `M${w},${h / 2}`,
     `V${r}`, `Q${w},0,${w - r},0`,
@@ -96,19 +117,46 @@ function AnnotationDot({
   active,
   onActivate,
   onDeactivate,
+  size: s,
 }: {
   hotspot: Hotspot
   active: boolean
   onActivate: () => void
   onDeactivate: () => void
+  size: AnnotationSize
 }) {
   const Icon = hotspot.icon
-  const isRight = hotspot.side === 'right'
+  const dotRef = useRef<HTMLDivElement>(null)
+  const [flipped, setFlipped] = useState(false)
 
-  const cardX = isRight ? LINE_W : 0
-  const lineX1 = isRight ? 0 : SVG_W
-  const lineX2 = isRight ? LINE_W : CARD_W
-  const midY = CARD_H / 2
+  const handlePointerEnter = () => {
+    const el = dotRef.current
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      const vw = window.innerWidth
+      const offset = parseInt(s.dotOffset)
+      const margin = 8
+
+      if (hotspot.side === 'right') {
+        const wouldOverflow = rect.right + offset + s.svgW > vw - margin
+        setFlipped(wouldOverflow)
+      } else {
+        const wouldOverflow = rect.left - offset - s.svgW < margin
+        setFlipped(wouldOverflow)
+      }
+    }
+    onActivate()
+  }
+
+  const effectiveSide = flipped
+    ? (hotspot.side === 'right' ? 'left' : 'right')
+    : hotspot.side
+  const isRight = effectiveSide === 'right'
+
+  const cardX = isRight ? s.lineW : 0
+  const lineX1 = isRight ? 0 : s.svgW
+  const lineX2 = isRight ? s.lineW : s.cardW
+  const midY = s.cardH / 2
 
   return (
     <Html
@@ -118,12 +166,13 @@ function AnnotationDot({
       style={{ pointerEvents: 'auto' }}
     >
       <div
+        ref={dotRef}
         className="relative"
-        onPointerEnter={onActivate}
+        onPointerEnter={handlePointerEnter}
         onPointerLeave={onDeactivate}
       >
         {/* Pulsing dot */}
-        <div className="relative size-3 cursor-pointer">
+        <div className={`relative ${s.dotSize} cursor-pointer`}>
           {!active && (
             <div
               className="absolute inset-0 rounded-full animate-ping opacity-40"
@@ -131,7 +180,7 @@ function AnnotationDot({
             />
           )}
           <div
-            className="relative size-3 rounded-full ring-2 ring-white/80 shadow-lg"
+            className={`relative ${s.dotSize} rounded-full ring-2 ring-white/80 shadow-lg`}
             style={{
               backgroundColor: hotspot.color,
               transform: active ? 'scale(1.5)' : 'scale(1)',
@@ -143,12 +192,12 @@ function AnnotationDot({
         {/* SVG tooltip — always rendered, CSS transitions drive the draw animation */}
         <div
           className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ [isRight ? 'left' : 'right']: '14px', zIndex: 50 }}
+          style={{ [isRight ? 'left' : 'right']: s.dotOffset, zIndex: 50 }}
         >
           <svg
-            width={SVG_W}
-            height={CARD_H}
-            viewBox={`0 0 ${SVG_W} ${CARD_H}`}
+            width={s.svgW}
+            height={s.cardH}
+            viewBox={`0 0 ${s.svgW} ${s.cardH}`}
             fill="none"
             style={{ overflow: 'visible' }}
           >
@@ -160,8 +209,8 @@ function AnnotationDot({
               y2={midY}
               stroke={hotspot.color}
               strokeWidth={1.5}
-              strokeDasharray={LINE_W}
-              strokeDashoffset={active ? 0 : LINE_W}
+              strokeDasharray={s.lineW}
+              strokeDashoffset={active ? 0 : s.lineW}
               style={{ transition: 'stroke-dashoffset 0.25s ease-out' }}
             />
 
@@ -169,9 +218,9 @@ function AnnotationDot({
             <rect
               x={cardX}
               y={0}
-              width={CARD_W}
-              height={CARD_H}
-              rx={CARD_R}
+              width={s.cardW}
+              height={s.cardH}
+              rx={s.cardR}
               fill="rgba(255,255,255,0.95)"
               opacity={active ? 0.95 : 0}
               style={{ transition: `opacity 0.15s ease ${active ? '0.35s' : '0s'}` }}
@@ -179,7 +228,7 @@ function AnnotationDot({
 
             {/* Card border — draws to 50% from the connection side */}
             <path
-              d={cardBorderPath(isRight)}
+              d={cardBorderPath(isRight, s)}
               stroke={hotspot.color}
               strokeWidth={1.5}
               fill="none"
@@ -190,9 +239,9 @@ function AnnotationDot({
             />
 
             {/* Card content */}
-            <foreignObject x={cardX} y={0} width={CARD_W} height={CARD_H}>
+            <foreignObject x={cardX} y={0} width={s.cardW} height={s.cardH}>
               <div
-                className="flex items-center gap-2 px-3 h-full"
+                className="flex items-center gap-1.5 px-2 h-full"
                 style={{
                   opacity: active ? 1 : 0,
                   transform: active ? 'translateY(0)' : 'translateY(4px)',
@@ -200,19 +249,19 @@ function AnnotationDot({
                 }}
               >
                 <div
-                  className="size-7 rounded-md flex items-center justify-center shrink-0"
+                  className={`${s.iconBox} rounded-md flex items-center justify-center shrink-0`}
                   style={{ backgroundColor: `${hotspot.color}15` }}
                 >
-                  <Icon className="size-4" style={{ color: hotspot.color }} />
+                  <Icon className={s.iconSize} style={{ color: hotspot.color }} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span
-                    className="block text-[11px] font-bold leading-tight"
+                    className={`block ${s.labelSize} font-bold leading-tight truncate`}
                     style={{ color: hotspot.color }}
                   >
                     {hotspot.label}
                   </span>
-                  <span className="block text-[10px] text-gray-600 leading-tight">
+                  <span className={`block ${s.specSize} text-gray-600 leading-snug`}>
                     {hotspot.spec}
                   </span>
                 </div>
@@ -227,6 +276,8 @@ function AnnotationDot({
 
 export function ModelAnnotations() {
   const [activeId, setActiveId] = useState<string | null>(null)
+  const isMobile = useMediaQuery('(max-width: 639px)')
+  const size = isMobile ? SIZE_MOBILE : SIZE_DESKTOP
 
   const handleActivate = (id: string) => setActiveId(id)
   const handleDeactivate = () => setActiveId(null)
@@ -240,6 +291,7 @@ export function ModelAnnotations() {
           active={activeId === hotspot.id}
           onActivate={() => handleActivate(hotspot.id)}
           onDeactivate={handleDeactivate}
+          size={size}
         />
       ))}
     </group>

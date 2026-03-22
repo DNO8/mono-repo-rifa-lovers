@@ -4,6 +4,7 @@ import { useGLTF, Environment, ContactShadows, OrbitControls, Center, Text3D } f
 import * as THREE from 'three'
 import { Spinner } from '@/components/ui/spinner'
 import { useModelDrag } from '@/hooks/use-model-drag'
+import { useMediaQuery } from '@/hooks/use-media-query'
 
 const MODEL_PATH = '/models/ticket-model-2k.glb'
 
@@ -94,6 +95,8 @@ interface TicketModelViewerProps {
 
 export function TicketModelViewer({ ticketNumber }: TicketModelViewerProps) {
   const { userRotation, paused, pointerHandlers } = useModelDrag()
+  const isMobile = useMediaQuery('(max-width: 639px)')
+  const cameraZ = isMobile ? 9 : 6
 
   return (
     <div
@@ -102,7 +105,8 @@ export function TicketModelViewer({ ticketNumber }: TicketModelViewerProps) {
     >
       <Suspense fallback={<LoadingFallback />}>
         <Canvas
-          camera={{ position: [0, 0, 6], fov: 30, near: 0.1, far: 100 }}
+          key={cameraZ}
+          camera={{ position: [0, 0, cameraZ], fov: 30, near: 0.1, far: 100 }}
           dpr={[1, 1.5]}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent' }}

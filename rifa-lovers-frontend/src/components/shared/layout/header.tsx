@@ -12,12 +12,12 @@ export function Header() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 glass-light">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-bg">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 md:px-8">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <img src="/images/logos/logo-color.webp" alt="RifaLovers" className="h-8 w-auto" />
-          <span className="font-bold text-lg text-text-primary">RifaLovers</span>
+        <Link to="/" className="flex flex-col lg:flex-row items-center gap-0.5 lg:gap-2">
+          <img src="/images/logos/logo-color.webp" alt="RifaLovers" className="h-6 lg:h-8 w-auto" />
+          <span className="font-bold text-xs lg:text-lg text-text-primary">RifaLovers</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -35,25 +35,27 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <Badge variant="outline-primary" className="hidden sm:inline-flex animate-pulse-subtle">
-            <Smile className="size-3.5" />
-            +{SMILE_COUNT.toLocaleString('es-CL')} Sonrisas
-          </Badge>
-          {isAuthenticated ? (
-            <Link to="/dashboard" className="hidden sm:inline-flex">
-              <Button variant="secondary" size="sm">
-                <User className="size-3.5" />
-                Mi cuenta
-              </Button>
-            </Link>
-          ) : (
-            <Link to="/login" className="hidden sm:inline-flex">
-              <Button variant="primary" size="sm">
-                <LogIn className="size-3.5" />
-                Ingresar
-              </Button>
-            </Link>
-          )}
+          <div className="hidden sm:flex flex-col lg:flex-row items-end lg:items-center gap-0.2 lg:gap-3">
+            {isAuthenticated ? (
+              <Link to="/dashboard">
+                <Button variant="secondary" size="sm">
+                  <User className="size-3.5" />
+                  Mi cuenta
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/login">
+                <Button variant="primary" size="sm">
+                  <LogIn className="size-3.5" />
+                  Ingresar
+                </Button>
+              </Link>
+            )}
+            <Badge variant="outline-primary" className="animate-pulse-subtle scale-75 lg:scale-100 origin-right">
+              <Smile className="size-3.5" />
+              +{SMILE_COUNT.toLocaleString('es-CL')} Sonrisas
+            </Badge>
+          </div>
 
           {/* Mobile toggle */}
           <button

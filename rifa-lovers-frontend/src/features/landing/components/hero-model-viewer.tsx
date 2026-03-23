@@ -1,5 +1,5 @@
-import { Suspense, useRef } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Suspense, useRef, useEffect } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, Environment, ContactShadows, OrbitControls, Center } from '@react-three/drei'
 import * as THREE from 'three'
 import { Spinner } from '@/components/ui/spinner'
@@ -75,15 +75,16 @@ export function HeroModelViewer() {
 
           <InnerScene userRotation={userRotation} paused={paused} />
 
+          <ZoomPassthrough />
           <OrbitControls
             enableRotate={false}
             enablePan={false}
             enableZoom
             enableDamping
             dampingFactor={0.08}
-            minDistance={1}
-            maxDistance={8}
-            target={[0, 0.1, 0]}
+            minDistance={MIN_DISTANCE}
+            maxDistance={MAX_DISTANCE}
+            target={ORBIT_TARGET}
           />
 
           <Environment preset="city" />
@@ -94,6 +95,32 @@ export function HeroModelViewer() {
       <div className="absolute inset-0 -z-10 rounded-full blur-3xl opacity-20 bg-linear-to-br from-primary via-secondary to-tertiary" />
     </div>
   )
+}
+
+const ORBIT_TARGET = new THREE.Vector3(0, 0.1, 0)
+const MIN_DISTANCE = 1
+const MAX_DISTANCE = 8
+
+function ZoomPassthrough() {
+  const camera = useThree((s) => s.camera)
+  const gl = useThree((s) => s.gl)
+
+  useEffect(() => {
+    const canvas = gl.domElement
+    const handler = (e: WheelEvent) => {
+      const dist = camera.position.distanceTo(ORBIT_TARGET)
+      const zoomingOut = e.deltaY > 0
+      const zoomingIn = e.deltaY < 0
+
+      if ((zoomingOut && dist >= MAX_DISTANCE - 0.2) || (zoomingIn && dist <= MIN_DISTANCE + 0.2)) {
+        e.stopImmediatePropagation()
+      }
+    }
+    canvas.addEventListener('wheel', handler, { capture: true, passive: true })
+    return () => canvas.removeEventListener('wheel', handler, { capture: true })
+  }, [camera, gl])
+
+  return null
 }
 
 function InnerScene({ userRotation, paused }: { userRotation: React.RefObject<number>; paused: React.RefObject<boolean> }) {

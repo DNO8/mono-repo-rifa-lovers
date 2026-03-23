@@ -162,7 +162,7 @@ function AnnotationDot({
     <Html
       position={hotspot.position}
       center
-      zIndexRange={active ? [100, 50] : [10, 0]}
+      zIndexRange={active ? [1000, 500] : [10, 0]}
       style={{ pointerEvents: 'auto' }}
     >
       <div
@@ -192,7 +192,7 @@ function AnnotationDot({
         {/* SVG tooltip — always rendered, CSS transitions drive the draw animation */}
         <div
           className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ [isRight ? 'left' : 'right']: s.dotOffset, zIndex: 50 }}
+          style={{ [isRight ? 'left' : 'right']: s.dotOffset }}
         >
           <svg
             width={s.svgW}

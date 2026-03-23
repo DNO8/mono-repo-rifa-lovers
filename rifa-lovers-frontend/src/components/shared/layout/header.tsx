@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router'
+import { useState, useCallback } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router'
 import { Menu, X, Smile, User, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +10,32 @@ import { cn } from '@/lib/utils'
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent, href: string) => {
+      const hashIndex = href.indexOf('#')
+      if (hashIndex === -1) return
+
+      e.preventDefault()
+      const hash = href.slice(hashIndex + 1)
+      const basePath = href.slice(0, hashIndex) || '/'
+
+      const scrollTo = () => {
+        const el = document.getElementById(hash)
+        el?.scrollIntoView({ behavior: 'smooth' })
+      }
+
+      if (location.pathname === basePath) {
+        scrollTo()
+      } else {
+        navigate(basePath)
+        setTimeout(scrollTo, 100)
+      }
+    },
+    [location.pathname, navigate],
+  )
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-bg">
@@ -26,6 +52,7 @@ export function Header() {
             <Link
               key={item.href}
               to={item.href}
+              onClick={(e) => handleNavClick(e, item.href)}
               className="text-sm font-medium text-text-secondary hover:text-primary transition-colors"
             >
               {item.label}
@@ -81,7 +108,10 @@ export function Header() {
               key={item.href}
               to={item.href}
               className="rounded-md px-4 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg-purple-soft hover:text-primary transition-colors"
-              onClick={() => setMobileOpen(false)}
+              onClick={(e) => {
+                handleNavClick(e, item.href)
+                setMobileOpen(false)
+              }}
             >
               {item.label}
             </Link>

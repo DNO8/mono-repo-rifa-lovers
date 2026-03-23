@@ -1,5 +1,5 @@
-import { Suspense, useRef } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Suspense, useRef, useEffect } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, Environment, ContactShadows, OrbitControls, Center, Text3D } from '@react-three/drei'
 import * as THREE from 'three'
 import { Spinner } from '@/components/ui/spinner'
@@ -80,11 +80,37 @@ function LoadingFallback() {
   )
 }
 
+const ORBIT_TARGET = new THREE.Vector3(0, 0, 0)
+const MIN_DISTANCE = 2
+const MAX_DISTANCE = 8
+
+function ZoomPassthrough() {
+  const camera = useThree((s) => s.camera)
+  const gl = useThree((s) => s.gl)
+
+  useEffect(() => {
+    const canvas = gl.domElement
+    const handler = (e: WheelEvent) => {
+      const dist = camera.position.distanceTo(ORBIT_TARGET)
+      const zoomingOut = e.deltaY > 0
+      const zoomingIn = e.deltaY < 0
+
+      if ((zoomingOut && dist >= MAX_DISTANCE - 0.2) || (zoomingIn && dist <= MIN_DISTANCE + 0.2)) {
+        e.stopImmediatePropagation()
+      }
+    }
+    canvas.addEventListener('wheel', handler, { capture: true, passive: true })
+    return () => canvas.removeEventListener('wheel', handler, { capture: true })
+  }, [camera, gl])
+
+  return null
+}
+
 function InnerScene({ ticketNumber, userRotation, paused }: TicketModelProps) {
   return (
     <>
       <TicketModel ticketNumber={ticketNumber} userRotation={userRotation} paused={paused} />
-      <ContactShadows position={[0, -1.5, 0]} opacity={0.2} scale={6} blur={2.5} />
+      <ContactShadows position={[0, -0.95, 0]} opacity={0.2} scale={6} blur={2.5} />
     </>
   )
 }
@@ -118,15 +144,16 @@ export function TicketModelViewer({ ticketNumber }: TicketModelViewerProps) {
 
           <InnerScene ticketNumber={ticketNumber} userRotation={userRotation} paused={paused} />
 
+          <ZoomPassthrough />
           <OrbitControls
             enableRotate={false}
             enablePan={false}
             enableZoom
             enableDamping
             dampingFactor={0.08}
-            minDistance={2}
-            maxDistance={8}
-            target={[0, 0, 0]}
+            minDistance={MIN_DISTANCE}
+            maxDistance={MAX_DISTANCE}
+            target={ORBIT_TARGET}
           />
 
           <Environment preset="city" />

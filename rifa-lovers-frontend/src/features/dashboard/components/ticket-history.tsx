@@ -37,7 +37,7 @@ export function TicketHistory({ items }: TicketHistoryProps) {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-text-primary truncate">{item.name}</p>
                 <p className="text-xs text-text-tertiary">
-                  Finalizado &bull; {item.tickets} {item.tickets === 1 ? 'ticket' : 'tickets'}
+                  Finalizado &bull; {item.tickets} LuckyPass
                 </p>
               </div>
 

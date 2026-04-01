@@ -14,6 +14,9 @@ export interface Raffle {
 
 export interface Milestone {
   id: string
+  threshold: number | 'flash'
+  emoji: string
+  name: string
   title: string
   description: string
   status: 'completed' | 'active' | 'locked'

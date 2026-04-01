@@ -6,7 +6,7 @@ export const TESTIMONIALS: Testimonial[] = [
     name: 'Carolina M.',
     avatar: '👩🏻',
     location: 'Santiago',
-    text: '¡No lo podía creer! Compré 3 tickets y gané el iPhone. Lo mejor es saber que parte de mi compra fue a una causa real.',
+    text: '¡No lo podía creer! Activé 3 LuckyPass y gané el iPhone. Lo mejor es saber que parte de mi compra fue a una causa real.',
     rating: 5,
     isWinner: true,
     prizeName: 'iPhone 15 Pro',
@@ -42,7 +42,7 @@ export const TESTIMONIALS: Testimonial[] = [
     name: 'Sofía L.',
     avatar: '👩🏽',
     location: 'Antofagasta',
-    text: 'Lo que más me gusta es el impacto social. Saber que mi ticket ayuda a entregar becas es increíble.',
+    text: 'Lo que más me gusta es el impacto social. Saber que mi LuckyPass ayuda a entregar becas es increíble.',
     rating: 5,
   },
   {

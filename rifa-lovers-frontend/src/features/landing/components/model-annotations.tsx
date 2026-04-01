@@ -1,15 +1,15 @@
 import { useState, useRef } from 'react'
 import { Html } from '@react-three/drei'
-import { Cpu, MemoryStick, HardDrive, Zap, Fan } from 'lucide-react'
+import { Cpu, MemoryStick, HardDrive, Monitor, BatteryFull } from 'lucide-react'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import type { Hotspot } from '@/types/domain.types'
 
 const HOTSPOTS: Hotspot[] = [
   {
-    id: 'gpu',
-    label: 'GPU',
-    spec: 'RTX 4070 Ti Super',
-    position: [-0.1, 0, -0.3],
+    id: 'chip',
+    label: 'Procesador',
+    spec: 'Apple M5 – 10 núcleos',
+    position: [0, -0.5, -0.2],
     side: 'right',
     icon: Cpu,
     color: '#7B3FE4',
@@ -17,37 +17,37 @@ const HOTSPOTS: Hotspot[] = [
   {
     id: 'ram',
     label: 'RAM',
-    spec: 'DDR5 32GB 6000MHz',
-    position: [0.1, 0.3, -0.1],
+    spec: '16 GB Unificada',
+    position: [0.3, 0.1, 0],
     side: 'right',
     icon: MemoryStick,
     color: '#FF4DA6',
   },
   {
-    id: 'psu',
-    label: 'Fuente',
-    spec: '850W 80+ Gold',
-    position: [0.1, -0.6, -0.5],
+    id: 'storage',
+    label: 'SSD',
+    spec: '512 GB SSD',
+    position: [-0.3, 0.05, 0.5],
     side: 'left',
-    icon: Zap,
+    icon: HardDrive,
     color: '#FF8A3D',
   },
   {
-    id: 'storage',
-    label: 'SSD',
-    spec: 'NVMe 1TB Gen4',
-    position: [0.2, -0.3, -0.3],
-    side: 'left',
-    icon: HardDrive,
+    id: 'display',
+    label: 'Pantalla',
+    spec: '13.6" Liquid Retina',
+    position: [0, 0.8, 0.6],
+    side: 'right',
+    icon: Monitor,
     color: '#10B981',
   },
   {
-    id: 'cooler',
-    label: 'Cooler',
-    spec: 'AIO 240mm RGB',
-    position: [-0.1, 0.3, 0.5],
-    side: 'right',
-    icon: Fan,
+    id: 'battery',
+    label: 'Batería',
+    spec: 'Hasta 18h de uso',
+    position: [0, -0.15, 0.3],
+    side: 'left',
+    icon: BatteryFull,
     color: '#3B82F6',
   },
 ]

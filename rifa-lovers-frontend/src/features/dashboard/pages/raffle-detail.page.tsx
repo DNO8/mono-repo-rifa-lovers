@@ -25,9 +25,9 @@ const MOCK_USER_TICKETS: UserTicket[] = [
 
 const MOCK_RAFFLE = {
   id: 'raffle-001',
-  prize: 'Tesla Model 3 Long Range',
+  prize: 'MacBook Air M5',
   drawDate: 'Mañana, 20:00',
-  totalTickets: 30000,
+  totalTickets: 5000,
 }
 
 export default function RaffleDetailPage() {
@@ -54,7 +54,7 @@ export default function RaffleDetailPage() {
           <div>
             <Badge variant="gradient" className="mb-3">Premium Entry</Badge>
             <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">
-              {MOCK_RAFFLE.prize}
+              LuckyPass {MOCK_RAFFLE.prize}
             </h1>
             <div className="flex items-center gap-4 mt-2 text-sm text-text-secondary">
               <span className="flex items-center gap-1">
@@ -63,7 +63,7 @@ export default function RaffleDetailPage() {
               </span>
               <span className="flex items-center gap-1">
                 <Hash className="size-3.5" />
-                {MOCK_RAFFLE.totalTickets.toLocaleString('es-CL')} tickets totales
+                {MOCK_RAFFLE.totalTickets.toLocaleString('es-CL')} LuckyPass totales
               </span>
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function RaffleDetailPage() {
           <Link to={`/checkout?raffle=${id ?? MOCK_RAFFLE.id}&tickets=1`}>
             <Button variant="primary" size="lg">
               <ShoppingCart className="size-4" />
-              Comprar otro ticket
+              Activar otro LuckyPass
             </Button>
           </Link>
         </div>
@@ -82,7 +82,7 @@ export default function RaffleDetailPage() {
           <div className="glass-medium rounded-2xl p-6 overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-text-primary">
-                Tu Ticket <span className="text-primary">#{String(selectedTicket.number).padStart(5, '0')}</span>
+                Tu LuckyPass <span className="text-primary">#{String(selectedTicket.number).padStart(5, '0')}</span>
               </h2>
               <Badge variant="outline-primary">Rifa {id ?? MOCK_RAFFLE.id}</Badge>
             </div>
@@ -91,17 +91,17 @@ export default function RaffleDetailPage() {
 
             <p className="flex items-center justify-center gap-1.5 text-xs text-text-tertiary mt-3 opacity-60">
               <Hand className="size-3.5" />
-              Arrastra para girar el ticket
+              Arrastra para girar tu LuckyPass
             </p>
           </div>
 
           {/* Ticket list sidebar */}
           <div className="glass-medium rounded-2xl p-5">
             <h3 className="text-base font-bold text-text-primary mb-1">
-              Mis Tickets
+              Mis LuckyPass
             </h3>
             <p className="text-xs text-text-tertiary mb-4">
-              {MOCK_USER_TICKETS.length} tickets comprados
+              {MOCK_USER_TICKETS.length} LuckyPass activados
             </p>
 
             <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-1">
@@ -143,7 +143,7 @@ export default function RaffleDetailPage() {
               <Link to={`/checkout?raffle=${id ?? MOCK_RAFFLE.id}&tickets=1`}>
                 <Button variant="secondary" size="md" className="w-full">
                   <ShoppingCart className="size-4" />
-                  Comprar más tickets
+                  Activar más LuckyPass
                 </Button>
               </Link>
             </div>

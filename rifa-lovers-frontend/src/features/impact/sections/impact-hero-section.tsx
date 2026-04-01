@@ -28,7 +28,7 @@ export function ImpactHeroSection() {
         </SplitText>
 
         <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-8">
-          Cada ticket que compras no solo te acerca a ganar — también transforma vidas.
+          Cada LuckyPass que activas no solo te acerca a ganar — también transforma vidas.
           Conoce cómo tu participación genera cambios reales en comunidades que lo necesitan.
         </p>
 

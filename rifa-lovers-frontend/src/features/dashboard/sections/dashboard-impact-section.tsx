@@ -29,7 +29,7 @@ export function DashboardImpactSection({ impact }: { impact: CollectiveImpact })
       </div>
 
       <p className="text-xs text-text-tertiary mb-4">
-        Faltan {impact.remaining.toLocaleString('es-CL')} tickets para {impact.nextGoal}
+        Faltan {impact.remaining.toLocaleString('es-CL')} LuckyPass para {impact.nextGoal}
       </p>
 
       <ProgressBar value={impact.progress} className="mb-5" />

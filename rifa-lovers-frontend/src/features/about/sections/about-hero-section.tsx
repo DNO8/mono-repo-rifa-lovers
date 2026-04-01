@@ -25,7 +25,7 @@ export function AboutHeroSection() {
         </SplitText>
 
         <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto">
-          RifaLovers nació con una idea simple: que participar en sorteos pueda cambiar vidas.
+          Rifa Lovers nació con una idea simple: que participar en sorteos pueda cambiar vidas.
           No solo la tuya — sino la de comunidades que más lo necesitan.
         </p>
       </div>

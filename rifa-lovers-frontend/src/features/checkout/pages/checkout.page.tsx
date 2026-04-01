@@ -9,18 +9,12 @@ import { apiClient } from '@/api/client'
 import { ENDPOINTS } from '@/api/endpoints'
 import { OrderSummary } from '../components/order-summary'
 
-const TOTAL_AVAILABLE = 30_000
-
-function getBonusTickets(count: number): number {
-  if (count >= 10) return 3
-  if (count >= 5) return 1
-  return 0
-}
+const TOTAL_AVAILABLE = 5_000
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
   const ticketCount = Math.max(1, Math.min(50, Number(searchParams.get('tickets')) || 1))
-  const bonusTickets = getBonusTickets(ticketCount)
+  const bonusTickets = 0
 
   const [selectedNumber, setSelectedNumber] = useState<number | ''>('')
   const [numberError, setNumberError] = useState('')
@@ -48,7 +42,7 @@ export default function CheckoutPage() {
 
   const handleConfirm = async () => {
     if (!selectedNumber) {
-      setNumberError('Debes elegir un número para tu ticket')
+      setNumberError('Debes elegir un número para tu LuckyPass')
       return
     }
     setIsProcessing(true)
@@ -81,7 +75,7 @@ export default function CheckoutPage() {
               ¡Compra exitosa!
             </h1>
             <p className="text-text-secondary mb-2">
-              Tus {ticketCount + bonusTickets} tickets para <strong>{ACTIVE_RAFFLE.prize}</strong> ya están activos.
+              Tus {ticketCount + bonusTickets} LuckyPass para <strong>{ACTIVE_RAFFLE.prize}</strong> ya están activos.
             </p>
             {selectedNumber && (
               <p className="text-lg font-bold text-primary mb-2">

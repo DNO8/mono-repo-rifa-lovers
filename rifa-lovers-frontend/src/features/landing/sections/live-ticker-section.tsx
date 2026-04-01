@@ -3,8 +3,9 @@ import { Ticket, Zap } from 'lucide-react'
 import { LIVE_ACTIVITIES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
-function TickerItem({ name, ticketCount, timeAgo, city }: {
+function TickerItem({ name, action, ticketCount, timeAgo, city }: {
   name: string
+  action: string
   ticketCount: number
   timeAgo: string
   city: string
@@ -15,8 +16,8 @@ function TickerItem({ name, ticketCount, timeAgo, city }: {
         <Ticket className="size-3 text-primary" />
       </div>
       <span className="font-medium text-text-primary">{name}</span>
-      <span className="text-text-secondary">compró</span>
-      <span className="font-bold text-primary">{ticketCount} {ticketCount === 1 ? 'ticket' : 'tickets'}</span>
+      <span className="text-text-secondary">{action}</span>
+      <span className="font-bold text-primary">{ticketCount} LuckyPass</span>
       <span className="text-text-tertiary">· {city} · {timeAgo}</span>
     </div>
   )
@@ -71,6 +72,7 @@ export function LiveTickerSection() {
           <TickerItem
             key={`${activity.id}-${i}`}
             name={activity.name}
+            action={activity.action}
             ticketCount={activity.ticketCount}
             timeAgo={activity.timeAgo}
             city={activity.city}

@@ -3,6 +3,14 @@ import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router'
 import { PageWithSuspense } from './route-wrappers'
 import { ProtectedRoute } from './protected-route'
+import { LandingPageSkeleton } from '@/components/skeletons/landing-skeleton'
+import { ImpactPageSkeleton } from '@/components/skeletons/impact-skeleton'
+import { AboutPageSkeleton } from '@/components/skeletons/about-skeleton'
+import { ContactPageSkeleton } from '@/components/skeletons/contact-skeleton'
+import { AuthPageSkeleton } from '@/components/skeletons/auth-skeleton'
+import { DashboardPageSkeleton } from '@/components/skeletons/dashboard-skeleton'
+import { CheckoutPageSkeleton } from '@/components/skeletons/checkout-skeleton'
+import { RaffleDetailPageSkeleton } from '@/components/skeletons/raffle-detail-skeleton'
 
 const LazyLandingPage = lazy(() => import('@/features/landing/pages/landing.page'))
 const LazyImpactPage = lazy(() => import('@/features/impact/pages/impact.page'))
@@ -18,7 +26,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<LandingPageSkeleton />}>
         <LazyLandingPage />
       </PageWithSuspense>
     ),
@@ -26,7 +34,7 @@ export const router = createBrowserRouter([
   {
     path: '/impacto',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<ImpactPageSkeleton />}>
         <LazyImpactPage />
       </PageWithSuspense>
     ),
@@ -34,7 +42,7 @@ export const router = createBrowserRouter([
   {
     path: '/nosotros',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<AboutPageSkeleton />}>
         <LazyAboutPage />
       </PageWithSuspense>
     ),
@@ -42,7 +50,7 @@ export const router = createBrowserRouter([
   {
     path: '/contacto',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<ContactPageSkeleton />}>
         <LazyContactPage />
       </PageWithSuspense>
     ),
@@ -50,7 +58,7 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<AuthPageSkeleton />}>
         <LazyLoginPage />
       </PageWithSuspense>
     ),
@@ -58,7 +66,7 @@ export const router = createBrowserRouter([
   {
     path: '/registro',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<AuthPageSkeleton />}>
         <LazyRegisterPage />
       </PageWithSuspense>
     ),
@@ -66,7 +74,7 @@ export const router = createBrowserRouter([
   {
     path: '/dashboard',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<DashboardPageSkeleton />}>
         <ProtectedRoute>
           <LazyDashboardPage />
         </ProtectedRoute>
@@ -76,7 +84,7 @@ export const router = createBrowserRouter([
   {
     path: '/checkout',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<CheckoutPageSkeleton />}>
         <ProtectedRoute>
           <LazyCheckoutPage />
         </ProtectedRoute>
@@ -86,7 +94,7 @@ export const router = createBrowserRouter([
   {
     path: '/raffle/:id',
     element: (
-      <PageWithSuspense>
+      <PageWithSuspense fallback={<RaffleDetailPageSkeleton />}>
         <ProtectedRoute>
           <LazyRaffleDetailPage />
         </ProtectedRoute>

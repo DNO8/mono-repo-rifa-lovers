@@ -19,7 +19,7 @@ export function ContactCommunitySection() {
           </h2>
           <p className="text-white/80 max-w-lg mx-auto mb-8">
             Conéctate con otros participantes, entérate primero de los sorteos
-            y comparte la experiencia RifaLovers.
+            y comparte la experiencia Rifa Lovers.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button variant="secondary" size="lg" className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/40 hover:text-white">

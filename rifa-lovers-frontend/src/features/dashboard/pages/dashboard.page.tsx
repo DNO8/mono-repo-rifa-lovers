@@ -16,7 +16,7 @@ const MOCK_HISTORY: HistoryItem[] = [
 
 const MOCK_RAFFLE: RaffleCardData = {
   id: 'raffle-001',
-  prize: 'Tesla Model 3 Long Range',
+  prize: 'MacBook Air M5',
   ticketCount: 8,
   uniqueId: 'RL-9921',
   drawLabel: 'Mañana, 20:00',
@@ -25,13 +25,15 @@ const MOCK_RAFFLE: RaffleCardData = {
 }
 
 const MOCK_IMPACT: CollectiveImpact = {
-  progress: 72,
-  nextGoal: 'donar 10 iPads',
-  remaining: 1600,
+  progress: 24,
+  nextGoal: '💸 Respiro RifaLovers',
+  remaining: 3800,
   milestones: [
-    { label: '1,000 Comidas entregadas', status: 'done', icon: 'check' },
-    { label: '10 iPads para Escuelas', status: 'active', icon: 'circle' },
-    { label: 'Refugio Animal RL', status: 'pending', icon: 'home' },
+    { label: '🛒 Carrito Lleno', status: 'done', icon: 'check' },
+    { label: '💸 Respiro RifaLovers', status: 'active', icon: 'circle' },
+    { label: '🌊 Escapada RifaLovers', status: 'pending', icon: 'home' },
+    { label: '💸 Respiro (reimpulso)', status: 'pending', icon: 'home' },
+    { label: '🔓 Gran Desbloqueo', status: 'pending', icon: 'home' },
   ],
 }
 

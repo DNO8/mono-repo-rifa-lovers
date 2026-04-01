@@ -12,6 +12,7 @@ interface SplitTextProps {
   y?: number
   delay?: number
   triggerStart?: string
+  gradient?: boolean
 }
 
 export function SplitText({
@@ -25,6 +26,7 @@ export function SplitText({
   y = 20,
   delay = 0,
   triggerStart = 'top 85%',
+  gradient = false,
 }: SplitTextProps) {
   const ref = useRef<HTMLElement>(null)
 
@@ -38,18 +40,23 @@ export function SplitText({
       return
     }
 
-    const words = children.split(/\s+/)
+    const lines = children.split('\n')
 
     if (type === 'chars') {
-      el.innerHTML = words
-        .map((word) => {
-          const chars = word
-            .split('')
-            .map((c) => `<span class="split-char" style="display:inline-block;opacity:0">${c}</span>`)
-            .join('')
-          return `<span style="display:inline-block;white-space:nowrap">${chars}</span>`
+      el.innerHTML = lines
+        .map((line) => {
+          const lineWords = line.trim().split(/\s+/)
+          return lineWords
+            .map((word) => {
+              const chars = word
+                .split('')
+                .map((c) => `<span class="split-char" style="display:inline-block;opacity:0">${c}</span>`)
+                .join('')
+              return `<span style="display:inline-block;white-space:nowrap">${chars}</span>`
+            })
+            .join(' ')
         })
-        .join(' ')
+        .join('<br>')
 
       const charEls = el.querySelectorAll('.split-char')
       gsap.set(charEls, { y, opacity: 0 })
@@ -65,9 +72,17 @@ export function SplitText({
       return () => { tween.kill() }
     }
 
-    el.innerHTML = words
-      .map((word) => `<span class="split-word" style="display:inline-block;opacity:0">${word}</span>`)
-      .join(' ')
+    el.innerHTML = lines
+      .map((line) => {
+        const lineWords = line.trim().split(/\s+/)
+        return lineWords
+          .map((word) => {
+            const gs = gradient ? 'background:inherit;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;' : ''
+            return `<span class="split-word" style="display:inline-block;opacity:0;${gs}">${word}</span>`
+          })
+          .join(' ')
+      })
+      .join('<br>')
 
     const wordEls = el.querySelectorAll('.split-word')
     gsap.set(wordEls, { y, opacity: 0 })
@@ -81,7 +96,7 @@ export function SplitText({
       scrollTrigger: { trigger: el, start: triggerStart, once: true },
     })
     return () => { tween.kill() }
-  }, [children, type, stagger, duration, y, delay, triggerStart])
+  }, [children, type, stagger, duration, y, delay, triggerStart, gradient])
 
   return (
     <Tag

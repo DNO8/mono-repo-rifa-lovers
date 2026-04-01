@@ -23,7 +23,7 @@ export function DashboardGreetingSection({ user, totalTickets, points }: Dashboa
       <div className="flex items-center gap-3 shrink-0">
         <Badge variant="outline-primary" className="gap-1.5 px-3 py-1.5">
           <Ticket className="size-3.5" />
-          {totalTickets} Tickets
+          {totalTickets} LuckyPass
         </Badge>
         <Badge variant="subtle" className="gap-1.5 px-3 py-1.5">
           <Star className="size-3.5" />

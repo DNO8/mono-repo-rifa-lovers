@@ -21,7 +21,7 @@ export function OrderSummary({ raffle, ticketCount, bonusTickets }: OrderSummary
           <span className="font-medium text-text-primary">{raffle.prize}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-text-secondary">Tickets</span>
+          <span className="text-text-secondary">LuckyPass</span>
           <span className="font-medium text-text-primary">{ticketCount}</span>
         </div>
         {bonusTickets > 0 && (
@@ -31,7 +31,7 @@ export function OrderSummary({ raffle, ticketCount, bonusTickets }: OrderSummary
           </div>
         )}
         <div className="flex justify-between text-sm">
-          <span className="text-text-secondary">Precio por ticket</span>
+          <span className="text-text-secondary">Precio por LuckyPass</span>
           <span className="font-medium text-text-primary">
             ${raffle.ticketPrice.toLocaleString('es-CL')}
           </span>
@@ -46,7 +46,7 @@ export function OrderSummary({ raffle, ticketCount, bonusTickets }: OrderSummary
           </span>
         </div>
         <p className="text-xs text-text-tertiary mt-1">
-          Total de tickets: {ticketCount + bonusTickets}
+          Total de LuckyPass: {ticketCount + bonusTickets}
         </p>
       </div>
     </Card>

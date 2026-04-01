@@ -26,11 +26,11 @@ export function CTASection() {
           duration={0.7}
           y={25}
         >
-          Tu próximo ticket puede cambiar todo.
+          Tu próximo LuckyPass puede cambiar todo.
         </SplitText>
 
         <p className="text-text-secondary mb-8 max-w-md mx-auto">
-          Cada participación es una oportunidad para ganar y una acción real de impacto social.
+          Cada LuckyPass es una oportunidad para ganar y una acción real de impacto social.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

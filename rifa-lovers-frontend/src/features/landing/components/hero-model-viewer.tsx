@@ -6,9 +6,9 @@ import { Spinner } from '@/components/ui/spinner'
 import { useModelDrag } from '@/hooks/use-model-drag'
 import { ModelAnnotations } from './model-annotations'
 
-const MODEL_PATH = '/models/custom_gaming_pc.glb'
+const MODEL_PATH = '/models/macbook-2k.glb'
 
-function PCModel({ userRotation, paused }: { userRotation: React.RefObject<number>; paused: React.RefObject<boolean> }) {
+function MacBookModel({ userRotation, paused }: { userRotation: React.RefObject<number>; paused: React.RefObject<boolean> }) {
   const pivotRef = useRef<THREE.Group>(null)
   const { scene } = useGLTF(MODEL_PATH)
   const idleRotation = useRef(0)
@@ -126,7 +126,7 @@ function ZoomPassthrough() {
 function InnerScene({ userRotation, paused }: { userRotation: React.RefObject<number>; paused: React.RefObject<boolean> }) {
   return (
     <>
-      <PCModel userRotation={userRotation} paused={paused} />
+      <MacBookModel userRotation={userRotation} paused={paused} />
       <ContactShadows position={[0, 0, 0]} opacity={0.3} scale={5} blur={2.5} />
     </>
   )

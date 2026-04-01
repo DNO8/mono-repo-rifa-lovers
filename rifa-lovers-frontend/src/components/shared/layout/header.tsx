@@ -41,9 +41,9 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-bg">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 md:px-8">
         {/* Logo */}
-        <Link to="/" className="flex flex-col lg:flex-row items-center gap-0.5 lg:gap-2">
+        <Link to="/" className="flex flex-row items-center gap-1.5">
           <img src="/images/logos/logo-color.webp" alt="RifaLovers" className="h-6 lg:h-8 w-auto" />
-          <span className="font-bold text-xs lg:text-lg text-text-primary">RifaLovers</span>
+          <span className="text-lg lg:py-8 md:py-4 py-2 lg:text-2xl gradient-text leading-none" style={{ fontFamily: 'var(--font-brand)' }}>RifaLovers</span>
         </Link>
 
         {/* Desktop Nav */}

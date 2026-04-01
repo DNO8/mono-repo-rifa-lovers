@@ -1,18 +1,15 @@
-import { Check, Lock } from 'lucide-react'
+import { Lock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { Milestone } from '@/types/domain.types'
-import type { IconMap } from '@/types/ui.types'
 
 interface MilestoneCardProps {
   milestone: Milestone
-  iconMap: IconMap
   onClick?: (e: React.MouseEvent) => void
 }
 
-export function MilestoneCard({ milestone, iconMap, onClick }: MilestoneCardProps) {
-  const IconComponent = iconMap[milestone.icon]
+export function MilestoneCard({ milestone, onClick }: MilestoneCardProps) {
   const isCompleted = milestone.status === 'completed'
   const isActive = milestone.status === 'active'
   const isLocked = milestone.status === 'locked'
@@ -35,8 +32,9 @@ export function MilestoneCard({ milestone, iconMap, onClick }: MilestoneCardProp
             isLocked && 'bg-bg-muted'
           )}
         >
-          {isCompleted && <Check className="size-4 text-success" />}
-          {isActive && IconComponent && <IconComponent className="size-4 text-primary" />}
+          {(isCompleted || isActive) && (
+            <img src={milestone.icon} alt={milestone.name} className="size-5" />
+          )}
           {isLocked && <Lock className="size-4 text-text-tertiary" />}
         </div>
         <Badge variant={isCompleted ? 'success' : isActive ? 'subtle' : 'muted'}>

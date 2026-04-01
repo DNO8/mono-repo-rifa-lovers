@@ -59,7 +59,7 @@ export function RaffleHeroCard({ raffle }: { raffle: RaffleCardData }) {
           <div className="flex items-center gap-6 mb-6">
             <div>
               <span className="block text-[10px] font-bold uppercase tracking-wider text-primary mb-0.5">
-                Tickets
+                LuckyPass
               </span>
               <span className="text-2xl font-extrabold text-text-primary">
                 {String(raffle.ticketCount).padStart(2, '0')}

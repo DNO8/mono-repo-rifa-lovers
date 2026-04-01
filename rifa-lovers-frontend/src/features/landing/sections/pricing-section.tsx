@@ -70,14 +70,14 @@ export function PricingSection() {
                   ${tier.price.toLocaleString('es-CL')}
                 </span>
                 <span className="text-text-secondary text-sm ml-1">
-                  / {tier.tickets} {tier.tickets === 1 ? 'ticket' : 'tickets'}
+                  / {tier.tickets} {tier.tickets === 1 ? 'LuckyPass' : 'LuckyPass'}
                 </span>
               </div>
 
               {/* Bonus */}
               {tier.bonusTickets > 0 && (
                 <div className="bg-success/10 text-success rounded-lg px-3 py-2 text-sm font-medium mb-5">
-                  +{tier.bonusTickets} {tier.bonusTickets === 1 ? 'ticket' : 'tickets'} de regalo 🎁
+                  +{tier.bonusTickets} LuckyPass de regalo 🎁
                 </div>
               )}
 

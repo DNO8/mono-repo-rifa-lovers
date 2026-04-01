@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Grand Hotel';
+  src: url('/fonts/Grand_Hotel/GrandHotel-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Stout Deco';
+  src: url('/fonts/stout_deco/StoutDeco.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    RifaLovers — Design Tokens (Tailwind v4)
    Source of truth: docs/design-system.md
@@ -58,7 +72,8 @@
   --shadow-glass-hover: 0 12px 40px rgba(0, 0, 0, 0.08);
 
   /* ─── Font ─── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-brand: 'Stout Deco', 'Grand Hotel', cursive;
 
   /* ─── Animation ─── */
   --duration-fast: 150ms;
@@ -73,6 +88,10 @@
   --animate-scale-up: scale-up 0.3s var(--ease-out) forwards;
   --animate-pulse-subtle: pulse-subtle 2s ease-in-out infinite;
   --animate-spin: spin 1s linear infinite;
+  --animate-border-spin: border-spin 3s linear infinite;
+
+  /* ─── Dark BG for live frame ─── */
+  --color-bg-dark: #1a1a2e;
 }
 
 @keyframes fade-in-up {
@@ -112,6 +131,24 @@
   }
 }
 
+@keyframes border-spin {
+  from {
+    transform: rotate(0deg) scale(2.5);
+  }
+  to {
+    transform: rotate(360deg) scale(2.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 @keyframes aurora-shift {
   0%, 100% {
     transform: translate(0, 0) scale(1);
@@ -139,6 +176,7 @@
     margin: 0;
     font-family: var(--font-sans);
     font-size: 16px;
+    font-weight: 300;
     line-height: 1.5;
     color: var(--color-text-primary);
     background-color: var(--color-bg);
@@ -151,6 +189,11 @@
     min-height: 100svh;
     display: flex;
     flex-direction: column;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 800;
   }
 }
 
@@ -184,7 +227,7 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #7B3FE4, #FF4DA6);
+    background: linear-gradient(135deg, #7B3FE4, #FF4DA6, #FF8A3D, #EF4444);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -204,6 +247,14 @@
   .glass-hover:hover {
     box-shadow: var(--shadow-glass-hover);
     transform: translateY(-2px);
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   .section-container {

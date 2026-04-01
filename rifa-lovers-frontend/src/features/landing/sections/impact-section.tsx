@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { ArrowRight, GraduationCap, Tablet, Heart } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
@@ -8,13 +8,6 @@ import { MetricCard } from '@/components/shared/metric-card'
 import { MilestoneCard } from '@/components/shared/milestone-card'
 import { MILESTONES, IMPACT_METRICS } from '@/lib/constants'
 import { ConfettiCanvas, type ConfettiRef } from '@/components/shared/confetti-canvas'
-import type { IconMap } from '@/types/ui.types'
-
-const MILESTONE_ICONS: IconMap = {
-  GraduationCap,
-  Tablet,
-  Heart,
-}
 
 export function ImpactSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.12 })
@@ -63,7 +56,6 @@ export function ImpactSection() {
             <MilestoneCard
               key={milestone.id}
               milestone={milestone}
-              iconMap={MILESTONE_ICONS}
               onClick={(e) => handleMilestoneClick(milestone.status, e)}
             />
           ))}

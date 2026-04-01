@@ -15,7 +15,7 @@ export function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-3">
               <img src="/images/logos/logo-color.webp" alt="RifaLovers" className="h-7 w-auto" />
-              <span className="font-bold text-lg text-text-primary">RifaLovers</span>
+              <span className="font-extrabold text-lg gradient-text" style={{ fontFamily: 'var(--font-brand)' }}>Rifa Lovers</span>
             </Link>
             <p className="text-sm text-text-secondary max-w-xs">
               Tu suerte crea impacto real. Participa, gana y transforma vidas.
@@ -68,7 +68,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-12 pt-6 border-t border-border-light text-center">
           <p className="text-xs text-text-tertiary">
-            © {new Date().getFullYear()} RifaLovers. Todos los derechos reservados.
+            © {new Date().getFullYear()} Rifa Lovers. Todos los derechos reservados.
           </p>
         </div>
       </div>

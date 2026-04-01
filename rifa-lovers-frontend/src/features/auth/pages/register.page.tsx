@@ -44,7 +44,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <img src="/images/logos/logo-color.webp" alt="RifaLovers" className="h-8 w-auto" />
-            <span className="font-bold text-xl text-text-primary">RifaLovers</span>
+            <span className="font-extrabold text-xl gradient-text" style={{ fontFamily: 'var(--font-brand)' }}>Rifa Lovers</span>
           </Link>
           <h1 className="text-2xl font-extrabold text-text-primary tracking-tight">
             Crea tu cuenta

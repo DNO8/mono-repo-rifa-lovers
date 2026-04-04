@@ -1,5 +1,5 @@
 # ⚙️ Backend — RifaLovers API
-tet
+
 API REST que gestiona la lógica de negocio, transacciones, rifas y pagos.
 
 ---

@@ -1,0 +1,263 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+enum UserRole {
+  admin
+  operator
+  customer
+}
+
+enum UserStatus {
+  active
+  blocked
+}
+
+enum RaffleStatus {
+  draft
+  active
+  sold_out
+  closed
+  drawn
+}
+
+enum PurchaseStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum PaymentStatus {
+  created
+  pending
+  approved
+  rejected
+}
+
+enum PrizeType {
+  milestone
+  flash
+}
+
+enum LuckyPassStatus {
+  active
+  used
+  winner
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(200)
+  slug      String   @unique @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  users   User[]
+  raffles Raffle[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String     @id @db.Uuid
+  organizationId String?    @map("organization_id") @db.Uuid
+  email          String?    @db.VarChar(255)
+  firstName      String?    @map("first_name") @db.VarChar(120)
+  lastName       String?    @map("last_name") @db.VarChar(120)
+  role           UserRole   @default(customer)
+  status         UserStatus @default(active)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  purchases    Purchase[]
+  userPacks    UserPack[]
+  luckyPasses  LuckyPass[]
+  prizeWinners PrizeWinner[]
+
+  @@map("users")
+}
+
+model Raffle {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String?      @map("organization_id") @db.Uuid
+  title           String?      @db.VarChar(255)
+  description     String?      @db.Text
+  goalPacks       Int          @default(5000) @map("goal_packs")
+  status          RaffleStatus @default(draft)
+  startDate       DateTime?    @map("start_date")
+  endDate         DateTime?    @map("end_date")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  purchases    Purchase[]
+  userPacks    UserPack[]
+  luckyPasses  LuckyPass[]
+  milestones   Milestone[]
+  prizes       Prize[]
+  progress     RaffleProgress?
+
+  @@map("raffles")
+}
+
+model Pack {
+  id                  String   @id @default(uuid()) @db.Uuid
+  name                String?  @db.VarChar(100)
+  price               Decimal? @db.Decimal(10, 2)
+  luckyPassQuantity   Int      @map("lucky_pass_quantity")
+  isFeatured          Boolean  @default(false) @map("is_featured")
+  isPreSale           Boolean  @default(false) @map("is_pre_sale")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  userPacks UserPack[]
+
+  @@map("packs")
+}
+
+model Purchase {
+  id          String         @id @default(uuid()) @db.Uuid
+  raffleId    String?        @map("raffle_id") @db.Uuid
+  userId      String?        @map("user_id") @db.Uuid
+  totalAmount Decimal?       @map("total_amount") @db.Decimal(12, 2)
+  status      PurchaseStatus @default(pending)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  paidAt      DateTime?      @map("paid_at")
+
+  raffle         Raffle?          @relation(fields: [raffleId], references: [id])
+  user           User?            @relation(fields: [userId], references: [id])
+  userPacks      UserPack[]
+  paymentTransactions PaymentTransaction[]
+
+  @@map("purchases")
+}
+
+model UserPack {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String?  @map("user_id") @db.Uuid
+  raffleId    String?  @map("raffle_id") @db.Uuid
+  packId      String?  @map("pack_id") @db.Uuid
+  purchaseId  String?  @map("purchase_id") @db.Uuid
+  quantity    Int      @default(1)
+  totalPaid   Decimal? @map("total_paid") @db.Decimal(10, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user       User?       @relation(fields: [userId], references: [id])
+  raffle     Raffle?     @relation(fields: [raffleId], references: [id])
+  pack       Pack?       @relation(fields: [packId], references: [id])
+  purchase   Purchase?   @relation(fields: [purchaseId], references: [id])
+  luckyPasses LuckyPass[]
+
+  @@map("user_packs")
+}
+
+model LuckyPass {
+  id          String          @id @default(uuid()) @db.Uuid
+  raffleId    String?         @map("raffle_id") @db.Uuid
+  userId      String?         @map("user_id") @db.Uuid
+  userPackId  String?         @map("user_pack_id") @db.Uuid
+  status      LuckyPassStatus @default(active)
+  isWinner    Boolean         @default(false) @map("is_winner")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  raffle     Raffle?       @relation(fields: [raffleId], references: [id])
+  user       User?         @relation(fields: [userId], references: [id])
+  userPack   UserPack?     @relation(fields: [userPackId], references: [id])
+  prizeWinners PrizeWinner[]
+
+  @@index([raffleId], map: "idx_lucky_raffle")
+  @@index([userId], map: "idx_lucky_user")
+  @@map("lucky_passes")
+}
+
+model Milestone {
+  id            String    @id @default(uuid()) @db.Uuid
+  raffleId      String?   @map("raffle_id") @db.Uuid
+  name          String?   @db.VarChar(150)
+  requiredPacks Int       @map("required_packs")
+  sortOrder     Int       @map("sort_order")
+  isUnlocked    Boolean   @default(false) @map("is_unlocked")
+  unlockedAt    DateTime? @map("unlocked_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  raffle Raffle?  @relation(fields: [raffleId], references: [id])
+  prizes Prize[]
+
+  @@map("milestones")
+}
+
+model Prize {
+  id               String     @id @default(uuid()) @db.Uuid
+  raffleId         String?    @map("raffle_id") @db.Uuid
+  milestoneId      String?    @map("milestone_id") @db.Uuid
+  type             PrizeType
+  name             String?    @db.VarChar(255)
+  description      String?    @db.Text
+  valueEstimated   Decimal?   @map("value_estimated") @db.Decimal(12, 2)
+  quantity         Int        @default(1)
+  createdAt        DateTime   @default(now()) @map("created_at")
+
+  raffle       Raffle?       @relation(fields: [raffleId], references: [id])
+  milestone    Milestone?    @relation(fields: [milestoneId], references: [id])
+  prizeWinners PrizeWinner[]
+
+  @@map("prizes")
+}
+
+model PrizeWinner {
+  id           String   @id @default(uuid()) @db.Uuid
+  prizeId      String?  @map("prize_id") @db.Uuid
+  luckyPassId  String?  @map("lucky_pass_id") @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  prize     Prize?      @relation(fields: [prizeId], references: [id])
+  luckyPass LuckyPass?  @relation(fields: [luckyPassId], references: [id])
+  user      User?       @relation(fields: [userId], references: [id])
+
+  @@unique([luckyPassId], map: "unique_lucky_pass_winner")
+  @@map("prize_winners")
+}
+
+model RaffleProgress {
+  id                String   @id @default(uuid()) @db.Uuid
+  raffleId          String   @unique @map("raffle_id") @db.Uuid
+  packsSold         Int      @default(0) @map("packs_sold")
+  revenueTotal      Decimal? @map("revenue_total") @db.Decimal(12, 2)
+  percentageToGoal  Decimal? @map("percentage_to_goal") @db.Decimal(5, 2)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+
+  raffle Raffle @relation(fields: [raffleId], references: [id])
+
+  @@map("raffle_progress")
+}
+
+model PaymentTransaction {
+  id                     String         @id @default(uuid()) @db.Uuid
+  purchaseId             String?        @map("purchase_id") @db.Uuid
+  provider               String?        @db.VarChar(50)
+  providerTransactionId  String?        @map("provider_transaction_id") @db.VarChar(255)
+  amount                 Decimal?       @db.Decimal(12, 2)
+  status                 PaymentStatus  @default(created)
+  createdAt              DateTime       @default(now()) @map("created_at")
+
+  purchase Purchase? @relation(fields: [purchaseId], references: [id])
+
+  @@map("payment_transactions")
+}

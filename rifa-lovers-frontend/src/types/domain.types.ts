@@ -100,6 +100,8 @@ export interface LiveActivity {
 export interface User {
   id: string
   name: string
+  lastName: string
+  phone: string
   email: string
   avatar?: string
 }

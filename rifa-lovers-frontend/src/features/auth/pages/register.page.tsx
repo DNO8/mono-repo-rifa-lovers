@@ -10,7 +10,9 @@ export default function RegisterPage() {
   const { register, isLoading, error, clearError } = useAuthStore()
 
   const [name, setName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -31,7 +33,7 @@ export default function RegisterPage() {
       return
     }
 
-    await register(name, email, password)
+    await register(name, lastName, email, password, phone)
     const { isAuthenticated } = useAuthStore.getState()
     if (isAuthenticated) navigate('/dashboard')
   }
@@ -77,6 +79,21 @@ export default function RegisterPage() {
           </div>
 
           <div>
+            <label htmlFor="register-lastName" className="block text-sm font-medium text-text-primary mb-1.5">
+              Apellido
+            </label>
+            <input
+              id="register-lastName"
+              type="text"
+              required
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Tu apellido"
+              className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            />
+          </div>
+
+          <div>
             <label htmlFor="register-email" className="block text-sm font-medium text-text-primary mb-1.5">
               Email
             </label>
@@ -87,6 +104,20 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
+              className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            />
+          </div>
+          <div>
+            <label htmlFor="register-phone" className="block text-sm font-medium text-text-primary mb-1.5">
+              Teléfono
+            </label>
+            <input
+              id="register-phone"
+              type="tel"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Tu teléfono"
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />
           </div>

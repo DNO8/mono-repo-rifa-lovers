@@ -6,7 +6,9 @@ import { ENDPOINTS } from '@/api/endpoints'
 
 const MOCK_USER: User = {
   id: 'user-001',
-  name: 'Participante Demo',
+  name: 'Participante',
+  lastName: 'Demo',
+  phone: '+56912345678',
   email: 'demo@rifalovers.cl',
   avatar: '👤',
 }
@@ -20,7 +22,7 @@ interface AuthState {
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  register: (name: string, lastName: string, phone: string, email: string, password: string) => Promise<void>
   logout: () => void
   clearError: () => void
 }
@@ -45,10 +47,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (name: string, email: string, password: string) => {
+      register: async (name: string, lastName: string, phone: string, email: string, password: string) => {
         set({ isLoading: true, error: null })
         try {
-          const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { name, email, password })
+          const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { name, lastName, phone, email, password })
           set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false })
         } catch {
           console.warn('[auth] Backend unavailable, using mock register')

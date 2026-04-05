@@ -77,7 +77,7 @@ model Organization {
 model User {
   id             String     @id @db.Uuid
   organizationId String?    @map("organization_id") @db.Uuid
-  email          String?    @db.VarChar(255)
+  email          String?    @unique @db.VarChar(255)
   firstName      String?    @map("first_name") @db.VarChar(120)
   lastName       String?    @map("last_name") @db.VarChar(120)
   role           UserRole   @default(customer)

@@ -12,7 +12,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { email, password, firstName, lastName } = registerDto;
+    const { email, password, firstName, lastName, phone } = registerDto;
 
     const existingUser = await this.prisma.user.findFirst({
       where: { email: email.toLowerCase() },
@@ -41,6 +41,8 @@ export class AuthService {
         email: email.toLowerCase(),
         firstName,
         lastName,
+        phone: parseFloat(phone),
+        role: 'customer',
       },
     });
 
@@ -60,7 +62,7 @@ export class AuthService {
     );
 
     if (supabaseError || !supabaseData.user) {
-      throw new UnauthorizedException('Credenciales inválidas');
+      throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -106,7 +108,7 @@ export class AuthService {
     return this.mapToUserResponse(user);
   }
 
-  async updateProfile(userId: string, updateDto: UpdateUserDto): Promise<UserResponseDto> {
+  async updateProfile(userId: string, updateData: UpdateUserDto): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -115,9 +117,9 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    if (updateDto.email && updateDto.email.toLowerCase() !== user.email) {
+    if (updateData.email && updateData.email.toLowerCase() !== user.email) {
       const existingUser = await this.prisma.user.findFirst({
-        where: { email: updateDto.email.toLowerCase() },
+        where: { email: updateData.email.toLowerCase() },
       });
 
       if (existingUser) {
@@ -125,22 +127,17 @@ export class AuthService {
       }
     }
 
-    let updateData: any = {
-      email: updateDto.email?.toLowerCase() || user.email,
-      firstName: updateDto.firstName || user.firstName,
-      lastName: updateDto.lastName || user.lastName,
+    const updateDataPrisma: any = {
+      email: updateData.email?.toLowerCase() || user.email,
+      firstName: updateData.firstName || user.firstName,
+      lastName: updateData.lastName || user.lastName,
+      phone: updateData.phone || user.phone,
     };
 
-    if (updateDto.email || updateDto.newPassword) {
-      const supabaseUpdates: { email?: string; password?: string } = {};
+    if (updateData.email) {
+      const supabaseUpdates: { email?: string } = {};
       
-      if (updateDto.email) {
-        supabaseUpdates.email = updateDto.email.toLowerCase();
-      }
-      
-      if (updateDto.newPassword) {
-        supabaseUpdates.password = updateDto.newPassword;
-      }
+      supabaseUpdates.email = updateData.email.toLowerCase();
 
       const { error: supabaseError } = await this.supabaseService.updateUser(userId, supabaseUpdates);
 
@@ -151,7 +148,7 @@ export class AuthService {
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
-      data: updateData,
+      data: updateDataPrisma,
     });
 
     return this.mapToUserResponse(updatedUser);
@@ -172,9 +169,10 @@ export class AuthService {
   private mapToUserResponse(user: User): UserResponseDto {
     return {
       id: user.id,
-      email: user.email || '',
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
+      email: user.email ?? '',
+      firstName: user.firstName ?? '',
+      lastName: user.lastName ?? '',
+      phone: user.phone ?? 0,
       role: user.role,
       status: user.status,
       createdAt: user.createdAt,

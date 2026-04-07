@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router'
-import { Menu, X, Smile, User, LogIn } from 'lucide-react'
+import { Menu, X, Smile, User, LogIn, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { NAV_ITEMS, SMILE_COUNT } from '@/lib/constants'
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -118,12 +119,27 @@ export function Header() {
           ))}
           <div className="mt-2 px-4 space-y-2">
             {isAuthenticated ? (
-              <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                <Button variant="secondary" size="md" className="w-full">
-                  <User className="size-4" />
-                  Mi cuenta
+              <>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                  <Button variant="secondary" size="md" className="w-full">
+                    <User className="size-4" />
+                    Mi cuenta
+                  </Button>
+                </Link>
+                <Button 
+                  variant="outline-primary" 
+                  size="md" 
+                  className="w-full"
+                  onClick={() => {
+                    logout()
+                    setMobileOpen(false)
+                    navigate('/')
+                  }}
+                >
+                  <LogOut className="size-4" />
+                  Cerrar sesión
                 </Button>
-              </Link>
+              </>
             ) : (
               <Link to="/login" onClick={() => setMobileOpen(false)}>
                 <Button variant="primary" size="md" className="w-full">

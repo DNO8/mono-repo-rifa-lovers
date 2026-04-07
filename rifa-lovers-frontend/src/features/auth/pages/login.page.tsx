@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') ?? '/dashboard'
 
-  const { login, isLoading, error, clearError } = useAuthStore()
+  const { login, isLoading, clearError } = useAuthStore()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -39,12 +39,6 @@ export default function LoginPage() {
             Ingresa tus datos para continuar participando
           </p>
         </div>
-
-        {error && (
-          <div className="bg-error/10 text-error rounded-lg px-4 py-3 text-sm font-medium mb-6">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

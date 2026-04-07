@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'react-toastify'
 import { Send } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,8 +20,9 @@ export function ContactForm() {
         email: formData.get('email'),
         message: formData.get('message'),
       })
-    } catch {
-      console.warn('[contact] Backend unavailable, simulating success')
+      toast.success('¡Mensaje enviado! Te responderemos pronto.')
+    } catch (err: any) {
+      toast.error(err.message || 'Error al enviar el mensaje. Intenta más tarde.')
     } finally {
       setIsLoading(false)
       setSubmitted(true)

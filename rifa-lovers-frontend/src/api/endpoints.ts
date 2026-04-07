@@ -5,8 +5,16 @@ export const ENDPOINTS = {
     logout: '/auth/logout',
     me: '/auth/me',
   },
+  purchases: {
+    my: '/purchases/my',
+  },
+  luckyPasses: {
+    my: '/lucky-passes/my',
+    mySummary: '/lucky-passes/my/summary',
+  },
   raffles: {
     active: '/raffles/active',
+    activeProgress: '/raffles/active/progress',
     detail: (id: string) => `/raffles/${id}`,
   },
   checkout: {

@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
-import { SupabaseService } from '../../config/supabase.service';
+import { SupabaseService } from '../../../config/supabase.service';
 import { AuthService } from '../auth.service';
 import { User } from '@prisma/client';
 

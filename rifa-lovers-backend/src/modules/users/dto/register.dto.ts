@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsNumberString, MinLength, MaxLength, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'El email debe ser válido' })
@@ -10,6 +11,12 @@ export class RegisterDto {
   @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   @MaxLength(100, { message: 'La contraseña no puede exceder 100 caracteres' })
   password: string;
+
+  @IsNumberString({}, { message: 'El teléfono debe contener solo números, sin el signo +' })
+  @Matches(/^[0-9]+$/, { message: 'El teléfono solo puede contener dígitos del 0-9, no se permite el signo +' })
+  @Transform(({ value }) => value?.toString().replace(/[^0-9]/g, ''))
+  @IsNotEmpty({ message: 'El teléfono es requerido' })
+  phone: string;
 
   @IsString({ message: 'El nombre debe ser un string' })
   @IsNotEmpty({ message: 'El nombre es requerido' })

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { toast } from 'react-toastify'
 import { ArrowLeft, CreditCard, CheckCircle, Shuffle, Hash } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,36 +18,27 @@ export default function CheckoutPage() {
   const bonusTickets = 0
 
   const [selectedNumber, setSelectedNumber] = useState<number | ''>('')
-  const [numberError, setNumberError] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
-  const [error, setError] = useState('')
 
   const generateRandom = () => {
     const num = Math.floor(Math.random() * TOTAL_AVAILABLE) + 1
     setSelectedNumber(num)
-    setNumberError('')
   }
 
   const handleNumberChange = (value: string) => {
-    setNumberError('')
     if (value === '') { setSelectedNumber(''); return }
     const num = parseInt(value, 10)
     if (isNaN(num)) return
     if (num < 1 || num > TOTAL_AVAILABLE) {
-      setNumberError(`Elige un número entre 1 y ${TOTAL_AVAILABLE.toLocaleString('es-CL')}`)
+      toast.error(`Elige un número entre 1 y ${TOTAL_AVAILABLE.toLocaleString('es-CL')}`)
       return
     }
     setSelectedNumber(num)
   }
 
   const handleConfirm = async () => {
-    if (!selectedNumber) {
-      setNumberError('Debes elegir un número para tu LuckyPass')
-      return
-    }
     setIsProcessing(true)
-    setError('')
     try {
       await apiClient.post(ENDPOINTS.checkout.createOrder, {
         raffleId: ACTIVE_RAFFLE.id,
@@ -54,10 +46,9 @@ export default function CheckoutPage() {
         selectedNumber,
       })
       setIsComplete(true)
-    } catch {
-      console.warn('[checkout] Backend unavailable, simulating success')
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      setIsComplete(true)
+      toast.success('¡Compra exitosa!')
+    } catch (err: any) {
+      toast.error(err.message || 'Error al procesar la compra')
     } finally {
       setIsProcessing(false)
     }
@@ -118,12 +109,6 @@ export default function CheckoutPage() {
           Revisa tu orden y confirma tu participación
         </p>
 
-        {error && (
-          <div className="bg-error/10 text-error rounded-lg px-4 py-3 text-sm font-medium mb-6">
-            {error}
-          </div>
-        )}
-
         <div className="space-y-6">
           <OrderSummary
             raffle={ACTIVE_RAFFLE}
@@ -160,11 +145,7 @@ export default function CheckoutPage() {
               </Button>
             </div>
 
-            {numberError && (
-              <p className="text-xs text-error font-medium mt-2">{numberError}</p>
-            )}
-
-            {selectedNumber && !numberError && (
+            {selectedNumber && (
               <p className="text-xs text-success font-medium mt-2">
                 Número seleccionado: #{String(selectedNumber).padStart(5, '0')}
               </p>

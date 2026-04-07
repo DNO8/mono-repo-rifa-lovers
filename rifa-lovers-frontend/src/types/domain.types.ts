@@ -1,15 +1,43 @@
+export interface LuckyPass {
+  id: string
+  ticketNumber: number
+  status: 'pending' | 'confirmed' | 'winner' | 'cancelled'
+  isWinner: boolean
+  raffleId: string
+  raffleName: string
+  createdAt: string
+}
+
+export interface LuckyPassSummary {
+  total: number
+  active: number
+  used: number
+  winners: number
+}
+
+export interface Purchase {
+  id: string
+  raffleId: string
+  raffleName: string
+  totalAmount: number
+  status: 'pending' | 'paid' | 'failed' | 'refunded'
+  createdAt: string
+}
+
+export interface RaffleProgress {
+  raffleId: string
+  packsSold: number
+  revenueTotal: number
+  percentageToGoal: number
+}
+
 export interface Raffle {
   id: string
-  name: string
-  description: string
-  prize: string
-  prizeImage: string
-  ticketPrice: number
-  totalTickets: number
-  soldCount: number
-  progress: number
-  drawDate: string
-  isActive: boolean
+  title: string | null
+  description: string | null
+  goalPacks: number
+  status: 'draft' | 'active' | 'sold_out' | 'completed' | 'drawn'
+  createdAt: string
 }
 
 export interface Milestone {
@@ -99,11 +127,13 @@ export interface LiveActivity {
 
 export interface User {
   id: string
-  name: string
-  lastName: string
-  phone: string
   email: string
-  avatar?: string
+  firstName: string | null
+  lastName: string | null
+  phone: string
+  role: 'customer' | 'admin' | 'operator'
+  status: 'active' | 'blocked'
+  createdAt: string
 }
 
 export interface Order {

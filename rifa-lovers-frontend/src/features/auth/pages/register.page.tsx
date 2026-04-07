@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { toast } from 'react-toastify'
 import { UserPlus, Eye, EyeOff } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,7 +8,7 @@ import { useAuthStore } from '@/stores/auth.store'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const { register, isLoading, error, clearError } = useAuthStore()
+  const { register, isLoading, clearError } = useAuthStore()
 
   const [name, setName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -16,29 +17,29 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [localError, setLocalError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     clearError()
-    setLocalError('')
 
     if (password !== confirmPassword) {
-      setLocalError('Las contraseñas no coinciden')
+      toast.error('Las contraseñas no coinciden')
       return
     }
 
     if (password.length < 6) {
-      setLocalError('La contraseña debe tener al menos 6 caracteres')
+      toast.error('La contraseña debe tener al menos 6 caracteres')
       return
     }
 
-    await register(name, lastName, email, password, phone)
-    const { isAuthenticated } = useAuthStore.getState()
-    if (isAuthenticated) navigate('/dashboard')
+    try {
+      await register(name, lastName, phone, email, password)
+      const { isAuthenticated } = useAuthStore.getState()
+      if (isAuthenticated) navigate('/dashboard')
+    } catch {
+      // Error ya mostrado por auth store
+    }
   }
-
-  const displayError = localError || error
 
   return (
     <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
@@ -55,12 +56,6 @@ export default function RegisterPage() {
             Únete y empieza a participar con impacto real
           </p>
         </div>
-
-        {displayError && (
-          <div className="bg-error/10 text-error rounded-lg px-4 py-3 text-sm font-medium mb-6">
-            {displayError}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -116,10 +111,11 @@ export default function RegisterPage() {
               type="tel"
               required
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Tu teléfono"
+              onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="56912345678 (sin el +)"
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />
+            <p className="text-xs text-text-tertiary mt-1">Solo números, sin el signo +</p>
           </div>
 
           <div>

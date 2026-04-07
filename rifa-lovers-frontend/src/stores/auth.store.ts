@@ -30,7 +30,7 @@ export const useAuthStore = create<AuthState>()(
       set({ isLoading: true, error: null })
       try {
         const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.login, { email, password })
-        set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false })
+        set({ user: data.user, token: data.accessToken, isAuthenticated: true, isLoading: false })
         toast.success('¡Bienvenido de vuelta!')
       } catch (err: any) {
         const message = err.message || 'Error al iniciar sesión'
@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
       set({ isLoading: true, error: null })
       try {
         const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password })
-        set({ user: data.user, token: data.token, isAuthenticated: true, isLoading: false })
+        set({ user: data.user, token: data.accessToken, isAuthenticated: true, isLoading: false })
         toast.success('¡Registro exitoso! Bienvenido a RifaLovers')
       } catch (err: any) {
         const message = err.message || 'Error al registrarse'

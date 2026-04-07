@@ -161,7 +161,7 @@ export interface CheckoutPayload {
 
 export interface AuthResponse {
   user: User
-  token: string
+  accessToken: string
 }
 
 export interface Hotspot {

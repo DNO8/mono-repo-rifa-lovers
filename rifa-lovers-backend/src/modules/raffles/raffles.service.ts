@@ -26,7 +26,7 @@ export class RafflesService {
     }
   }
 
-  async getActiveProgress(): Promise<RaffleProgressDto | null> {
+  async getActiveProgress(): Promise<RaffleProgressDto> {
     const raffle = await this.prisma.raffle.findFirst({
       where: { status: 'active' },
       include: {
@@ -34,15 +34,22 @@ export class RafflesService {
       },
     })
 
-    if (!raffle || !raffle.progress) return null
+    if (!raffle) {
+      return {
+        raffleId: '',
+        packsSold: 0,
+        revenueTotal: 0,
+        percentageToGoal: 0,
+      }
+    }
 
     const progress = raffle.progress
 
     return {
       raffleId: raffle.id,
-      packsSold: progress.packsSold,
-      revenueTotal: progress.revenueTotal ? progress.revenueTotal.toNumber() : 0,
-      percentageToGoal: progress.percentageToGoal ? progress.percentageToGoal.toNumber() : 0,
+      packsSold: progress?.packsSold ?? 0,
+      revenueTotal: progress?.revenueTotal?.toNumber() ?? 0,
+      percentageToGoal: progress?.percentageToGoal?.toNumber() ?? 0,
     }
   }
 }

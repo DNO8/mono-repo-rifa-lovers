@@ -10,10 +10,15 @@ type TokenProvider = () => string | null
 const defaultTokenProvider: TokenProvider = () => {
   try {
     const raw = localStorage.getItem('auth-storage')
+    console.log('[AuthDecorator] localStorage raw:', raw)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    return (parsed?.state?.token as string) ?? null
-  } catch {
+    console.log('[AuthDecorator] parsed:', parsed)
+    const token = parsed?.state?.token ?? null
+    console.log('[AuthDecorator] extracted token:', token ? token.substring(0, 20) + '...' : null)
+    return token
+  } catch (e) {
+    console.error('[AuthDecorator] Error reading token:', e)
     return null
   }
 }

@@ -13,7 +13,7 @@ export function DashboardGreetingSection({ user, totalTickets, points }: Dashboa
     <section className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">
-          Hola, {user.name} <span className="inline-block">👋</span>
+          Hola, {user.firstName || 'Usuario'} <span className="inline-block">👋</span>
         </h1>
         <p className="text-sm text-text-secondary mt-1">
           Aquí tienes un resumen de tus oportunidades hoy.

@@ -112,6 +112,7 @@ export default function RegisterPage() {
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+              maxLength={11}
               placeholder="56912345678 (sin el +)"
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />

@@ -5,17 +5,22 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["public"]
 }
 
 enum UserRole {
   admin
   operator
   customer
+  @@map("user_role")
+  @@schema("public")
 }
 
 enum UserStatus {
   active
   blocked
+  @@map("user_status")
+  @@schema("public")
 }
 
 enum RaffleStatus {
@@ -26,6 +31,7 @@ enum RaffleStatus {
   drawn
 
   @@map("raffle_status")
+  @@schema("public")
 }
 
 enum PurchaseStatus {
@@ -33,6 +39,9 @@ enum PurchaseStatus {
   paid
   failed
   refunded
+
+  @@map("purchase_status")
+  @@schema("public")
 }
 
 enum PaymentStatus {
@@ -40,11 +49,16 @@ enum PaymentStatus {
   pending
   approved
   rejected
+
+  @@map("payment_status")
+  @@schema("public")
 }
 
 enum PrizeType {
   milestone
   flash
+
+  @@schema("public")
 }
 
 enum LuckyPassStatus {
@@ -54,6 +68,7 @@ enum LuckyPassStatus {
   cancelled
 
   @@map("lucky_pass_status")
+  @@schema("public")
 }
 
 model Organization {
@@ -67,6 +82,7 @@ model Organization {
   raffles Raffle[]
 
   @@map("organizations")
+  @@schema("public")
 }
 
 model User {
@@ -88,6 +104,7 @@ model User {
   prizeWinners PrizeWinner[]
 
   @@map("users")
+  @@schema("public")
 }
 
 model Raffle {
@@ -111,6 +128,7 @@ model Raffle {
   progress     RaffleProgress?
 
   @@map("raffles")
+  @@schema("public")
 }
 
 model Pack {
@@ -125,6 +143,7 @@ model Pack {
   userPacks UserPack[]
 
   @@map("packs")
+  @@schema("public")
 }
 
 model Purchase {
@@ -142,6 +161,7 @@ model Purchase {
   paymentTransactions PaymentTransaction[]
 
   @@map("purchases")
+  @@schema("public")
 }
 
 model UserPack {
@@ -161,6 +181,7 @@ model UserPack {
   luckyPasses LuckyPass[]
 
   @@map("user_packs")
+  @@schema("public")
 }
 
 model LuckyPass {
@@ -181,6 +202,7 @@ model LuckyPass {
   @@index([raffleId], map: "idx_lucky_raffle")
   @@index([userId], map: "idx_lucky_user")
   @@map("lucky_passes")
+  @@schema("public")
 }
 
 model Milestone {
@@ -197,6 +219,7 @@ model Milestone {
   prizes Prize[]
 
   @@map("milestones")
+  @@schema("public")
 }
 
 model Prize {
@@ -215,6 +238,7 @@ model Prize {
   prizeWinners PrizeWinner[]
 
   @@map("prizes")
+  @@schema("public")
 }
 
 model PrizeWinner {
@@ -230,6 +254,7 @@ model PrizeWinner {
 
   @@unique([luckyPassId], map: "unique_lucky_pass_winner")
   @@map("prize_winners")
+  @@schema("public")
 }
 
 model RaffleProgress {
@@ -243,6 +268,7 @@ model RaffleProgress {
   raffle Raffle @relation(fields: [raffleId], references: [id])
 
   @@map("raffle_progress")
+  @@schema("public")
 }
 
 model PaymentTransaction {
@@ -257,4 +283,5 @@ model PaymentTransaction {
   purchase Purchase? @relation(fields: [purchaseId], references: [id])
 
   @@map("payment_transactions")
+  @@schema("public")
 }

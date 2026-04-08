@@ -1,3 +1,19 @@
+export class PrizeDto {
+  id: string
+  name: string | null
+  description: string | null
+  type: string
+}
+
+export class MilestoneDto {
+  id: string
+  name: string | null
+  requiredPacks: number
+  sortOrder: number
+  isUnlocked: boolean
+  prizes: PrizeDto[]
+}
+
 export class RaffleResponseDto {
   id: string
   title: string | null
@@ -5,6 +21,7 @@ export class RaffleResponseDto {
   goalPacks: number
   status: string
   createdAt: string
+  milestones?: MilestoneDto[]
 }
 
 export class RaffleProgressDto {

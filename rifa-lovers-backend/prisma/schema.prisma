@@ -58,6 +58,7 @@ enum PrizeType {
   milestone
   flash
 
+  @@map("prize_type")
   @@schema("public")
 }
 

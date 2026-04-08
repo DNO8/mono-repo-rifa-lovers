@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common'
 import { RafflesController } from './raffles.controller'
 import { RafflesService } from './raffles.service'
+import { RafflesRepository } from './raffles.repository'
 
 @Module({
   controllers: [RafflesController],
-  providers: [RafflesService],
-  exports: [RafflesService],
+  providers: [RafflesService, RafflesRepository],
+  exports: [RafflesService, RafflesRepository],
 })
 export class RafflesModule {}

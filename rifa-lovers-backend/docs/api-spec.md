@@ -2,11 +2,12 @@
 
 Especificación de la API REST del backend.
 
-Base URL:
+Base URL: `/api/v1`
 
-
-/api/v1
-
+Leyenda:
+- ✅ Implementado
+- ⚠️ Placeholder (existe pero incompleto)
+- 🚧 Pendiente de implementación
 
 ---
 
@@ -14,212 +15,615 @@ Base URL:
 
 ---
 
-## POST /auth/register
+## ✅ POST /auth/register
 
-Registrar usuario.
+Registrar usuario nuevo. Crea cuenta en Supabase Auth y en la tabla `users`.
 
 ### Request
 
 ```json
 {
   "email": "user@email.com",
-  "password": "123456"
+  "password": "12345678",
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "phone": "56912345678"
 }
-Response
+```
+
+### Response `201`
+
+```json
 {
-  "user_id": "uuid",
-  "token": "jwt"
+  "user": {
+    "id": "uuid",
+    "email": "user@email.com",
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "phone": 56912345678,
+    "role": "customer",
+    "status": "active",
+    "createdAt": "timestamp"
+  },
+  "accessToken": "jwt",
+  "refreshToken": "jwt"
 }
-POST /auth/login
+```
+
+---
+
+## ✅ POST /auth/login
 
 Login de usuario.
 
-Request
+### Request
+
+```json
 {
   "email": "user@email.com",
-  "password": "123456"
+  "password": "12345678"
 }
-Response
+```
+
+### Response `200`
+
+```json
 {
-  "token": "jwt"
+  "user": {
+    "id": "uuid",
+    "email": "user@email.com",
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "phone": 56912345678,
+    "role": "customer",
+    "status": "active",
+    "createdAt": "timestamp"
+  },
+  "accessToken": "jwt",
+  "refreshToken": "jwt"
 }
-👤 Users
-GET /users/me
+```
+
+---
+
+## ✅ POST /auth/refresh
+
+Renueva el accessToken usando el refreshToken.
+
+### Request
+
+```json
+{
+  "refreshToken": "jwt"
+}
+```
+
+### Response `200`
+
+```json
+{
+  "accessToken": "jwt"
+}
+```
+
+---
+
+# 👤 Users
+
+---
+
+## ✅ GET /users/me
 
 Obtiene el perfil del usuario autenticado.
 
-Response
+**Auth:** JWT requerido
+
+### Response `200`
+
+```json
 {
   "id": "uuid",
   "email": "user@email.com",
-  "created_at": "timestamp"
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "phone": 56912345678,
+  "role": "customer",
+  "status": "active",
+  "createdAt": "timestamp"
 }
-🎲 Raffles
-GET /raffles
+```
 
-Lista rifas activas.
+---
 
-Response
-[
-  {
-    "id": "uuid",
-    "title": "Macbook Raffle",
-    "ticket_price": 5000,
-    "total_tickets": 10000,
-    "sold_tickets": 3250,
-    "status": "ACTIVE",
-    "draw_date": "timestamp"
-  }
-]
-GET /raffles/:id
+## ✅ PATCH /users/me
 
-Obtiene detalle de una rifa.
+Actualizar perfil del usuario autenticado.
 
-Response
+**Auth:** JWT requerido
+
+### Request
+
+```json
+{
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "phone": "56912345678"
+}
+```
+
+### Response `200`
+
+```json
 {
   "id": "uuid",
-  "title": "Macbook Raffle",
-  "description": "...",
-  "ticket_price": 5000,
-  "total_tickets": 10000,
-  "sold_tickets": 3250,
-  "status": "ACTIVE",
-  "draw_date": "timestamp"
+  "email": "user@email.com",
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "phone": 56912345678,
+  "role": "customer",
+  "status": "active",
+  "createdAt": "timestamp"
 }
-GET /raffles/:id/prizes
+```
 
-Lista premios de la rifa.
+---
 
-Response
+## ✅ GET /users
+
+Lista todos los usuarios.
+
+**Auth:** JWT + rol `admin` o `operator`
+
+### Query params
+
+```
+?skip=0&take=20
+```
+
+### Response `200`
+
+```json
 [
   {
     "id": "uuid",
-    "name": "Macbook",
-    "position": 1,
-    "unlocked_at_tickets": 8000
+    "email": "user@email.com",
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "role": "customer",
+    "status": "active"
   }
 ]
-🎟 Tickets
-GET /raffles/:id/tickets
+```
 
-Obtiene estado de tickets.
+---
 
-Query
-?status=AVAILABLE
-Response
+## ✅ GET /users/:id
+
+Obtiene un usuario por id.
+
+**Auth:** JWT + rol `admin` o `operator`
+
+---
+
+# 🎲 Raffles
+
+---
+
+## ✅ GET /raffles/active
+
+Obtiene la rifa actualmente activa.
+
+### Response `200`
+
+```json
+{
+  "id": "uuid",
+  "title": "Rifa Macbook Pro",
+  "description": "...",
+  "goalPacks": 5000,
+  "status": "active",
+  "createdAt": "timestamp"
+}
+```
+
+---
+
+## ✅ GET /raffles/active/progress
+
+Progreso actual de la rifa activa.
+
+### Response `200`
+
+```json
+{
+  "raffleId": "uuid",
+  "packsSold": 1250,
+  "revenueTotal": 6250000,
+  "percentageToGoal": 25.0
+}
+```
+
+---
+
+## 🚧 GET /raffles/active/prizes
+
+Lista de premios de la rifa activa con su estado de desbloqueo.
+
+### Response `200` (esperado)
+
+```json
 [
   {
     "id": "uuid",
-    "number": 345,
-    "status": "AVAILABLE"
+    "name": "Macbook Pro",
+    "type": "milestone",
+    "description": "...",
+    "valueEstimated": 1500000,
+    "quantity": 1,
+    "milestone": {
+      "id": "uuid",
+      "name": "Meta 100%",
+      "requiredPacks": 5000,
+      "isUnlocked": false
+    }
   }
 ]
-🧾 Purchases
-POST /purchases
+```
+
+---
+
+## 🚧 GET /raffles/active/milestones
+
+Lista de milestones de la rifa activa con su estado.
+
+### Response `200` (esperado)
+
+```json
+[
+  {
+    "id": "uuid",
+    "name": "Meta 50%",
+    "requiredPacks": 2500,
+    "sortOrder": 1,
+    "isUnlocked": true,
+    "unlockedAt": "timestamp"
+  }
+]
+```
+
+---
+
+# 📦 Packs
+
+---
+
+## 🚧 GET /packs
+
+Lista los packs disponibles para comprar.
+
+### Response `200` (esperado)
+
+```json
+[
+  {
+    "id": "uuid",
+    "name": "Pack Básico",
+    "price": 5000,
+    "luckyPassQuantity": 1,
+    "isFeatured": false,
+    "isPreSale": false
+  },
+  {
+    "id": "uuid",
+    "name": "Pack x5",
+    "price": 20000,
+    "luckyPassQuantity": 5,
+    "isFeatured": true,
+    "isPreSale": false
+  }
+]
+```
+
+---
+
+# 🧾 Purchases
+
+---
+
+## ✅ GET /purchases/my
+
+Historial de compras del usuario autenticado.
+
+**Auth:** JWT requerido
+
+### Response `200`
+
+```json
+[
+  {
+    "id": "uuid",
+    "raffleId": "uuid",
+    "raffleName": "Rifa Macbook Pro",
+    "totalAmount": 20000,
+    "status": "paid",
+    "createdAt": "timestamp"
+  }
+]
+```
+
+---
+
+## ⚠️ POST /purchases
 
 Crear orden de compra.
 
-Request
-{
-  "raffle_id": "uuid",
-  "ticket_numbers": [123,456,789]
-}
-Response
-{
-  "purchase_id": "uuid",
-  "status": "PENDING",
-  "total_amount": 15000
-}
-GET /purchases/:id
+**Auth:** JWT requerido
 
-Detalle de compra.
+> ⚠️ Actualmente es un placeholder. El flujo real (validar rifa, crear UserPack, iniciar pago) está pendiente de implementación.
 
-Response
+### Request (implementación final esperada)
+
+```json
+{
+  "raffleId": "uuid",
+  "packId": "uuid",
+  "quantity": 2
+}
+```
+
+### Response `201`
+
+```json
 {
   "id": "uuid",
-  "raffle_id": "uuid",
-  "status": "PAID",
-  "total_amount": 15000,
-  "tickets": [123,456,789]
+  "raffleId": "uuid",
+  "raffleName": "Rifa Macbook Pro",
+  "totalAmount": 40000,
+  "status": "pending",
+  "createdAt": "timestamp"
 }
-💳 Payments
-POST /payments/create
+```
 
-Crea orden en Flow.
+---
 
-Request
+## 🚧 GET /purchases/:id
+
+Detalle de una compra específica.
+
+### Response `200` (esperado)
+
+```json
 {
-  "purchase_id": "uuid"
+  "id": "uuid",
+  "raffleId": "uuid",
+  "raffleName": "Rifa Macbook Pro",
+  "totalAmount": 40000,
+  "status": "paid",
+  "paidAt": "timestamp",
+  "createdAt": "timestamp",
+  "luckyPasses": [
+    { "id": "uuid", "ticketNumber": 4521 },
+    { "id": "uuid", "ticketNumber": 4522 }
+  ]
 }
-Response
-{
-  "flow_token": "string",
-  "payment_url": "https://flow.cl/payment"
-}
-POST /payments/webhook
+```
 
-Webhook de Flow.
+---
 
-Request
-{
-  "flowOrder": "123456",
-  "status": "PAID"
-}
-Acción
-1 validar firma
-2 actualizar payment
-3 actualizar purchase
-4 asignar tickets
-🏆 Winners
-GET /raffles/:id/winners
+# 🎟 LuckyPass
 
-Obtiene ganadores de una rifa.
+---
 
-Response
+## ✅ GET /lucky-passes/my
+
+Lista los LuckyPasses del usuario autenticado.
+
+**Auth:** JWT requerido
+
+### Response `200`
+
+```json
 [
   {
-    "ticket_number": 345,
-    "prize": "Macbook"
+    "id": "uuid",
+    "ticketNumber": 4521,
+    "status": "active",
+    "isWinner": false,
+    "raffleId": "uuid",
+    "raffleName": "Rifa Macbook Pro",
+    "createdAt": "timestamp"
   }
 ]
-🎲 Sorteo (Admin)
-POST /raffles/:id/draw
+```
 
-Ejecuta sorteo.
+---
 
-Response
+## ✅ GET /lucky-passes/my/summary
+
+Resumen de LuckyPasses del usuario.
+
+**Auth:** JWT requerido
+
+### Response `200`
+
+```json
+{
+  "total": 10,
+  "active": 8,
+  "used": 1,
+  "winners": 1
+}
+```
+
+---
+
+# 💳 Payments
+
+---
+
+## 🚧 POST /payments/create
+
+Crea orden de pago en la pasarela para una purchase existente.
+
+**Auth:** JWT requerido
+
+### Request
+
+```json
+{
+  "purchaseId": "uuid"
+}
+```
+
+### Response `201` (esperado)
+
+```json
+{
+  "paymentUrl": "https://flow.cl/payment/xxx",
+  "providerTransactionId": "string"
+}
+```
+
+---
+
+## 🚧 POST /payments/webhook
+
+Webhook de confirmación de pago. Recibe notificación de la pasarela.
+
+> No requiere JWT — autenticado por firma de la pasarela.
+
+### Acciones al recibir confirmación aprobada
+
+1. Validar firma del proveedor
+2. Verificar estado en API del proveedor
+3. Actualizar `PaymentTransaction.status → 'approved'`
+4. Actualizar `Purchase.status → 'paid'`
+5. Generar LuckyPasses para cada UserPack de la compra
+6. Actualizar `raffle_progress`
+
+---
+
+# 🏆 Winners
+
+---
+
+## 🚧 GET /raffles/active/winners
+
+Obtiene los ganadores de la rifa después del sorteo.
+
+### Response `200` (esperado)
+
+```json
+[
+  {
+    "prizeId": "uuid",
+    "prizeName": "Macbook Pro",
+    "ticketNumber": 4521,
+    "userId": "uuid"
+  }
+]
+```
+
+---
+
+# 🎲 Sorteo (Admin)
+
+---
+
+## 🚧 POST /admin/raffles/:id/draw
+
+Ejecuta el sorteo de una rifa.
+
+**Auth:** JWT + rol `admin`
+
+**Requiere:** `raffle.status = 'closed'`
+
+### Response `200` (esperado)
+
+```json
 {
   "winners": [
     {
-      "ticket_number": 345,
-      "prize": "Macbook"
+      "prizeId": "uuid",
+      "prizeName": "Macbook Pro",
+      "ticketNumber": 4521,
+      "userId": "uuid"
     }
   ]
 }
-📊 KPIs
-GET /admin/kpis
-Response
+```
+
+---
+
+# 📊 Admin / KPIs
+
+---
+
+## 🚧 GET /admin/kpis
+
+Métricas globales del sistema.
+
+**Auth:** JWT + rol `admin`
+
+### Response `200` (esperado)
+
+```json
 {
-  "total_sales": 15000000,
-  "tickets_sold": 4500,
-  "active_users": 230,
-  "raffles_active": 2
+  "totalSales": 15000000,
+  "packsSold": 4500,
+  "activeUsers": 230,
+  "activeRaffles": 1
 }
-⚠️ Códigos de Error
-Código	Significado
-400	Bad Request
-401	Unauthorized
-404	Not Found
-409	Conflict
-500	Server Error
-🔒 Seguridad
-JWT obligatorio
-Rate limiting
-Validación DTO
-Webhook verification
-🚀 Versionado
-/api/v1
+```
 
-Futuro:
+---
 
-/api/v2
+## 🚧 POST /admin/raffles
+
+Crear una nueva rifa.
+
+**Auth:** JWT + rol `admin`
+
+---
+
+## 🚧 PATCH /admin/raffles/:id/status
+
+Cambiar el estado de una rifa.
+
+**Auth:** JWT + rol `admin`
+
+### Request
+
+```json
+{
+  "status": "active"
+}
+```
+
+---
+
+# ⚠️ Códigos de Error
+
+| Código | Significado |
+|--------|-------------|
+| 400 | Bad Request — validación fallida |
+| 401 | Unauthorized — JWT inválido o ausente |
+| 403 | Forbidden — rol insuficiente |
+| 404 | Not Found |
+| 409 | Conflict — recurso duplicado |
+| 500 | Server Error |
+
+---
+
+# 🔒 Seguridad
+
+- JWT obligatorio en endpoints autenticados
+- `RolesGuard` para endpoints de Admin/Operator
+- Validación de DTOs con `class-validator`
+- Verificación de firma en webhooks de pago
+
+---
+
+# 🚀 Versionado
+
+Versión actual: `/api/v1`

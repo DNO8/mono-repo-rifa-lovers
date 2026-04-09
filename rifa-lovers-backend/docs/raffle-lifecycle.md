@@ -12,14 +12,14 @@ Tipo:
 raffle_status (ENUM)
 
 
-Estados definidos en el modelo de datos:
+Estados definidos en el modelo de datos (valores en minúsculas en la BD):
 
 
-DRAFT
-ACTIVE
-SOLD_OUT
-CLOSED
-DRAWN
+draft
+active
+sold_out
+closed
+drawn
 
 
 El backend debe respetar estas transiciones para mantener consistencia en el sistema.
@@ -29,77 +29,75 @@ El backend debe respetar estas transiciones para mantener consistencia en el sis
 # 🧩 Estados de una Rifa
 
 | Estado | Descripción |
-|------|------|
-| DRAFT | La rifa está configurándose pero aún no está publicada |
-| ACTIVE | La rifa está vendiendo tickets |
-| SOLD_OUT | Todos los tickets fueron vendidos |
-| CLOSED | La venta terminó y la rifa está lista para el sorteo |
-| DRAWN | El sorteo fue ejecutado y los ganadores fueron registrados |
+|--------|-------------|
+| `draft` | La rifa está configurándose pero aún no está publicada |
+| `active` | La rifa está vendiendo packs |
+| `sold_out` | La meta de packs fue alcanzada (`packs_sold >= goal_packs`) |
+| `closed` | La venta terminó y la rifa está lista para el sorteo |
+| `drawn` | El sorteo fue ejecutado y los ganadores fueron registrados |
 
 ---
 
 # 🔄 Diagrama del Ciclo de Vida
 
 
-DRAFT
+draft
 │
 ▼
-ACTIVE
+active
 │
-├─────────────► SOLD_OUT
-│ │
-▼ ▼
-CLOSED
+├─────────────► sold_out
+│               │
+▼               ▼
+closed  ◄───────┘
 │
 ▼
-DRAWN
+drawn
 
 
 ---
 
-# 🧾 Estado: DRAFT
+# 🧾 Estado: `draft`
 
 La rifa existe pero aún **no está publicada**.
 
 
-status = DRAFT
+status = 'draft'
 
 
 ### Permitido
 
 - editar rifa
-- agregar premios
-- generar tickets
+- agregar premios y milestones
+- configurar packs
 
 ### No permitido
 
-- comprar tickets
-- reservar tickets
+- comprar packs
 - ejecutar sorteo
 
 ---
 
-# 🧾 Estado: ACTIVE
+# 🧾 Estado: `active`
 
-La rifa está abierta para compras.
+La rifa está abierta para compras de packs.
 
 
-status = ACTIVE
+status = 'active'
 
 
 ### Permitido
 
-- comprar tickets
-- reservar tickets
+- comprar packs
 - crear purchases
-- crear pagos
+- generar LuckyPasses (tras pago)
 
 ### Validación Backend
 
 Al crear purchase:
 
 
-raffle.status = ACTIVE
+raffle.status = 'active'
 
 
 Si no:
@@ -110,68 +108,67 @@ Si no:
 
 ---
 
-# 🧾 Estado: SOLD_OUT
+# 🧾 Estado: `sold_out`
 
-Todos los tickets fueron vendidos.
+La meta de packs fue alcanzada.
 
 
-sold_tickets = total_tickets
+raffle_progress.packs_sold >= raffle.goal_packs
 
 
 Entonces:
 
 
-status → SOLD_OUT
+status → 'sold_out'
 
 
 ### Permitido
 
-- consultar tickets
+- consultar packs y LuckyPasses
 - consultar compras
-- ejecutar sorteo posteriormente
+- transitar a `closed`
 
 ### No permitido
 
-- comprar tickets
-- reservar tickets
+- comprar packs
 
-Este estado permite **cerrar ventas automáticamente cuando no quedan tickets**.
+Este estado permite **cerrar ventas automáticamente cuando se alcanza la meta de packs**.
 
 ---
 
-# 🧾 Estado: CLOSED
+# 🧾 Estado: `closed`
 
-La rifa dejó de aceptar ventas.
+La rifa dejó de aceptar ventas. Está lista para el sorteo.
 
 Esto puede ocurrir cuando:
 
 
-draw_date <= NOW()
+raffle.end_date <= NOW()
 
 
 o cuando un administrador la cierra manualmente.
 
 
-status = CLOSED
+status = 'closed'
 
 
 ### Permitido
 
-- ejecutar sorteo
+- ejecutar sorteo (`POST /admin/raffles/:id/draw`)
 - consultar datos
 
 ### No permitido
 
-- comprar tickets
+- comprar packs
 
 ---
 
-# 🧾 Estado: DRAWN
+# 🧾 Estado: `drawn`
 
 El sorteo ya fue ejecutado.
 
 
-status = DRAWN
+status = 'drawn'
 
 
 Esto significa:
@@ -197,28 +194,28 @@ Esto significa:
 
 ---
 
-## Compra solo en ACTIVE
+## Compra solo en `active`
 
 Al crear purchase:
 
 
-raffle.status = ACTIVE
+raffle.status = 'active'
 
 
 ---
 
-## Transición automática a SOLD_OUT
+## Transición automática a `sold_out`
 
-Cuando:
+Cuando se actualiza `raffle_progress` al confirmar un pago:
 
 
-sold_tickets >= total_tickets
+raffle_progress.packs_sold >= raffle.goal_packs
 
 
 Entonces:
 
 
-status → SOLD_OUT
+raffle.status → 'sold_out'
 
 
 ---
@@ -228,8 +225,8 @@ status → SOLD_OUT
 Una rifa puede pasar a:
 
 
-ACTIVE → CLOSED
-SOLD_OUT → CLOSED
+active → closed
+sold_out → closed
 
 
 Esto ocurre cuando:
@@ -244,47 +241,47 @@ Esto ocurre cuando:
 El endpoint:
 
 
-POST /raffles/:id/draw
+POST /admin/raffles/:id/draw
 
 
 solo puede ejecutarse si:
 
 
-status = CLOSED
+status = 'closed'
 
 
 ---
 
 ## Después del sorteo
 
-Una vez generado el resultado:
+Una vez registrados todos los `prize_winners`:
 
 
-status → DRAWN
+status → 'drawn'
 
 
 ---
 
 # 🧠 Transiciones Permitidas
 
-| From | To |
-|----|----|
-DRAFT | ACTIVE
-ACTIVE | SOLD_OUT
-ACTIVE | CLOSED
-SOLD_OUT | CLOSED
-CLOSED | DRAWN
+| Desde | Hacia |
+|-------|-------|
+`draft` | `active`
+`active` | `sold_out`
+`active` | `closed`
+`sold_out` | `closed`
+`closed` | `drawn`
 
 ---
 
 # ❌ Transiciones Prohibidas
 
-| From | To |
-|----|----|
-ACTIVE | DRAFT
-SOLD_OUT | ACTIVE
-DRAWN | ACTIVE
-DRAWN | CLOSED
+| Desde | Hacia |
+|-------|-------|
+`active` | `draft`
+`sold_out` | `active`
+`drawn` | `active`
+`drawn` | `closed`
 
 ---
 
@@ -293,45 +290,44 @@ DRAWN | CLOSED
 Caso 1 — rifa normal
 
 
-DRAFT
-→ ACTIVE
-→ CLOSED
-→ DRAWN
+draft → active → closed → drawn
 
 
-Caso 2 — tickets agotados
+Caso 2 — meta de packs alcanzada
 
 
-DRAFT
-→ ACTIVE
-→ SOLD_OUT
-→ CLOSED
-→ DRAWN
+draft → active → sold_out → closed → drawn
 
 
 ---
 
 # ⚙ Automatizaciones recomendadas
 
-### Auto SOLD_OUT
+### Auto `sold_out`
 
-Cuando se venden todos los tickets:
+Cuando `raffle_progress` se actualiza al confirmar un pago:
+
+```sql
+UPDATE raffles r
+SET status = 'sold_out'
+FROM raffle_progress rp
+WHERE r.id = rp.raffle_id
+  AND rp.packs_sold >= r.goal_packs
+  AND r.status = 'active';
+```
+
+### Auto `closed` por fecha
 
 ```sql
 UPDATE raffles
-SET status = 'SOLD_OUT'
-WHERE sold_tickets >= total_tickets
-AND status = 'ACTIVE';
-Auto CLOSED por fecha
-UPDATE raffles
-SET status = 'CLOSED'
-WHERE status IN ('ACTIVE','SOLD_OUT')
-AND draw_date <= NOW();
+SET status = 'closed'
+WHERE status IN ('active', 'sold_out')
+  AND end_date <= NOW();
 🔒 Consistencia del sistema
 
-El estado DRAWN garantiza:
+El estado `drawn` garantiza:
 
-los winners ya fueron generados
+los `prize_winners` ya fueron generados
 
 Esto evita:
 

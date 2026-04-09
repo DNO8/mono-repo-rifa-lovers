@@ -1,190 +1,217 @@
-# 🎟 Ticket Allocation Strategy
+# � LuckyPass Allocation Strategy
 
-Este documento describe la estrategia para **reservar y asignar tickets** evitando:
+Este documento describe la estrategia para **generar y asignar LuckyPasses** evitando:
 
 - Race conditions
-- Double spending
+- Duplicados de `ticket_number`
 - Conflictos entre compras simultáneas
 
-El sistema puede manejar **miles de compras concurrentes** sin inconsistencias.
+El sistema puede manejar **múltiples compras concurrentes** sin inconsistencias.
 
 ---
 
-# 🎯 Problema
+# 🎯 Concepto clave
 
-Si dos usuarios intentan comprar el mismo número:
+En RifaLovers **no existen tickets pre-generados** ni selección manual de números.
 
+El flujo es:
 
-User A → compra ticket 123
-User B → compra ticket 123
+```
+Usuario compra un Pack
+↓
+Se crea un UserPack
+↓
+Al confirmar pago, se generan N LuckyPasses automáticamente
+(N = pack.lucky_pass_quantity × userPack.quantity)
+↓
+Cada LuckyPass recibe un ticket_number único dentro de la rifa
+```
 
-
-Ambos podrían verlo disponible si no hay control transaccional.
-
-Esto generaría:
-
-- tickets duplicados
-- compras inválidas
-- problemas legales en sorteos
-
-Por lo tanto necesitamos **control transaccional fuerte**.
-
----
-
-# 🧩 Estados del Ticket
-
-El ticket tiene un enum:
-
-
-AVAILABLE
-RESERVED
-SOLD
-
-
-Flujo normal:
-
-
-AVAILABLE → RESERVED → SOLD
-
+No hay concepto de "reservar un número". Los números se asignan al confirmar el pago.
 
 ---
 
-# 🔄 Flujo de Compra
+# 🧩 Estados del LuckyPass
 
-1️⃣ Usuario selecciona números
+```
+active    → participando en la rifa
+used      → rifa terminada, no ganó
+winner    → ganó un premio
+cancelled → compra cancelada o fallida
+```
 
-
-[123, 456, 789]
-
-
-2️⃣ Backend valida disponibilidad
-
-3️⃣ Se inicia transacción SQL
-
-4️⃣ Se reservan tickets
-
-5️⃣ Se crea purchase
-
-6️⃣ Se inicia pago Flow
-
-7️⃣ Si pago confirmado → tickets pasan a SOLD
+No hay estado RESERVED ni AVAILABLE.
 
 ---
 
-# 🧱 Reserva de Tickets (Paso Crítico)
+# 🔄 Flujo Completo de Compra
 
-Debe ejecutarse dentro de **una transacción**.
+### 1️⃣ Usuario envía solicitud de compra
 
-### Query
+```json
+POST /purchases
+{
+  "raffleId": "uuid",
+  "packId": "uuid",
+  "quantity": 2
+}
+```
+
+### 2️⃣ Backend valida rifa activa
+
+```
+raffle.status = 'active' ?
+  → continuar
+  → si no, 400 RAFFLE_NOT_ACTIVE
+```
+
+### 3️⃣ Transacción: crear Purchase + UserPack
+
+```typescript
+await prisma.$transaction(async (tx) => {
+  const purchase = await tx.purchase.create({
+    data: { userId, raffleId, totalAmount, status: 'pending' }
+  })
+  await tx.userPack.create({
+    data: { userId, raffleId, packId, purchaseId: purchase.id, quantity }
+  })
+  return purchase
+})
+```
+
+### 4️⃣ Crear orden de pago
+
+```
+POST /payments/create { purchaseId }
+→ PaymentTransaction.status = 'created'
+→ Retorna URL de pago al usuario
+```
+
+### 5️⃣ Usuario paga en la pasarela
+
+### 6️⃣ Webhook confirma el pago
+
+```
+POST /payments/webhook
+→ Validar firma
+→ PaymentTransaction.status → 'approved'
+→ Purchase.status → 'paid', paidAt = NOW()
+→ Generar LuckyPasses
+→ Actualizar raffle_progress
+```
+
+---
+
+# 🎫 Generación de LuckyPasses (Paso Crítico)
+
+Una vez confirmado el pago, se generan los LuckyPasses:
+
+```typescript
+const N = userPack.quantity * pack.luckyPassQuantity
+
+await prisma.$transaction(async (tx) => {
+  for (let i = 0; i < N; i++) {
+    const ticketNumber = await getNextTicketNumber(tx, raffleId)
+    await tx.luckyPass.create({
+      data: {
+        raffleId,
+        userId,
+        userPackId: userPack.id,
+        ticketNumber,
+        status: 'active',
+        isWinner: false,
+      }
+    })
+  }
+})
+```
+
+### Asignación de `ticket_number`
+
+Opciones válidas:
+
+**Opción A — Auto-incremental por rifa:**
 
 ```sql
-UPDATE tickets
-SET status = 'RESERVED'
-WHERE raffle_id = $1
-AND number = ANY($2)
-AND status = 'AVAILABLE'
-RETURNING id, number;
+SELECT COALESCE(MAX(ticket_number), 0) + 1
+FROM lucky_passes
+WHERE raffle_id = $1;
+```
 
-Si el número de filas retornadas no coincide con los tickets solicitados, la operación falla.
+**Opción B — Número aleatorio sin repetir:**
 
-🧪 Validación
+Generar un número aleatorio y verificar unicidad vía constraint.
 
-Ejemplo:
+En ambos casos, el constraint `UNIQUE(raffle_id, ticket_number)` en la tabla `lucky_passes` previene duplicados a nivel de base de datos.
 
-Usuario intenta comprar:
+---
 
-[100, 101, 102]
+# ⏱ Expiración de Purchases no pagadas
 
-Pero 101 ya fue reservado.
+Si el usuario no completa el pago en 30 minutos:
 
-Resultado:
+```sql
+UPDATE purchases
+SET status = 'failed'
+WHERE status = 'pending'
+  AND created_at < NOW() - INTERVAL '30 minutes';
+```
 
-RETURNING → 2 filas
+Esto se ejecuta con un cron job. No hay LuckyPasses que liberar porque se generan **después** del pago.
 
-Entonces:
+---
 
-ROLLBACK
+# ❌ Pago fallido
 
-y el backend responde:
+Si el webhook reporta rechazo:
 
-409 CONFLICT
-🧾 Creación de Purchase
+```
+PaymentTransaction.status → 'rejected'
+Purchase.status → 'failed'
+```
 
-Después de reservar tickets:
+No se generan LuckyPasses. No hay que revertir nada porque aún no se crearon.
 
-BEGIN
+---
 
-UPDATE tickets → RESERVED
+# 🔒 Índices Importantes
 
-INSERT purchase
+```sql
+CREATE INDEX idx_lucky_raffle ON lucky_passes(raffle_id);
+CREATE INDEX idx_lucky_user ON lucky_passes(user_id);
+```
 
-INSERT payment
+Ambos ya están definidos en `prisma/schema.prisma`.
 
-COMMIT
-⏱ Expiración de Reservas
+---
 
-Si el usuario no paga, los tickets deben liberarse.
+# 🧠 Reglas de Consistencia
 
-Ejemplo:
+1️⃣ Los LuckyPasses se generan **únicamente** tras pago confirmado.
 
-RESERVED > 15 minutos → AVAILABLE
+2️⃣ `(raffle_id, ticket_number)` debe ser único.
 
-Query de limpieza:
+3️⃣ Un LuckyPass `winner` no puede volver a `active`.
 
-UPDATE tickets
-SET status = 'AVAILABLE',
-purchase_id = NULL
-WHERE status = 'RESERVED'
-AND reserved_at < NOW() - interval '15 minutes';
+4️⃣ Solo LuckyPasses con `status = 'active'` participan en el sorteo.
 
-Esto puede ejecutarse con:
+5️⃣ La generación de LuckyPasses debe ejecutarse dentro de una transacción Prisma.
 
-cron job
-worker
-background task
-💰 Confirmación de Pago
+---
 
-Cuando Flow confirma:
-
-tickets.status = SOLD
-purchase.status = PAID
-
-Query:
-
-UPDATE tickets
-SET status = 'SOLD'
-WHERE purchase_id = $1;
-❌ Pago fallido
-
-Si el pago falla:
-
-purchase.status = FAILED
-tickets → AVAILABLE
-🔒 Índices Importantes
-CREATE INDEX idx_tickets_raffle_status
-ON tickets(raffle_id, status);
-CREATE INDEX idx_tickets_purchase
-ON tickets(purchase_id);
-🧠 Reglas de Consistencia
-
-1️⃣ Un ticket solo puede estar en un estado.
-
-2️⃣ Un ticket SOLD no puede volver a AVAILABLE.
-
-3️⃣ Un ticket RESERVED debe tener purchase_id.
-
-4️⃣ Solo tickets SOLD participan en sorteo.
-
-🚀 Escalabilidad
+# 🚀 Escalabilidad
 
 Este enfoque escala bien porque:
 
-usa operaciones por lote
-evita locks largos
-PostgreSQL maneja concurrencia
+- No pre-genera miles de tickets al crear una rifa
+- Solo crea los LuckyPasses necesarios al confirmar cada compra
+- PostgreSQL maneja concurrencia a nivel de constraint
+- Transacciones Prisma garantizan consistencia
 
 Soporta fácilmente:
 
-10k tickets
-1000 compras simultáneas
+```
+5000 packs × N lucky_pass_quantity
+→ generación incremental y eficiente
+```
 

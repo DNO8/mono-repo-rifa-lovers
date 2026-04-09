@@ -11,6 +11,23 @@ La estructura está optimizada para:
 
 ---
 
+# Estado de los módulos
+
+| Módulo | Estado | Tabla principal |
+|--------|--------|----------------|
+| `users/` | ✅ Implementado | `users` |
+| `raffles/` | ✅ Básico (solo lectura) | `raffles`, `raffle_progress` |
+| `lucky-pass/` | ✅ Básico (solo lectura) | `lucky_passes` |
+| `purchases/` | ⚠️ Placeholder | `purchases` |
+| `packs/` | ❌ Pendiente (carpeta no existe) | `packs` |
+| `payments/` | ❌ Pendiente (carpeta vacía) | `payment_transactions` |
+| `prizes/` | ❌ Pendiente (carpeta vacía) | `prizes`, `milestones` |
+| `winners/` | ❌ Pendiente (carpeta vacía) | `prize_winners` |
+| `admin/` | ❌ Pendiente (carpeta vacía) | múltiples |
+| `scripts/` | ❌ Pendiente (carpeta vacía) | — |
+
+---
+
 # Principios de arquitectura
 
 La arquitectura sigue estos principios:
@@ -21,12 +38,15 @@ Cada dominio de negocio es un **módulo independiente**.
 
 Ejemplo:
 
-- Users
+- Users (incluye Auth)
 - Raffles
-- Tickets
+- Packs
 - Purchases
 - Lucky Pass
+- Payments
 - Prizes
+- Draw / Winners
+- Admin
 
 Cada módulo contiene:
 
@@ -91,9 +111,7 @@ src/
 ├── app.module.ts
 │
 ├── config/
-│ ├── database.config.ts
-│ ├── supabase.config.ts
-│ └── env.config.ts
+│ └── supabase.service.ts    ← Supabase Auth client
 │
 ├── common/
 │ ├── guards/
@@ -104,115 +122,77 @@ src/
 │ └── constants/
 │
 ├── database/
-│ ├── database.module.ts
-│ └── supabase.service.ts
+│ └── database.module.ts
+│ └── prisma.service.ts
 │
 ├── modules/
 │
-│ ├── users/
+│ ├── users/                  ← ✅ Implementado
 │ │
 │ │ ├── users.module.ts
-│ │ ├── users.controller.ts
+│ │ ├── users.controller.ts   ← rutas /users
 │ │ ├── users.service.ts
-│ │ ├── users.repository.ts
+│ │ ├── auth.controller.ts    ← rutas /auth
+│ │ ├── auth.service.ts
 │ │ │
 │ │ ├── dto/
-│ │ │ ├── create-user.dto.ts
-│ │ │ └── update-user.dto.ts
+│ │ │ ├── register.dto.ts
+│ │ │ ├── login.dto.ts
+│ │ │ ├── update-user.dto.ts
+│ │ │ └── auth-response.dto.ts
 │ │ │
-│ │ └── entities/
-│ │ └── user.entity.ts
+│ │ └── guards/
+│ │ └── roles.guard.ts
 │
-│ ├── raffles/
+│ ├── raffles/                ← ✅ Básico
 │ │
 │ │ ├── raffles.module.ts
 │ │ ├── raffles.controller.ts
 │ │ ├── raffles.service.ts
-│ │ ├── raffles.repository.ts
 │ │ │
-│ │ ├── dto/
-│ │ │ ├── create-raffle.dto.ts
-│ │ │ ├── update-raffle.dto.ts
-│ │ │ └── raffle-filter.dto.ts
-│ │ │
-│ │ └── entities/
-│ │ └── raffle.entity.ts
+│ │ └── dto/
+│ │ ├── raffle-response.dto.ts
+│ │ └── index.ts
 │
-│ ├── prizes/
-│ │
-│ │ ├── prizes.module.ts
-│ │ ├── prizes.controller.ts
-│ │ ├── prizes.service.ts
-│ │ ├── prizes.repository.ts
-│ │ │
-│ │ ├── dto/
-│ │ │ └── create-prize.dto.ts
-│ │ │
-│ │ └── entities/
-│ │ └── prize.entity.ts
+│ ├── prizes/                 ← ❌ Pendiente (carpeta vacía)
+│ │   Tabla: prizes, milestones
 │
-│ ├── tickets/
-│ │
-│ │ ├── tickets.module.ts
-│ │ ├── tickets.controller.ts
-│ │ ├── tickets.service.ts
-│ │ ├── tickets.repository.ts
-│ │ │
-│ │ ├── dto/
-│ │ │ └── reserve-ticket.dto.ts
-│ │ │
-│ │ └── entities/
-│ │ └── ticket.entity.ts
+│ ├── packs/                  ← ❌ Pendiente (carpeta no existe)
+│ │   Tabla: packs
 │
-│ ├── lucky-pass/
+│ ├── lucky-pass/             ← ✅ Básico
 │ │
 │ │ ├── lucky-pass.module.ts
 │ │ ├── lucky-pass.controller.ts
 │ │ ├── lucky-pass.service.ts
-│ │ ├── lucky-pass.repository.ts
 │ │ │
-│ │ ├── dto/
-│ │ │ └── create-lucky-pass.dto.ts
-│ │ │
-│ │ └── entities/
-│ │ └── lucky-pass.entity.ts
+│ │ └── dto/
+│ │ ├── lucky-pass-response.dto.ts
+│ │ └── index.ts
 │
-│ ├── purchases/
+│ ├── purchases/              ← ⚠️ Placeholder
 │ │
 │ │ ├── purchases.module.ts
 │ │ ├── purchases.controller.ts
 │ │ ├── purchases.service.ts
-│ │ ├── purchases.repository.ts
 │ │ │
-│ │ ├── dto/
-│ │ │ └── create-purchase.dto.ts
-│ │ │
-│ │ └── entities/
-│ │ └── purchase.entity.ts
+│ │ └── dto/
+│ │ ├── create-purchase.dto.ts
+│ │ ├── purchase-response.dto.ts
+│ │ └── index.ts
 │
-│ ├── payments/
-│ │
-│ │ ├── payments.module.ts
-│ │ ├── payments.controller.ts
-│ │ ├── payments.service.ts
-│ │ └── payments.repository.ts
+│ ├── payments/              ← ❌ Pendiente (carpeta vacía)
+│ │   Tabla: payment_transactions
 │
-│ ├── winners/
-│ │
-│ │ ├── winners.module.ts
-│ │ ├── winners.service.ts
-│ │ ├── winners.repository.ts
-│ │ └── entities/
-│ │ └── winner.entity.ts
+│ ├── winners/               ← ❌ Pendiente (carpeta vacía)
+│ │   Tabla: prize_winners
 │
-│ └── admin/
-│ ├── admin.module.ts
-│ ├── admin.controller.ts
-│ └── admin.service.ts
+│ └── admin/                 ← ❌ Pendiente (carpeta vacía)
+│     Tablas: múltiples (gestión + KPIs)
 │
-└── scripts/
-├── draw-raffle.ts
-└── seed-database.ts
+└── scripts/                 ← ❌ Pendiente (carpeta vacía)
+    draw-raffle.ts
+    seed-database.ts
 
 
 ---
@@ -268,108 +248,113 @@ drawn
 Responsabilidad:
 
 - Gestión de premios de una rifa
-- Premios desbloqueables
+- Premios desbloqueables por milestone
 
-Tabla:
+Tablas:
 
 
-raffle_prizes
+prizes
+milestones
 
 
 ---
 
-# Tickets Module
+# Packs Module
+
+**Estado: Pendiente**
 
 Responsabilidad:
 
-- Generación de tickets
-- Reservas
-- Validación de disponibilidad
+- Listar packs disponibles
+- Precio y cantidad de LuckyPasses por pack
 
 Tabla:
 
 
-tickets
-
-
-Estados posibles:
-
-
-available
-reserved
-sold
+packs
 
 
 ---
 
 # Lucky Pass Module
 
+**Estado: Básico (solo lectura)**
+
 Responsabilidad:
 
-Representa el **número que participa en la rifa**.
+Representa el **número de participación en la rifa**. Se genera automáticamente al confirmar el pago.
 
 Tabla:
 
 
-lucky_pass
+lucky_passes
 
 
 Relación:
 
 
-ticket -> lucky_pass -> purchase
+Purchase → UserPack → LuckyPass
 
 
 ---
 
 # Purchases Module
 
+**Estado: Placeholder — flujo real pendiente**
+
 Responsabilidad:
 
-- Compras de tickets
-- Relación usuario → ticket
-- confirmación de compra
+- Crear órdenes de compra
+- Asociar UserPacks a la compra
+- Confirmar pago y generar LuckyPasses
 
-Tabla:
+Tablas:
 
 
 purchases
+user_packs
 
 
 ---
 
 # Payments Module
 
+**Estado: Pendiente**
+
 Responsabilidad:
 
-- Integración con pasarela de pago
-- Webhooks
-- Confirmación de pago
+- Integración con pasarela de pago (ej: Flow)
+- Crear órdenes de pago
+- Procesar webhooks
+- Confirmar compra y generar LuckyPasses
 
 Tabla:
 
 
-payments
+payment_transactions
 
 
 ---
 
 # Winners Module
 
+**Estado: Pendiente**
+
 Responsabilidad:
 
-- Registrar ganadores
-- Relacionar premio con lucky pass
+- Registrar ganadores del sorteo
+- Relacionar premio con lucky pass ganador
 
 Tabla:
 
 
-raffle_winners
+prize_winners
 
 
 Regla clave:
 
-Un **lucky_pass solo puede ganar un premio**.
+Un **lucky_pass solo puede ganar un premio** → `UNIQUE(lucky_pass_id)` en `prize_winners`.
+
 
 ---
 
@@ -387,39 +372,49 @@ Selecciona ganadores cuando una rifa termina.
 
 Carga datos iniciales.
 
+
 ---
 
 # Flujo típico del backend
 
-Compra de tickets:
+Compra de packs (flujo objetivo):
 
 
 User
 ↓
-POST /purchases
+POST /purchases (raffleId + packId + quantity)
 ↓
-TicketsService
+PurchasesService
 ↓
-reserve tickets
+Validar raffle.status = 'active'
 ↓
-create purchase
+Crear Purchase (pending) + UserPack
 ↓
-payment
+POST /payments/create
 ↓
-confirm purchase
+Crear PaymentTransaction + orden en pasarela
+↓
+POST /payments/webhook (confirmación)
+↓
+Purchase → paid
+↓
+Generar LuckyPasses
+↓
+Actualizar raffle_progress
 
 
 ---
 
 # Manejo de concurrencia
 
-El módulo **Tickets** maneja la concurrencia para evitar doble venta.
+El módulo **Purchases** maneja la concurrencia para evitar duplicados.
 
 Se usan:
 
-- `SELECT FOR UPDATE`
-- transacciones
-- índices únicos
+- transacciones Prisma (`prisma.$transaction`)
+- índice único `UNIQUE(raffle_id, ticket_number)` en `lucky_passes`
+- verificación de `raffle.status = 'active'` dentro de la transacción
+
 
 ---
 

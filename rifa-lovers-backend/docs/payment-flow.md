@@ -1,6 +1,8 @@
-# 💳 Payment Flow — Flow Integration
+# 💳 Payment Flow
 
-Este documento describe el flujo completo de pagos usando **Flow**.
+Este documento describe el flujo completo de pagos del sistema RifaLovers.
+
+La pasarela de pago es **genérica** (ej: Flow, MercadoPago, u otra). El sistema abstrae el proveedor en la tabla `payment_transactions` con el campo `provider`.
 
 ---
 
@@ -8,28 +10,30 @@ Este documento describe el flujo completo de pagos usando **Flow**.
 
 Garantizar que:
 
-- pagos sean verificables
-- tickets solo se asignen tras pago
-- no existan compras fraudulentas
+- pagos sean verificables e idempotentes
+- LuckyPasses solo se generen tras pago confirmado
+- no existan compras fraudulentas ni duplicadas
 
 ---
 
 # 🧩 Flujo Completo
 
 
-Usuario compra tickets
+Usuario compra packs
 ↓
-Backend crea purchase
+Backend crea Purchase (pending) + UserPack
 ↓
-Backend crea orden Flow
+Backend crea PaymentTransaction + orden en pasarela
 ↓
-Usuario paga en Flow
+Usuario paga en la pasarela
 ↓
-Flow envía webhook
+Pasarela envía webhook
 ↓
 Backend valida pago
 ↓
-Tickets pasan a SOLD
+LuckyPasses generados
+↓
+raffle_progress actualizado
 
 
 ---
@@ -42,17 +46,26 @@ Endpoint:
 POST /purchases
 
 
-Acciones:
+Request:
+```json
+{
+  "raffleId": "uuid",
+  "packId": "uuid",
+  "quantity": 2
+}
+```
+
+Acciones dentro de transacción Prisma:
 
 
-reservar tickets
-crear purchase
-status = PENDING
+Validar raffle.status = 'active'
+Crear Purchase (status: 'pending')
+Crear UserPack (userId + raffleId + packId + quantity)
 
 
 ---
 
-# 🧾 Paso 2 — Crear pago en Flow
+# 🧾 Paso 2 — Crear orden de pago
 
 Endpoint:
 
@@ -60,17 +73,19 @@ Endpoint:
 POST /payments/create
 
 
-Backend llama API Flow:
+Backend llama API de la pasarela y crea:
 
 
-/payment/create
+PaymentTransaction (status: 'created')
+provider = 'flow' (o el que corresponda)
+provider_transaction_id = ID de la pasarela
 
 
-Flow devuelve:
+Pasarela devuelve:
 
 
-token
-url
+URL de pago
+ID de transacción
 
 
 ---
@@ -79,52 +94,69 @@ url
 
 ```json
 {
-  "payment_url": "...",
-  "flow_token": "..."
+  "paymentUrl": "https://flow.cl/payment/xxx",
+  "providerTransactionId": "string"
 }
 
 Frontend redirige usuario.
 
 💰 Paso 3 — Usuario paga
 
-Flow procesa:
+El usuario es redirigido a la URL de la pasarela y realiza el pago.
 
-tarjeta
-transferencia
-etc
 📡 Paso 4 — Webhook
 
-Flow llama:
+La pasarela notifica al backend:
 
+```
 POST /payments/webhook
+```
 
-Payload típico:
+Payload típico (ejemplo con Flow):
 
-flowOrder
+```
+provider_transaction_id
 status
 amount
+```
+
 🔒 Paso 5 — Verificación
 
 Backend debe:
 
-1️⃣ validar firma Flow
-2️⃣ consultar API Flow
-3️⃣ verificar monto
+```
+1️⃣ Verificar idempotencia:
+   if PaymentTransaction.status == 'approved' → ignorar
 
-Ejemplo:
+2️⃣ Validar firma del proveedor
 
-GET /payment/getStatus
+3️⃣ Consultar estado en API del proveedor
+
+4️⃣ Verificar monto coincide con purchase.total_amount
+```
+
 🧾 Paso 6 — Actualizar sistema
 
-Si pago es válido:
+Si pago aprobado:
 
-payment.status = PAID
-purchase.status = PAID
-tickets.status = SOLD
-❌ Si pago falla
-payment.status = REJECTED
-purchase.status = FAILED
-tickets → AVAILABLE
+```
+PaymentTransaction.status → 'approved'
+Purchase.status → 'paid', paidAt = NOW()
+Generar N LuckyPasses por UserPack
+Actualizar raffle_progress:
+  packs_sold += userPack.quantity
+  revenue_total += purchase.totalAmount
+  percentage_to_goal = packs_sold / raffle.goalPacks × 100
+```
+
+❌ Si pago rechazado:
+
+```
+PaymentTransaction.status → 'rejected'
+Purchase.status → 'failed'
+```
+
+No se generan LuckyPasses. No hay que liberar nada.
 🧠 Idempotencia
 
 El webhook puede llegar más de una vez.
@@ -133,40 +165,51 @@ Debemos prevenir doble ejecución.
 
 Solución:
 
-UNIQUE(flow_order)
+```
+UNIQUE(provider_transaction_id) en payment_transactions
+```
 
 Antes de procesar:
 
-if payment.status == PAID
-  ignore webhook
+```
+if PaymentTransaction.status == 'approved'
+  ignorar webhook
+```
 ⏱ Timeout de pago
 
-Si el usuario no paga:
+Si el usuario no paga en 30 minutos:
 
-purchase.status → EXPIRED
-tickets → AVAILABLE
+```
+Purchase.status → 'failed'
+```
 
-Esto se maneja con:
+No hay LuckyPasses que revertir. Esto se maneja con un cron job.
 
-cron job
-worker
+Consultar `draw-algorithm.md` para el flujo post-pago del sorteo.
 🔒 Seguridad
 
 Validaciones obligatorias:
 
-firma Flow
-monto correcto
-purchase_id válido
-📊 Logs
+```
+firma del proveedor (HMAC o header de verificación)
+monto coincide con purchase.total_amount
+purchase_id válido y en estado 'pending'
+provider_transaction_id no duplicado
+```
 
-Guardar siempre:
+📊 Auditoría
 
-flow_order
-flow_token
-payment_status
-timestamp
+La tabla `payment_transactions` guarda:
 
-Esto permite auditoría.
+```
+provider            → 'flow' / 'mercadopago' / etc.
+provider_transaction_id → ID de la pasarela
+amount              → monto cobrado
+status              → estado de la transacción
+created_at          → timestamp
+```
+
+Esto permite auditar cada transacción.
 
 🚀 Mejores prácticas
 

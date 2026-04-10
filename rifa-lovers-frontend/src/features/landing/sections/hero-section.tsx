@@ -1,12 +1,11 @@
 import { useRef, useEffect, useCallback } from 'react'
-import { ArrowRight, Bell, Hand, Users } from 'lucide-react'
+import { ArrowRight, Bell, Hand } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SplitText } from '@/components/shared/split-text'
 import { HeroModelViewer } from '../components/hero-model-viewer'
 import { HeroLiveFrame } from '../components/hero-live-frame'
-import { MilestoneTimeline } from '../components/ticket-selector'
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -52,7 +51,7 @@ export function HeroSection() {
     <section
       ref={sectionRef}
       id="hero"
-      className="relative px-4 md:px-8 pt-24 md:pt-28 pb-16 md:pb-24"
+      className="relative min-h-screen overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -68,92 +67,84 @@ export function HeroSection() {
           }}
         />
       </div>
-      <div className="mx-auto max-w-[1400px]">
-        {/* Two-column hero: copy left + live frame right */}
-        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-14 mb-10 lg:mb-14">
-          {/* Left: Copy */}
-          <div className="flex-1 text-center lg:text-left">
-            <div data-gsap>
-              <Badge variant="gradient" className="mb-5">
-                <div className="size-2 rounded-full bg-white animate-pulse" />
-                EN VIVO AHORA
-              </Badge>
-            </div>
 
-            <h1
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.5rem] xl:text-7xl leading-[1.3] tracking-tight mb-5"
-              style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}
-            >
-              <SplitText
-                as="span"
-                className="block text-text-primary"
-                type="words"
-                stagger={0.06}
-                duration={0.7}
-                y={30}
-                delay={0.3}
-              >
-                Participa hoy
-              </SplitText>
-              <SplitText
-                as="span"
-                className="block text-text-primary"
-                type="words"
-                stagger={0.06}
-                duration={0.7}
-                y={30}
-                delay={0.7}
-              >
-                Gana premios
-              </SplitText>
-              <SplitText
-                as="span"
-                className="block bg-linear-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent"
-                type="words"
-                gradient
-                stagger={0.06}
-                duration={0.7}
-                y={30}
-                delay={1.1}
-              >
-                Impacta vidas
-              </SplitText>
-            </h1>
-
-            <p
-              data-gsap
-              className="text-base md:text-lg text-text-secondary max-w-xl mx-auto lg:mx-0 mb-4"
-            >
-              Así funciona Rifa Lovers en simple
-            </p>
-
-            <div data-gsap className="flex items-center gap-2 justify-center lg:justify-start mb-6">
-              <div className="flex -space-x-2">
-                <span className="text-xl">🧑🏻</span>
-                <span className="text-xl">👩🏽</span>
-                <span className="text-xl">🧑🏼</span>
-                <span className="text-xl">👩🏻</span>
-              </div>
-              <span className="text-sm text-text-secondary">
-                <Users className="size-3.5 inline mr-1" />
-                +8.000 personas participando
-              </span>
-            </div>
-
-            <div data-gsap className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-              <Button variant="primary" size="lg">
-                Ver en vivo ahora
-                <ArrowRight className="size-4" />
-              </Button>
-              <Button variant="secondary" size="lg">
-                <Bell className="size-4" />
-                Recordarme el sorteo
-              </Button>
-            </div>
+      {/* ── Desktop: text overlay left + model right ── */}
+      {/* ── Mobile: stacked — text top, model bottom ── */}
+      <div className="relative min-h-screen flex flex-col lg:flex-row">
+        {/* Left: Copy overlay */}
+        <div className="relative z-20 flex flex-col justify-center px-6 md:px-12 lg:px-10 xl:px-16 pt-24 pb-8 lg:py-0 lg:w-[38%] xl:w-[40%]">
+          <div data-gsap>
+            <Badge variant="gradient" className="mb-5">
+              <div className="size-2 rounded-full bg-white animate-pulse" />
+              EN VIVO AHORA
+            </Badge>
           </div>
 
-          {/* Right: Live frame with 3D model */}
-          <div data-gsap className="flex-1 w-full max-w-[620px]">
+          <h1
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-[2.75rem] xl:text-7xl leading-[1.15] tracking-tight mb-5"
+            style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}
+          >
+            <SplitText
+              as="span"
+              className="block text-text-primary"
+              type="words"
+              stagger={0.06}
+              duration={0.7}
+              y={30}
+              delay={0.3}
+            >
+              Participa hoy
+            </SplitText>
+            <SplitText
+              as="span"
+              className="block text-text-primary"
+              type="words"
+              stagger={0.06}
+              duration={0.7}
+              y={30}
+              delay={0.7}
+            >
+              Gana premios
+            </SplitText>
+            <SplitText
+              as="span"
+              className="block bg-linear-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent"
+              type="words"
+              gradient
+              stagger={0.06}
+              duration={0.7}
+              y={30}
+              delay={1.1}
+            >
+              Impacta vidas
+            </SplitText>
+          </h1>
+
+          <p
+            data-gsap
+            className="text-base md:text-lg text-text-secondary max-w-xl mb-6"
+          >
+            Así funciona Rifa Lovers en simple
+          </p>
+
+          <div data-gsap className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3">
+            <Button variant="primary" size="lg">
+              Ver en vivo ahora
+              <ArrowRight className="size-4" />
+            </Button>
+            <Button variant="secondary" size="lg">
+              <Bell className="size-4" />
+              Recordarme el sorteo
+            </Button>
+          </div>
+        </div>
+
+        {/* Right: Live frame with 3D model */}
+        <div
+          data-gsap
+          className="relative z-10 flex-1 flex items-center justify-center px-4 pb-8 lg:px-4 xl:px-8 lg:py-16"
+        >
+          <div className="w-full max-w-[700px]">
             <HeroLiveFrame>
               <HeroModelViewer />
             </HeroLiveFrame>
@@ -162,11 +153,6 @@ export function HeroSection() {
               Arrastra o scrollea para interactuar
             </p>
           </div>
-        </div>
-
-        {/* Milestone timeline — full width card below */}
-        <div data-gsap className="max-w-4xl mx-auto">
-          <MilestoneTimeline />
         </div>
       </div>
     </section>

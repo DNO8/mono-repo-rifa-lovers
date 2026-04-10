@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 export interface HistoryItem {
   id: string
   name: string
-  status: 'finalizado' | 'activo' | 'bloqueado'
+  status: 'confirmado' | 'pendiente' | 'fallido'
   tickets: number
 }
 
@@ -24,7 +24,8 @@ export function TicketHistory({ items }: TicketHistoryProps) {
 
       <div className="space-y-1">
         {items.map((item) => {
-          const isLocked = item.status === 'bloqueado'
+          const isLocked = item.status === 'fallido'
+          const statusLabel = item.status === 'confirmado' ? 'Confirmado' : item.status === 'pendiente' ? 'Pendiente' : 'Fallido'
           return (
             <div
               key={item.id}
@@ -37,7 +38,7 @@ export function TicketHistory({ items }: TicketHistoryProps) {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-text-primary truncate">{item.name}</p>
                 <p className="text-xs text-text-tertiary">
-                  Finalizado &bull; {item.tickets} LuckyPass
+                  {statusLabel} &bull; {item.tickets} LuckyPass
                 </p>
               </div>
 

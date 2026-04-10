@@ -1,4 +1,4 @@
-import { Radio, Users, Play } from 'lucide-react'
+import { Radio, Play } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export function HeroLiveFrame({ children }: { children: React.ReactNode }) {
@@ -11,19 +11,8 @@ export function HeroLiveFrame({ children }: { children: React.ReactNode }) {
 
       {/* Inner container */}
       <div className="relative rounded-2xl bg-bg-dark overflow-hidden">
-        {/* Top bar — simulated live overlay */}
-        <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between px-3 py-2 bg-linear-to-b from-black/60 to-transparent">
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-1.5">
-              <span className="text-base">🧑🏻</span>
-              <span className="text-base">👩🏽</span>
-              <span className="text-base">🧑🏼</span>
-            </div>
-            <Badge variant="gradient" className="text-[10px] px-2 py-0.5 gap-1">
-              <Users className="size-2.5" />
-              1.284 personas viendo ahora
-            </Badge>
-          </div>
+        {/* Top bar — live overlay */}
+        <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-end px-3 py-2 bg-linear-to-b from-black/60 to-transparent">
           <Badge variant="gradient" className="text-[10px] px-2 py-0.5 gap-1 cursor-pointer">
             Entrar al Live
             <Play className="size-2.5" />

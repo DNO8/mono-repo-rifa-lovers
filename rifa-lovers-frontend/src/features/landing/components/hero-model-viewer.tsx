@@ -57,7 +57,7 @@ export function HeroModelViewer() {
 
   return (
     <div
-      className="relative mx-auto w-full max-w-[480px] h-[320px] sm:max-w-[560px] sm:h-[380px] md:max-w-[680px] md:h-[460px] cursor-grab active:cursor-grabbing"
+      className="relative mx-auto w-full h-[320px] sm:h-[380px] md:h-[460px] lg:h-[540px] xl:h-[600px] cursor-grab active:cursor-grabbing"
       {...pointerHandlers}
     >
       <Suspense fallback={<LoadingFallback3D />}>

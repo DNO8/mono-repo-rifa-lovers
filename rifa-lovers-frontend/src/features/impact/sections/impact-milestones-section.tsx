@@ -7,11 +7,30 @@ import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { SplitText } from '@/components/shared/split-text'
 import { MilestoneCard } from '@/components/shared/milestone-card'
 import { ConfettiCanvas, type ConfettiRef } from '@/components/shared/confetti-canvas'
-import { MILESTONES } from '@/lib/constants'
+import { useActiveRaffle } from '@/hooks/use-raffles'
+import type { Milestone } from '@/types/domain.types'
+
+function buildMilestones(raffle: ReturnType<typeof useActiveRaffle>['raffle']): Milestone[] {
+  const milestones = raffle?.milestones ?? []
+  const sorted = [...milestones].sort((a, b) => a.sortOrder - b.sortOrder)
+  const firstPendingIdx = sorted.findIndex((m) => !m.isUnlocked)
+  return sorted.map((m, i) => ({
+    id: m.id,
+    threshold: m.requiredPacks,
+    emoji: m.isUnlocked ? '✅' : '🔒',
+    name: m.name ?? `Hito ${m.sortOrder}`,
+    title: m.name ?? `Hito ${m.sortOrder}`,
+    description: m.prizes.map((p) => p.name).filter(Boolean).join(', ') || 'Premio por revelar',
+    status: m.isUnlocked ? 'completed' : (!m.isUnlocked && i === firstPendingIdx) ? 'active' : 'locked',
+    icon: '/icons/cart.svg',
+  }))
+}
 
 export function ImpactMilestonesSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.12 })
   const confettiRef = useRef<ConfettiRef>(null)
+  const { raffle } = useActiveRaffle()
+  const milestones = buildMilestones(raffle)
 
   const handleMilestoneClick = (status: string, e: React.MouseEvent) => {
     if (status === 'completed') {
@@ -45,7 +64,7 @@ export function ImpactMilestonesSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-          {MILESTONES.map((milestone) => (
+          {milestones.map((milestone) => (
             <MilestoneCard
               key={milestone.id}
               milestone={milestone}

@@ -5,24 +5,32 @@ import { ArrowLeft, CreditCard, CheckCircle, Shuffle, Hash } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ACTIVE_RAFFLE } from '@/lib/constants'
+import { PRICING_TIERS } from '@/lib/constants'
 import { apiClient } from '@/api/client'
 import { ENDPOINTS } from '@/api/endpoints'
+import { useActiveRaffle } from '@/hooks/use-raffles'
+import { Spinner } from '@/components/ui/spinner'
 import { OrderSummary } from '../components/order-summary'
-
-const TOTAL_AVAILABLE = 5_000
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
   const ticketCount = Math.max(1, Math.min(50, Number(searchParams.get('tickets')) || 1))
   const bonusTickets = 0
 
+  const { raffle, isLoading } = useActiveRaffle()
+
   const [selectedNumber, setSelectedNumber] = useState<number | ''>('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
 
+  const raffleTitle = raffle?.title ?? 'Premio por confirmar'
+  const goalPacks = raffle?.goalPacks ?? 5000
+  const tier = PRICING_TIERS.find((t) => t.tickets === ticketCount) ?? PRICING_TIERS[0]
+  const unitPrice = tier.price / tier.tickets
+  const totalPrice = ticketCount * unitPrice
+
   const generateRandom = () => {
-    const num = Math.floor(Math.random() * TOTAL_AVAILABLE) + 1
+    const num = Math.floor(Math.random() * goalPacks) + 1
     setSelectedNumber(num)
   }
 
@@ -30,28 +38,38 @@ export default function CheckoutPage() {
     if (value === '') { setSelectedNumber(''); return }
     const num = parseInt(value, 10)
     if (isNaN(num)) return
-    if (num < 1 || num > TOTAL_AVAILABLE) {
-      toast.error(`Elige un número entre 1 y ${TOTAL_AVAILABLE.toLocaleString('es-CL')}`)
+    if (num < 1 || num > goalPacks) {
+      toast.error(`Elige un número entre 1 y ${goalPacks.toLocaleString('es-CL')}`)
       return
     }
     setSelectedNumber(num)
   }
 
   const handleConfirm = async () => {
+    if (!raffle) return
     setIsProcessing(true)
     try {
       await apiClient.post(ENDPOINTS.checkout.createOrder, {
-        raffleId: ACTIVE_RAFFLE.id,
+        raffleId: raffle.id,
         ticketCount,
         selectedNumber,
       })
       setIsComplete(true)
       toast.success('¡Compra exitosa!')
-    } catch (err: any) {
-      toast.error(err.message || 'Error al procesar la compra')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al procesar la compra'
+      toast.error(message)
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-24">
+        <Spinner size="lg" />
+      </div>
+    )
   }
 
   if (isComplete) {
@@ -66,7 +84,7 @@ export default function CheckoutPage() {
               ¡Compra exitosa!
             </h1>
             <p className="text-text-secondary mb-2">
-              Tus {ticketCount + bonusTickets} LuckyPass para <strong>{ACTIVE_RAFFLE.prize}</strong> ya están activos.
+              Tus {ticketCount + bonusTickets} LuckyPass para <strong>{raffleTitle}</strong> ya están activos.
             </p>
             {selectedNumber && (
               <p className="text-lg font-bold text-primary mb-2">
@@ -111,9 +129,11 @@ export default function CheckoutPage() {
 
         <div className="space-y-6">
           <OrderSummary
-            raffle={ACTIVE_RAFFLE}
+            raffleName={raffleTitle}
             ticketCount={ticketCount}
             bonusTickets={bonusTickets}
+            unitPrice={unitPrice}
+            totalPrice={totalPrice}
           />
 
           {/* Number selector */}
@@ -121,14 +141,14 @@ export default function CheckoutPage() {
             <div className="flex items-center gap-2 mb-3">
               <Hash className="size-4 text-primary" />
               <span className="text-sm font-bold text-text-primary">Elige tu número de la suerte</span>
-              <Badge variant="muted" className="ml-auto text-[10px]">1 — {TOTAL_AVAILABLE.toLocaleString('es-CL')}</Badge>
+              <Badge variant="muted" className="ml-auto text-[10px]">1 — {goalPacks.toLocaleString('es-CL')}</Badge>
             </div>
 
             <div className="flex gap-2">
               <input
                 type="number"
                 min={1}
-                max={TOTAL_AVAILABLE}
+                max={goalPacks}
                 value={selectedNumber}
                 onChange={(e) => handleNumberChange(e.target.value)}
                 placeholder="Ej: 14582"
@@ -167,9 +187,10 @@ export default function CheckoutPage() {
             className="w-full"
             onClick={handleConfirm}
             loading={isProcessing}
+            disabled={!raffle}
           >
             <CreditCard className="size-4" />
-            Confirmar y pagar ${(ticketCount * ACTIVE_RAFFLE.ticketPrice).toLocaleString('es-CL')}
+            Confirmar y pagar ${totalPrice.toLocaleString('es-CL')}
           </Button>
 
           <p className="text-xs text-text-tertiary text-center">

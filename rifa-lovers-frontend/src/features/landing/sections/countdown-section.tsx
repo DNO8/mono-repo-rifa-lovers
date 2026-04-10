@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Timer, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useActiveRaffle } from '@/hooks/use-raffles'
 
-// Mock: 24h from page load so the countdown is always visibly ticking
-const MOCK_TARGET_MS = Date.now() + 24 * 60 * 60 * 1000
+const FALLBACK_TARGET_MS = Date.now() + 24 * 60 * 60 * 1000
 
 interface TimeLeft {
   days: number
@@ -48,14 +48,19 @@ function Dot() {
 }
 
 export function CountdownSection() {
-  const [time, setTime] = useState<TimeLeft>({ days: 1, hours: 0, minutes: 0, seconds: 0 })
+  const { raffle } = useActiveRaffle()
+  const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+
+  const targetMs = raffle?.createdAt
+    ? new Date(raffle.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000
+    : FALLBACK_TARGET_MS
 
   useEffect(() => {
-    const tick = () => setTime(calcTimeLeft(MOCK_TARGET_MS))
+    const tick = () => setTime(calcTimeLeft(targetMs))
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [targetMs])
 
   return (
     <section className="py-8 md:py-12 px-4 md:px-8 border-y border-border-light bg-bg-white/60">

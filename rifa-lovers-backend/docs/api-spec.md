@@ -211,7 +211,7 @@ Obtiene un usuario por id.
 
 ## ✅ GET /raffles/active
 
-Obtiene la rifa actualmente activa.
+Obtiene la rifa actualmente activa, incluyendo milestones y sus prizes.
 
 ### Response `200`
 
@@ -222,9 +222,43 @@ Obtiene la rifa actualmente activa.
   "description": "...",
   "goalPacks": 5000,
   "status": "active",
-  "createdAt": "timestamp"
+  "createdAt": "timestamp",
+  "milestones": [
+    {
+      "id": "uuid",
+      "name": "Meta 50%",
+      "requiredPacks": 2500,
+      "sortOrder": 1,
+      "isUnlocked": true,
+      "prizes": [
+        {
+          "id": "uuid",
+          "name": "AirPods Pro",
+          "description": "...",
+          "type": "milestone"
+        }
+      ]
+    },
+    {
+      "id": "uuid",
+      "name": "Meta 100%",
+      "requiredPacks": 5000,
+      "sortOrder": 2,
+      "isUnlocked": false,
+      "prizes": [
+        {
+          "id": "uuid",
+          "name": "Macbook Pro",
+          "description": "...",
+          "type": "milestone"
+        }
+      ]
+    }
+  ]
 }
 ```
+
+> **Nota:** Los milestones y prizes se incluyen embebidos en esta respuesta. No se necesitan endpoints separados para lectura pública.
 
 ---
 
@@ -243,52 +277,27 @@ Progreso actual de la rifa activa.
 }
 ```
 
----
-
-## 🚧 GET /raffles/active/prizes
-
-Lista de premios de la rifa activa con su estado de desbloqueo.
-
-### Response `200` (esperado)
-
-```json
-[
-  {
-    "id": "uuid",
-    "name": "Macbook Pro",
-    "type": "milestone",
-    "description": "...",
-    "valueEstimated": 1500000,
-    "quantity": 1,
-    "milestone": {
-      "id": "uuid",
-      "name": "Meta 100%",
-      "requiredPacks": 5000,
-      "isUnlocked": false
-    }
-  }
-]
-```
+> **Nota:** El campo `percentageToGoal` se almacena en la BD pero **el frontend no lo usa** — calcula el progreso dinámicamente como `(packsSold / goalPacks) × 100`.
 
 ---
 
-## 🚧 GET /raffles/active/milestones
+## ✅ GET /raffles/:id
 
-Lista de milestones de la rifa activa con su estado.
+Detalle de una rifa por ID (sin milestones).
 
-### Response `200` (esperado)
+**Auth:** No requerido
+
+### Response `200`
 
 ```json
-[
-  {
-    "id": "uuid",
-    "name": "Meta 50%",
-    "requiredPacks": 2500,
-    "sortOrder": 1,
-    "isUnlocked": true,
-    "unlockedAt": "timestamp"
-  }
-]
+{
+  "id": "uuid",
+  "title": "Rifa Macbook Pro",
+  "description": "...",
+  "goalPacks": 5000,
+  "status": "active",
+  "createdAt": "timestamp"
+}
 ```
 
 ---

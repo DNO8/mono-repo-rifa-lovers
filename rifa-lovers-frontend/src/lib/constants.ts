@@ -1,12 +1,10 @@
 /**
- * Barrel re-export — all mock/constant data split by domain.
- * Existing imports from '@/lib/constants' continue to work unchanged.
+ * Barrel re-export — static content split by domain.
+ * Marketing/UI constants only. Domain data comes from API hooks.
  */
 
-export { NAV_ITEMS } from './mock/navigation.mock'
-export { ACTIVE_RAFFLE, PRICING_TIERS } from './mock/raffle.mock'
-export { MILESTONES, IMPACT_METRICS, SMILE_COUNT } from './mock/impact.mock'
-export { STEPS } from './mock/steps.mock'
-export { FAQS } from './mock/faq.mock'
-export { TESTIMONIALS, WINNERS } from './mock/testimonials.mock'
-export { LIVE_ACTIVITIES } from './mock/activity.mock'
+export { NAV_ITEMS } from './content/navigation.content'
+export { PRICING_TIERS } from './content/pricing.content'
+export { STEPS } from './content/steps.content'
+export { FAQS } from './content/faq.content'
+export { TESTIMONIALS, WINNERS } from './content/testimonials.content'

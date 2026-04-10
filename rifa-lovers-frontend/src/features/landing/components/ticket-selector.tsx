@@ -3,9 +3,9 @@ import { Lock, Zap, Trophy, Gift } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { gsap } from '@/lib/gsap'
-import { MILESTONES, ACTIVE_RAFFLE } from '@/lib/constants'
+import { useActiveRaffle } from '@/hooks/use-raffles'
 import { cn } from '@/lib/utils'
-import type { Milestone } from '@/types/domain.types'
+import type { RaffleMilestone } from '@/types/domain.types'
 
 /* ── Flash Campaign Config (will come from backend) ── */
 const FLASH_CAMPAIGN = {
@@ -14,13 +14,29 @@ const FLASH_CAMPAIGN = {
   detail: 'Síguenos en Instagram para enterarte primero',
 }
 
-function thresholdLabel(threshold: number | 'flash'): string {
-  return typeof threshold === 'number' ? threshold.toLocaleString('es-CL') : 'FLASH'
+interface DisplayMilestone {
+  id: string
+  name: string
+  requiredPacks: number
+  isCompleted: boolean
+  isActive: boolean
 }
 
-function MilestoneNode({ milestone, isLast }: { milestone: Milestone; isLast: boolean }) {
-  const isCompleted = milestone.status === 'completed'
-  const isActive = milestone.status === 'active'
+function buildDisplayMilestones(milestones: RaffleMilestone[]): DisplayMilestone[] {
+  const sorted = [...milestones].sort((a, b) => a.sortOrder - b.sortOrder)
+  const firstPendingIdx = sorted.findIndex((m) => !m.isUnlocked)
+  return sorted.map((m, i) => ({
+    id: m.id,
+    name: m.name ?? `Hito ${m.sortOrder}`,
+    requiredPacks: m.requiredPacks,
+    isCompleted: m.isUnlocked,
+    isActive: !m.isUnlocked && i === firstPendingIdx,
+  }))
+}
+
+function MilestoneNode({ milestone, isLast }: { milestone: DisplayMilestone; isLast: boolean }) {
+  const isCompleted = milestone.isCompleted
+  const isActive = milestone.isActive
 
   return (
     <div className="flex flex-col items-center shrink-0 w-[110px] sm:w-auto sm:flex-1 relative">
@@ -46,7 +62,7 @@ function MilestoneNode({ milestone, isLast }: { milestone: Milestone; isLast: bo
           )}
         >
           {(isCompleted || isActive) && (
-            <img src={milestone.icon} alt={milestone.name} className="size-5" />
+            <Trophy className="size-4 text-current" />
           )}
           {!isCompleted && !isActive && <Lock className="size-3.5 text-text-tertiary" />}
         </div>
@@ -71,7 +87,7 @@ function MilestoneNode({ milestone, isLast }: { milestone: Milestone; isLast: bo
           variant={isCompleted ? 'success' : isActive ? 'subtle' : 'muted'}
           className="text-[8px] px-1.5 py-0 leading-relaxed mb-1"
         >
-          {thresholdLabel(milestone.threshold)}
+          {milestone.requiredPacks.toLocaleString('es-CL')}
         </Badge>
         <p className={cn(
           'text-[11px] font-bold leading-tight mb-0.5',
@@ -80,12 +96,6 @@ function MilestoneNode({ milestone, isLast }: { milestone: Milestone; isLast: bo
           !isCompleted && !isActive && 'text-text-tertiary'
         )}>
           {milestone.name}
-        </p>
-        <p className={cn(
-          'text-[9px] leading-snug',
-          isCompleted || isActive ? 'text-text-secondary' : 'text-text-tertiary'
-        )}>
-          {milestone.description}
         </p>
       </div>
     </div>
@@ -149,6 +159,11 @@ function FlashCampaignBanner() {
 
 export function MilestoneTimeline() {
   const timelineRef = useRef<HTMLDivElement>(null)
+  const { raffle, progress } = useActiveRaffle()
+
+  const milestones = buildDisplayMilestones(raffle?.milestones ?? [])
+  const packsSold = progress?.packsSold ?? 0
+  const goalPacks = raffle?.goalPacks ?? 0
 
   useEffect(() => {
     const el = timelineRef.current
@@ -196,7 +211,7 @@ export function MilestoneTimeline() {
     }
 
     return () => { tl.kill() }
-  }, [])
+  }, [milestones.length])
 
   return (
     <Card variant="glass" className="p-4 md:p-6">
@@ -206,7 +221,7 @@ export function MilestoneTimeline() {
           Escala de Premios
         </Badge>
         <p className="text-xs text-text-secondary">
-          {ACTIVE_RAFFLE.soldCount.toLocaleString('es-CL')} / {ACTIVE_RAFFLE.totalTickets.toLocaleString('es-CL')} LuckyPass vendidos
+          {packsSold.toLocaleString('es-CL')} / {goalPacks.toLocaleString('es-CL')} LuckyPass vendidos
         </p>
       </div>
 
@@ -214,11 +229,11 @@ export function MilestoneTimeline() {
         {/* Horizontal scrollable on mobile, full flex on desktop */}
         <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0 scrollbar-hide">
           <div className="flex min-w-[550px] md:min-w-0">
-            {MILESTONES.map((milestone, i) => (
+            {milestones.map((milestone, i) => (
               <MilestoneNode
                 key={milestone.id}
                 milestone={milestone}
-                isLast={i === MILESTONES.length - 1}
+                isLast={i === milestones.length - 1}
               />
             ))}
           </div>

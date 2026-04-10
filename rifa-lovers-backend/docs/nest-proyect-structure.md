@@ -16,12 +16,12 @@ La estructura está optimizada para:
 | Módulo | Estado | Tabla principal |
 |--------|--------|----------------|
 | `users/` | ✅ Implementado | `users` |
-| `raffles/` | ✅ Básico (solo lectura) | `raffles`, `raffle_progress` |
-| `lucky-pass/` | ✅ Básico (solo lectura) | `lucky_passes` |
-| `purchases/` | ⚠️ Placeholder | `purchases` |
+| `raffles/` | ✅ Completo (lectura) | `raffles`, `raffle_progress`, `milestones`, `prizes` |
+| `lucky-pass/` | ✅ Completo (lectura) | `lucky_passes` |
+| `purchases/` | ⚠️ Parcial (lectura + placeholder create) | `purchases` |
 | `packs/` | ❌ Pendiente (carpeta no existe) | `packs` |
 | `payments/` | ❌ Pendiente (carpeta vacía) | `payment_transactions` |
-| `prizes/` | ❌ Pendiente (carpeta vacía) | `prizes`, `milestones` |
+| `prizes/` | ❌ Pendiente (para admin CRUD) | `prizes`, `milestones` |
 | `winners/` | ❌ Pendiente (carpeta vacía) | `prize_winners` |
 | `admin/` | ❌ Pendiente (carpeta vacía) | múltiples |
 | `scripts/` | ❌ Pendiente (carpeta vacía) | — |
@@ -144,15 +144,20 @@ src/
 │ │ └── guards/
 │ │ └── roles.guard.ts
 │
-│ ├── raffles/                ← ✅ Básico
+│ ├── raffles/                ← ✅ Completo (lectura con milestones + prizes)
 │ │
 │ │ ├── raffles.module.ts
 │ │ ├── raffles.controller.ts
 │ │ ├── raffles.service.ts
+│ │ ├── raffles.repository.ts
 │ │ │
-│ │ └── dto/
-│ │ ├── raffle-response.dto.ts
-│ │ └── index.ts
+│ │ ├── dto/
+│ │ │ ├── raffle-response.dto.ts  ← incluye MilestoneDto y PrizeDto
+│ │ │ └── index.ts
+│ │ │
+│ │ └── entities/
+│ │   ├── raffle.entity.ts
+│ │   └── index.ts
 │
 │ ├── prizes/                 ← ❌ Pendiente (carpeta vacía)
 │ │   Tabla: prizes, milestones
@@ -160,26 +165,36 @@ src/
 │ ├── packs/                  ← ❌ Pendiente (carpeta no existe)
 │ │   Tabla: packs
 │
-│ ├── lucky-pass/             ← ✅ Básico
+│ ├── lucky-pass/             ← ✅ Completo (lectura)
 │ │
 │ │ ├── lucky-pass.module.ts
 │ │ ├── lucky-pass.controller.ts
 │ │ ├── lucky-pass.service.ts
+│ │ ├── lucky-pass.repository.ts
 │ │ │
-│ │ └── dto/
-│ │ ├── lucky-pass-response.dto.ts
-│ │ └── index.ts
+│ │ ├── dto/
+│ │ │ ├── lucky-pass-response.dto.ts
+│ │ │ └── index.ts
+│ │ │
+│ │ └── entities/
+│ │   ├── lucky-pass.entity.ts
+│ │   └── index.ts
 │
-│ ├── purchases/              ← ⚠️ Placeholder
+│ ├── purchases/              ← ⚠️ Parcial (lectura OK, create placeholder)
 │ │
 │ │ ├── purchases.module.ts
 │ │ ├── purchases.controller.ts
 │ │ ├── purchases.service.ts
+│ │ ├── purchases.repository.ts
 │ │ │
-│ │ └── dto/
-│ │ ├── create-purchase.dto.ts
-│ │ ├── purchase-response.dto.ts
-│ │ └── index.ts
+│ │ ├── dto/
+│ │ │ ├── create-purchase.dto.ts
+│ │ │ ├── purchase-response.dto.ts
+│ │ │ └── index.ts
+│ │ │
+│ │ └── entities/
+│ │   ├── purchase.entity.ts
+│ │   └── index.ts
 │
 │ ├── payments/              ← ❌ Pendiente (carpeta vacía)
 │ │   Tabla: payment_transactions
@@ -221,14 +236,22 @@ users
 
 Responsabilidad:
 
-- Crear rifas
-- Estado de rifas
-- Información de rifas
+- Lectura de la rifa activa con milestones y prizes embebidos
+- Progreso de la rifa (packsSold, revenueTotal)
+- Detalle de rifa por ID
 
-Tabla principal:
+Tablas:
 
 
-raffles
+raffles, raffle_progress, milestones, prizes
+
+
+Endpoints:
+
+
+GET /raffles/active           → rifa activa + milestones + prizes
+GET /raffles/active/progress  → packsSold, revenueTotal, percentageToGoal
+GET /raffles/:id              → detalle por ID
 
 
 Estados soportados:
@@ -278,11 +301,15 @@ packs
 
 # Lucky Pass Module
 
-**Estado: Básico (solo lectura)**
-
-Responsabilidad:
+**Estado: Completo (lectura)**
 
 Representa el **número de participación en la rifa**. Se genera automáticamente al confirmar el pago.
+
+Endpoints:
+
+
+GET /lucky-passes/my         → lista de passes del usuario
+GET /lucky-passes/my/summary → resumen (total, active, used, winners)
 
 Tabla:
 
@@ -300,13 +327,19 @@ Purchase → UserPack → LuckyPass
 
 # Purchases Module
 
-**Estado: Placeholder — flujo real pendiente**
+**Estado: Parcial** — lectura funcional, creación placeholder
 
-Responsabilidad:
+Endpoints implementados:
 
-- Crear órdenes de compra
-- Asociar UserPacks a la compra
-- Confirmar pago y generar LuckyPasses
+
+GET  /purchases/my  → ✅ historial de compras del usuario
+POST /purchases     → ⚠️ placeholder (no valida rifa, no crea UserPack)
+
+Responsabilidad completa (pendiente):
+
+- Validar rifa activa antes de crear compra
+- Crear Purchase + UserPack en transacción
+- Coordinar con Payments para confirmar pago y generar LuckyPasses
 
 Tablas:
 

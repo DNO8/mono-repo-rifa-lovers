@@ -1,16 +1,14 @@
 import { Card } from '@/components/ui/card'
-import type { Raffle } from '@/types/domain.types'
 
 interface OrderSummaryProps {
-  raffle: Raffle
+  raffleName: string
   ticketCount: number
   bonusTickets: number
+  unitPrice: number
+  totalPrice: number
 }
 
-export function OrderSummary({ raffle, ticketCount, bonusTickets }: OrderSummaryProps) {
-  const subtotal = ticketCount * raffle.ticketPrice
-  const total = subtotal
-
+export function OrderSummary({ raffleName, ticketCount, bonusTickets, unitPrice, totalPrice }: OrderSummaryProps) {
   return (
     <Card variant="glass" className="p-6">
       <h3 className="text-lg font-bold text-text-primary mb-4">Resumen de orden</h3>
@@ -18,7 +16,7 @@ export function OrderSummary({ raffle, ticketCount, bonusTickets }: OrderSummary
       <div className="space-y-3 mb-4">
         <div className="flex justify-between text-sm">
           <span className="text-text-secondary">Sorteo</span>
-          <span className="font-medium text-text-primary">{raffle.prize}</span>
+          <span className="font-medium text-text-primary">{raffleName}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-text-secondary">LuckyPass</span>
@@ -33,7 +31,7 @@ export function OrderSummary({ raffle, ticketCount, bonusTickets }: OrderSummary
         <div className="flex justify-between text-sm">
           <span className="text-text-secondary">Precio por LuckyPass</span>
           <span className="font-medium text-text-primary">
-            ${raffle.ticketPrice.toLocaleString('es-CL')}
+            ${unitPrice.toLocaleString('es-CL')}
           </span>
         </div>
       </div>
@@ -42,7 +40,7 @@ export function OrderSummary({ raffle, ticketCount, bonusTickets }: OrderSummary
         <div className="flex justify-between items-center">
           <span className="font-bold text-text-primary">Total</span>
           <span className="text-2xl font-extrabold text-text-primary">
-            ${total.toLocaleString('es-CL')}
+            ${totalPrice.toLocaleString('es-CL')}
           </span>
         </div>
         <p className="text-xs text-text-tertiary mt-1">

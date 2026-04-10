@@ -1,7 +1,7 @@
 export interface LuckyPass {
   id: string
   ticketNumber: number
-  status: 'pending' | 'confirmed' | 'winner' | 'cancelled'
+  status: 'active' | 'used' | 'winner' | 'cancelled'
   isWinner: boolean
   raffleId: string
   raffleName: string
@@ -31,13 +31,30 @@ export interface RaffleProgress {
   percentageToGoal: number
 }
 
+export interface MilestonePrize {
+  id: string
+  name: string | null
+  description: string | null
+  type: string
+}
+
+export interface RaffleMilestone {
+  id: string
+  name: string | null
+  requiredPacks: number
+  sortOrder: number
+  isUnlocked: boolean
+  prizes: MilestonePrize[]
+}
+
 export interface Raffle {
   id: string
   title: string | null
   description: string | null
   goalPacks: number
-  status: 'draft' | 'active' | 'sold_out' | 'completed' | 'drawn'
+  status: 'draft' | 'active' | 'sold_out' | 'closed' | 'drawn'
   createdAt: string
+  milestones?: RaffleMilestone[]
 }
 
 export interface Milestone {
@@ -136,32 +153,12 @@ export interface User {
   createdAt: string
 }
 
-export interface Order {
-  id: string
-  raffleId: string
-  raffleName: string
-  ticketCount: number
-  bonusTickets: number
-  total: number
-  status: 'pending' | 'completed' | 'cancelled'
-  createdAt: string
-}
 
-export interface DashboardSummary {
-  totalTickets: number
-  points: number
-  activeRaffle: Raffle | null
-  history: Order[]
-}
-
-export interface CheckoutPayload {
-  raffleId: string
-  ticketCount: number
-}
 
 export interface AuthResponse {
   user: User
   accessToken: string
+  refreshToken?: string
 }
 
 export interface Hotspot {

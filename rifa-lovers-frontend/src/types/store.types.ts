@@ -2,17 +2,19 @@
  * Store state interfaces — contracts for Zustand stores (Observer pattern).
  */
 
-import type { User, Raffle, Order } from './domain.types'
+import type { User } from './domain.types'
 
 export interface AuthState {
   user: User | null
   token: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  register: (name: string, lastName: string, phone: string, email: string, password: string) => Promise<void>
   logout: () => void
+  setToken: (token: string) => void
   clearError: () => void
 }
 
@@ -35,16 +37,4 @@ export interface UiState {
   openModal: (content: string) => void
   closeModal: () => void
   setGlobalLoading: (loading: boolean) => void
-}
-
-export interface DashboardState {
-  summary: {
-    totalTickets: number
-    points: number
-    activeRaffle: Raffle | null
-    history: Order[]
-  } | null
-  isLoading: boolean
-  error: string | null
-  fetchSummary: () => Promise<void>
 }

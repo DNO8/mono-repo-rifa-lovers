@@ -6,12 +6,77 @@ import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { SplitText } from '@/components/shared/split-text'
 import { MetricCard } from '@/components/shared/metric-card'
 import { MilestoneCard } from '@/components/shared/milestone-card'
-import { MILESTONES, IMPACT_METRICS } from '@/lib/constants'
+import { useActiveRaffle } from '@/hooks/use-raffles'
 import { ConfettiCanvas, type ConfettiRef } from '@/components/shared/confetti-canvas'
+import type { Milestone, ImpactMetric } from '@/types/domain.types'
+
+function buildMilestones(raffle: ReturnType<typeof useActiveRaffle>['raffle']): Milestone[] {
+  const milestones = raffle?.milestones ?? []
+  const sorted = [...milestones].sort((a, b) => a.sortOrder - b.sortOrder)
+  const firstPendingIdx = sorted.findIndex((m) => !m.isUnlocked)
+
+  return sorted.map((m, i) => ({
+    id: m.id,
+    threshold: m.requiredPacks,
+    emoji: m.isUnlocked ? '✅' : '🔒',
+    name: m.name ?? `Hito ${m.sortOrder}`,
+    title: m.name ?? `Hito ${m.sortOrder}`,
+    description: m.prizes.map((p) => p.name).filter(Boolean).join(', ') || 'Premio por revelar',
+    status: m.isUnlocked ? 'completed' : (!m.isUnlocked && i === firstPendingIdx) ? 'active' : 'locked',
+    icon: '/icons/cart.svg',
+  }))
+}
+
+function buildMetrics(
+  progress: ReturnType<typeof useActiveRaffle>['progress'],
+  raffle: ReturnType<typeof useActiveRaffle>['raffle'],
+): ImpactMetric[] {
+  const packsSold = progress?.packsSold ?? 0
+  const goalPacks = raffle?.goalPacks ?? 1
+  const pct = Math.min((packsSold / goalPacks) * 100, 100)
+
+  return [
+    {
+      id: 'metric-packs',
+      label: 'LuckyPass vendidos',
+      value: `+${packsSold.toLocaleString('es-CL')}`,
+      numericValue: packsSold,
+      prefix: '+',
+    },
+    {
+      id: 'metric-progress',
+      label: 'progreso hacia la meta',
+      value: `${Math.round(pct)}%`,
+      numericValue: Math.round(pct),
+      suffix: '%',
+    },
+    {
+      id: 'metric-prizes',
+      label: 'premios desbloqueados',
+      value: '0',
+      numericValue: 0,
+      prefix: '+',
+    },
+  ]
+}
 
 export function ImpactSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.12 })
   const confettiRef = useRef<ConfettiRef>(null)
+  const { raffle, progress } = useActiveRaffle()
+
+  const milestones = buildMilestones(raffle)
+  const metrics = buildMetrics(progress, raffle)
+
+  // Count unlocked prizes for the metric
+  const unlockedPrizes = (raffle?.milestones ?? [])
+    .filter((m) => m.isUnlocked)
+    .reduce((acc, m) => acc + m.prizes.length, 0)
+  metrics[2] = {
+    ...metrics[2],
+    value: `+${unlockedPrizes}`,
+    numericValue: unlockedPrizes,
+  }
 
   const handleMilestoneClick = (status: string, e: React.MouseEvent) => {
     if (status === 'completed') {
@@ -45,14 +110,14 @@ export function ImpactSection() {
 
         {/* Metrics */}
         <div className="grid grid-cols-3 gap-4 sm:gap-8 mb-12 md:mb-16">
-          {IMPACT_METRICS.map((metric) => (
+          {metrics.map((metric) => (
             <MetricCard key={metric.id} metric={metric} />
           ))}
         </div>
 
         {/* Milestones */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-          {MILESTONES.map((milestone) => (
+          {milestones.map((milestone) => (
             <MilestoneCard
               key={milestone.id}
               milestone={milestone}

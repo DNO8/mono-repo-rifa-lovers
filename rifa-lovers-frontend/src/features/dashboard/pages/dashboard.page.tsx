@@ -14,18 +14,35 @@ import { usePurchases } from '@/hooks/use-purchases'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { Spinner } from '@/components/ui/spinner'
+import type { Raffle, RaffleProgress, Purchase } from '@/types/domain.types'
 
-const MOCK_IMPACT: CollectiveImpact = {
-  progress: 24,
-  nextGoal: '💸 Respiro RifaLovers',
-  remaining: 3800,
-  milestones: [
-    { label: '🛒 Carrito Lleno', status: 'done', icon: 'check' },
-    { label: '💸 Respiro RifaLovers', status: 'active', icon: 'circle' },
-    { label: '🌊 Escapada RifaLovers', status: 'pending', icon: 'home' },
-    { label: '💸 Respiro (reimpulso)', status: 'pending', icon: 'home' },
-    { label: '🔓 Gran Desbloqueo', status: 'pending', icon: 'home' },
-  ],
+function buildImpact(raffle: Raffle | null, progress: RaffleProgress | null): CollectiveImpact {
+  const milestones = raffle?.milestones ?? []
+  const sorted = [...milestones].sort((a, b) => a.sortOrder - b.sortOrder)
+  const packsSold = progress?.packsSold ?? 0
+  const goalPacks = raffle?.goalPacks ?? 1
+
+  // Dynamic progress: packsSold / goalPacks * 100
+  const pct = Math.min((packsSold / goalPacks) * 100, 100)
+
+  const firstPendingIdx = sorted.findIndex((m) => !m.isUnlocked)
+  const nextMilestone = firstPendingIdx >= 0 ? sorted[firstPendingIdx] : null
+
+  return {
+    progress: Math.round(pct * 100) / 100,
+    nextGoal: nextMilestone?.name ?? 'Meta completada',
+    remaining: nextMilestone ? Math.max(0, nextMilestone.requiredPacks - packsSold) : 0,
+    milestones: sorted.map((m, i) => {
+      const isUnlocked = m.isUnlocked
+      const isActive = !isUnlocked && i === firstPendingIdx
+      return {
+        id: m.id,
+        label: m.name ?? `Hito ${m.sortOrder}`,
+        status: isUnlocked ? 'done' as const : isActive ? 'active' as const : 'pending' as const,
+        icon: isUnlocked ? 'check' as const : isActive ? 'circle' as const : 'home' as const,
+      }
+    }),
+  }
 }
 
 // Helper to map purchase status to display status
@@ -41,7 +58,7 @@ const mapStatus = (status: string): 'finalizado' | 'activo' | 'bloqueado' => {
 }
 
 // Helper to transform purchases to history items
-const transformPurchasesToHistory = (purchases: any[]): HistoryItem[] => {
+const transformPurchasesToHistory = (purchases: Purchase[]): HistoryItem[] => {
   return purchases.map((p) => ({
     id: p.id,
     name: p.raffleName,
@@ -51,7 +68,7 @@ const transformPurchasesToHistory = (purchases: any[]): HistoryItem[] => {
 }
 
 // Helper to transform raffle to card data
-const transformRaffleToCardData = (raffle: any, progress: any): RaffleCardData | null => {
+const transformRaffleToCardData = (raffle: Raffle | null, progress: RaffleProgress | null): RaffleCardData | null => {
   if (!raffle) return null
   return {
     id: raffle.id,
@@ -123,7 +140,7 @@ export default function DashboardPage() {
               {/* Main content */}
               <main className="order-1 lg:order-2 space-y-6">
                 {raffleCardData && <RaffleHeroCard raffle={raffleCardData} />}
-                <DashboardImpactSection impact={MOCK_IMPACT} />
+                <DashboardImpactSection impact={buildImpact(raffle, progress)} />
               </main>
             </div>
           </>

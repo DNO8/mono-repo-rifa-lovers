@@ -3,7 +3,8 @@ import { ArrowRight, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ACTIVE_RAFFLE, PRICING_TIERS } from '@/lib/constants'
+import { PRICING_TIERS } from '@/lib/constants'
+import { useActiveRaffle } from '@/hooks/use-raffles'
 import { useAuthStore } from '@/stores/auth.store'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { cn } from '@/lib/utils'
@@ -12,9 +13,11 @@ export function PricingSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.15 })
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const { raffle } = useActiveRaffle()
 
   const handleSelect = (tickets: number) => {
-    const checkoutUrl = `/checkout?raffle=${ACTIVE_RAFFLE.id}&tickets=${tickets}`
+    const raffleId = raffle?.id ?? ''
+    const checkoutUrl = `/checkout?raffle=${raffleId}&tickets=${tickets}`
     if (isAuthenticated) {
       navigate(checkoutUrl)
     } else {

@@ -3,7 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router'
 import { Menu, X, Smile, User, LogIn, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { NAV_ITEMS, SMILE_COUNT } from '@/lib/constants'
+import { NAV_ITEMS } from '@/lib/constants'
+import { useActiveRaffle } from '@/hooks/use-raffles'
 import { useAuthStore } from '@/stores/auth.store'
 import { cn } from '@/lib/utils'
 
@@ -13,6 +14,8 @@ export function Header() {
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const location = useLocation()
+  const { progress } = useActiveRaffle()
+  const smileCount = progress?.packsSold ?? 0
 
   const handleNavClick = useCallback(
     (e: React.MouseEvent, href: string) => {
@@ -81,7 +84,7 @@ export function Header() {
             )}
             <Badge variant="outline-primary" className="animate-pulse-subtle scale-75 lg:scale-100 origin-right">
               <Smile className="size-3.5" />
-              +{SMILE_COUNT.toLocaleString('es-CL')} Sonrisas
+              +{smileCount.toLocaleString('es-CL')} Sonrisas
             </Badge>
           </div>
 

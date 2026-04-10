@@ -2,10 +2,49 @@ import { Badge } from '@/components/ui/badge'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { SplitText } from '@/components/shared/split-text'
 import { MetricCard } from '@/components/shared/metric-card'
-import { IMPACT_METRICS } from '@/lib/constants'
+import { useActiveRaffle } from '@/hooks/use-raffles'
+import type { ImpactMetric } from '@/types/domain.types'
+
+function buildMetrics(
+  progress: ReturnType<typeof useActiveRaffle>['progress'],
+  raffle: ReturnType<typeof useActiveRaffle>['raffle'],
+): ImpactMetric[] {
+  const packsSold = progress?.packsSold ?? 0
+  const goalPacks = raffle?.goalPacks ?? 1
+  const pct = Math.min((packsSold / goalPacks) * 100, 100)
+  const unlockedPrizes = (raffle?.milestones ?? [])
+    .filter((m) => m.isUnlocked)
+    .reduce((acc, m) => acc + m.prizes.length, 0)
+
+  return [
+    {
+      id: 'metric-packs',
+      label: 'LuckyPass vendidos',
+      value: `+${packsSold.toLocaleString('es-CL')}`,
+      numericValue: packsSold,
+      prefix: '+',
+    },
+    {
+      id: 'metric-progress',
+      label: 'progreso hacia la meta',
+      value: `${Math.round(pct)}%`,
+      numericValue: Math.round(pct),
+      suffix: '%',
+    },
+    {
+      id: 'metric-prizes',
+      label: 'premios desbloqueados',
+      value: `+${unlockedPrizes}`,
+      numericValue: unlockedPrizes,
+      prefix: '+',
+    },
+  ]
+}
 
 export function ImpactStatsSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.12 })
+  const { raffle, progress } = useActiveRaffle()
+  const metrics = buildMetrics(progress, raffle)
 
   return (
     <section
@@ -32,7 +71,7 @@ export function ImpactStatsSection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {IMPACT_METRICS.map((metric) => (
+          {metrics.map((metric) => (
             <MetricCard key={metric.id} metric={metric} />
           ))}
         </div>

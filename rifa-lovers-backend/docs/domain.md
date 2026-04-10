@@ -325,8 +325,10 @@ Tabla de seguimiento del progreso de una rifa. Se actualiza cada vez que se conf
 | raffle_id | uuid | FK — UNIQUE |
 | packs_sold | integer | Total de packs vendidos |
 | revenue_total | decimal(12,2) | Ingresos totales |
-| percentage_to_goal | decimal(5,2) | packs_sold / goal_packs × 100 |
+| percentage_to_goal | decimal(5,2) | packs_sold / goal_packs × 100 (ver nota) |
 | updated_at | timestamp | |
+
+> **Nota:** `percentage_to_goal` se almacena en la BD pero actualmente **no se actualiza automáticamente** al vender packs. El frontend calcula el progreso dinámicamente como `(packs_sold / goal_packs) × 100` usando los datos de `RaffleProgress.packs_sold` y `Raffle.goal_packs`. Cuando se implemente el flujo de pagos (Fase 8), este campo debería actualizarse al confirmar cada compra.
 
 ---
 

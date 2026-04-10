@@ -8,12 +8,14 @@ import { ENDPOINTS } from '@/api/endpoints'
 interface AuthState {
   user: User | null
   token: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
   register: (name: string, lastName: string, phone: string, email: string, password: string) => Promise<void>
   logout: () => void
+  setToken: (token: string) => void
   clearError: () => void
 }
 
@@ -22,6 +24,7 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
     user: null,
     token: null,
+    refreshToken: null,
     isAuthenticated: false,
     isLoading: false,
     error: null,
@@ -30,10 +33,10 @@ export const useAuthStore = create<AuthState>()(
       set({ isLoading: true, error: null })
       try {
         const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.login, { email, password })
-        set({ user: data.user, token: data.accessToken, isAuthenticated: true, isLoading: false })
+        set({ user: data.user, token: data.accessToken, refreshToken: data.refreshToken ?? null, isAuthenticated: true, isLoading: false })
         toast.success('¡Bienvenido de vuelta!')
-      } catch (err: any) {
-        const message = err.message || 'Error al iniciar sesión'
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al iniciar sesión'
         set({ error: message, isLoading: false })
         toast.error(message)
         throw err
@@ -44,10 +47,10 @@ export const useAuthStore = create<AuthState>()(
       set({ isLoading: true, error: null })
       try {
         const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password })
-        set({ user: data.user, token: data.accessToken, isAuthenticated: true, isLoading: false })
+        set({ user: data.user, token: data.accessToken, refreshToken: data.refreshToken ?? null, isAuthenticated: true, isLoading: false })
         toast.success('¡Registro exitoso! Bienvenido a RifaLovers')
-      } catch (err: any) {
-        const message = err.message || 'Error al registrarse'
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al registrarse'
         set({ error: message, isLoading: false })
         toast.error(message)
         throw err
@@ -55,15 +58,17 @@ export const useAuthStore = create<AuthState>()(
     },
 
     logout: () => {
-      set({ user: null, token: null, isAuthenticated: false, error: null })
+      set({ user: null, token: null, refreshToken: null, isAuthenticated: false, error: null })
       toast.info('Sesión cerrada')
     },
+
+    setToken: (token: string) => set({ token }),
 
     clearError: () => set({ error: null }),
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ token: state.token, refreshToken: state.refreshToken, user: state.user, isAuthenticated: state.isAuthenticated }),
     }
   )
 )

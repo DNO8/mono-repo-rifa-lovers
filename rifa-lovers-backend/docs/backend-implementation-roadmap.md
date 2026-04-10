@@ -19,12 +19,12 @@ Stack definitivo:
 | 1 | Infraestructura Base | ✅ Completo |
 | 2 | Modelo de Datos (Prisma Schema) | ✅ Completo |
 | 3 | Auth + Users | ✅ Completo |
-| 4 | Raffles — lectura básica | ✅ Básico |
-| 5 | LuckyPass — lectura básica | ✅ Básico |
-| 6 | Purchases — flujo real | ❌ Pendiente |
+| 4 | Raffles + Milestones + Prizes | ✅ Completo (lectura) |
+| 5 | LuckyPass — lectura | ✅ Completo |
+| 6 | Purchases — lectura + placeholder create | ⚠️ Parcial |
 | 7 | Packs | ❌ Pendiente |
 | 8 | Payments | ❌ Pendiente |
-| 9 | Prizes + Milestones | ❌ Pendiente |
+| 9 | Frontend ↔ Backend integrado | ✅ Completo |
 | 10 | Draw (Sorteo) | ❌ Pendiente |
 | 11 | Admin | ❌ Pendiente |
 | 12 | Jobs Automáticos | ❌ Pendiente |
@@ -32,7 +32,7 @@ Stack definitivo:
 
 ---
 
-# ✅ Fase 1 — Infraestructura Base
+# Fase 1 — Infraestructura Base
 
 **Estado: Completo**
 
@@ -45,7 +45,7 @@ Proyecto NestJS configurado con:
 
 ---
 
-# ✅ Fase 2 — Modelo de Datos
+# Fase 2 — Modelo de Datos
 
 **Estado: Completo**
 
@@ -87,7 +87,7 @@ idx_lucky_user    — lucky_passes(user_id)
 
 ---
 
-# ✅ Fase 3 — Módulo Auth + Users
+# Fase 3 — Módulo Auth + Users
 
 **Estado: Completo**
 
@@ -149,17 +149,18 @@ Response (register y login):
 
 ---
 
-# ✅ Fase 4 — Módulo Raffles (lectura básica)
+# Fase 4 — Módulo Raffles + Milestones + Prizes (lectura)
 
-**Estado: Básico — solo lectura de la rifa activa**
+**Estado: Completo (lectura)**
 
 Módulo: `/modules/raffles/`
 
 ### Endpoints implementados
 
 ```
-GET /raffles/active           → Retorna la rifa con status='active'
-GET /raffles/active/progress  → Retorna progreso de la rifa activa
+GET /raffles/active           → Retorna la rifa activa con milestones y prizes incluidos
+GET /raffles/active/progress  → Retorna progreso de la rifa activa (packsSold, revenue, %)
+GET /raffles/:id              → Detalle de una rifa por ID
 ```
 
 ### Responses
@@ -172,7 +173,24 @@ GET /raffles/active/progress  → Retorna progreso de la rifa activa
   "description": "...",
   "goalPacks": 5000,
   "status": "active",
-  "createdAt": "timestamp"
+  "createdAt": "timestamp",
+  "milestones": [
+    {
+      "id": "uuid",
+      "name": "Meta 50%",
+      "requiredPacks": 2500,
+      "sortOrder": 1,
+      "isUnlocked": true,
+      "prizes": [
+        {
+          "id": "uuid",
+          "name": "AirPods Pro",
+          "description": "...",
+          "type": "milestone"
+        }
+      ]
+    }
+  ]
 }
 ```
 
@@ -186,16 +204,17 @@ GET /raffles/active/progress  → Retorna progreso de la rifa activa
 }
 ```
 
-### Pendiente en este módulo
+### Notas
 
-- `GET /raffles/active/prizes` — listar premios y milestones
-- `GET /raffles/active/milestones` — estado de desbloqueo
+- **Milestones y prizes se incluyen directamente** en la respuesta de `/raffles/active` — no se necesitan endpoints separados
+- El `repository.findActiveWithProgress()` hace `include: { progress: true, milestones: { include: { prizes: true } } }`
+- `percentageToGoal` de la BD **no se usa en el frontend** — el progreso se calcula dinámicamente: `(packsSold / goalPacks) × 100`
 
 ---
 
-# ✅ Fase 5 — Módulo LuckyPass (lectura básica)
+# Fase 5 — Módulo LuckyPass (lectura)
 
-**Estado: Básico — solo lectura de passes del usuario**
+**Estado: Completo (lectura)**
 
 Módulo: `/modules/lucky-pass/`
 
@@ -244,17 +263,35 @@ cancelled → compra cancelada o fallida
 
 ---
 
-# ❌ Fase 6 — Purchases (flujo real)
+# Fase 6 — Purchases (parcial)
 
-**Estado: Pendiente** (existe placeholder sin lógica de negocio)
+**Estado: Parcial** — lectura funcional, creación placeholder
 
 Módulo: `/modules/purchases/`
 
-> ⚠️ El módulo existe con endpoints, pero actualmente crea compras con `status: 'paid'` directamente sin lógica real.
+### Endpoints implementados
 
-### Lo que debe implementarse
+```
+GET  /purchases/my       → ✅ Historial de compras del usuario (auth requerido)
+POST /purchases          → ⚠️ Crear compra (placeholder — no valida rifa ni crea UserPack)
+```
 
-El flujo completo de una compra:
+### Response actual de `GET /purchases/my`
+
+```json
+[
+  {
+    "id": "uuid",
+    "raffleId": "uuid",
+    "raffleName": "Rifa Macbook",
+    "totalAmount": 20000,
+    "status": "paid",
+    "createdAt": "timestamp"
+  }
+]
+```
+
+### Lo que falta implementar (flujo real)
 
 ```
 1. Validar que raffle.status = 'active'
@@ -266,15 +303,7 @@ El flujo completo de una compra:
 
 La generación de LuckyPasses ocurre **después de confirmar el pago** (Fase 8).
 
-### Endpoints a completar
-
-```
-POST /purchases          → Crear orden de compra (requiere packId + quantity)
-GET  /purchases/my       → Historial de compras del usuario
-GET  /purchases/:id      → Detalle de una compra
-```
-
-### Request final esperado
+### Request final esperado (POST /purchases)
 
 ```json
 {
@@ -290,9 +319,9 @@ La creación de `Purchase` + `UserPack` debe ejecutarse en una transacción Pris
 
 ---
 
-# ❌ Fase 7 — Módulo Packs
+# Fase 7 — Módulo Packs
 
-**Estado: Pendiente** (carpeta no existe aún)
+**Estado: Pendiente**
 
 Módulo a crear: `/modules/packs/`
 
@@ -325,9 +354,9 @@ GET /packs/:id      → Detalle de un pack
 
 ---
 
-# ❌ Fase 8 — Módulo Payments
+# Fase 8 — Módulo Payments
 
-**Estado: Pendiente** (carpeta vacía)
+**Estado: Pendiente**
 
 Módulo: `/modules/payments/`
 
@@ -377,24 +406,68 @@ Usar `UNIQUE(provider_transaction_id)` para prevenir duplicados.
 
 ---
 
-# ❌ Fase 9 — Prizes + Milestones
+# Fase 9 — Frontend ↔ Backend Integración
 
-**Estado: Pendiente** (carpeta vacía)
+**Estado: Completo**
 
-Módulo: `/modules/prizes/`
+Todo el frontend consume datos reales del backend. No quedan mocks de dominio.
 
-### Responsabilidad
+### Integración completada
 
-- Listar premios de una rifa
-- Listar milestones y su estado de desbloqueo
-- Un milestone se desbloquea cuando `raffle_progress.packs_sold >= milestone.required_packs`
+| Página/Sección | Hook | Endpoint(s) |
+|----------------|------|-------------|
+| Landing — pricing | `useActiveRaffle()` | `GET /raffles/active` |
+| Landing — countdown | `useActiveRaffle()` | `GET /raffles/active` |
+| Landing — impact | `useActiveRaffle()` | `GET /raffles/active` + `/progress` |
+| Landing — milestones | `useActiveRaffle()` | `GET /raffles/active` |
+| Header — smile count | `useActiveRaffle()` | `GET /raffles/active/progress` |
+| Dashboard — greeting | `useLuckyPasses()` | `GET /lucky-passes/my/summary` |
+| Dashboard — impact | `useActiveRaffle()` | `GET /raffles/active` + `/progress` |
+| Dashboard — history | `usePurchases()` | `GET /purchases/my` |
+| Dashboard — raffle card | `useActiveRaffle()` | `GET /raffles/active` + `/progress` |
+| Impact — milestones | `useActiveRaffle()` | `GET /raffles/active` |
+| Impact — stats | `useActiveRaffle()` | `GET /raffles/active` + `/progress` |
 
-### Endpoints
+### Lógica de progreso (frontend)
+
+El porcentaje de progreso se calcula **dinámicamente en el frontend**:
+
+```typescript
+const pct = Math.min((packsSold / goalPacks) * 100, 100)
+```
+
+- `packsSold` → de `GET /raffles/active/progress`
+- `goalPacks` → de `GET /raffles/active`
+- No se usa `percentageToGoal` de la BD (valor estático sin actualización automática)
+
+### Lógica de milestones (frontend)
+
+- Se ordenan por `sortOrder`
+- Estado se lee directo de `isUnlocked` del backend
+- El primer milestone con `isUnlocked = false` se marca como `active`
+- Prizes se listan desde los milestones incluidos en la respuesta
+
+### Auth — Token refresh
+
+El frontend implementa auto-refresh de JWT:
 
 ```
-GET /raffles/active/prizes      → Premios de la rifa activa
-GET /raffles/active/milestones  → Milestones y estado de desbloqueo
+Request → 401 → POST /auth/refresh con refreshToken → Retry con nuevo accessToken
 ```
+
+Decorator chain: `FetchHttpClient → AuthDecorator → RefreshDecorator → LoggingDecorator`
+
+Hooks protegidos (`useLuckyPasses`, `usePurchases`) solo disparan fetch si `isAuthenticated = true`.
+
+### Premios — módulo independiente
+
+Los premios y milestones **ya se sirven embebidos** en `GET /raffles/active` (via `include` en Prisma).
+
+Si se necesita un módulo `/prizes/` independiente, sería para:
+
+- Admin CRUD de premios
+- Endpoint público `GET /raffles/active/prizes` separado
+- Lógica de desbloqueo automático de milestones
 
 ### Tipos de premio (`PrizeType`)
 
@@ -405,9 +478,9 @@ flash     → premio especial no asociado a milestone
 
 ---
 
-# ❌ Fase 10 — Draw (Sorteo)
+# Fase 10 — Draw (Sorteo)
 
-**Estado: Pendiente** (carpeta `winners/` vacía)
+**Estado: Pendiente**
 
 Módulo: `/modules/draw/` (o endpoint en admin)
 
@@ -465,9 +538,9 @@ UNIQUE(lucky_pass_id) en prize_winners — un LuckyPass no puede ganar dos premi
 
 ---
 
-# ❌ Fase 11 — Admin
+# Fase 11 — Admin
 
-**Estado: Pendiente** (carpeta vacía)
+**Estado: Pendiente**
 
 Módulo: `/modules/admin/`
 
@@ -501,7 +574,7 @@ PATCH /admin/users/:id/block     → Bloquear usuario
 
 ---
 
-# ❌ Fase 12 — Jobs Automáticos
+# Fase 12 — Jobs Automáticos
 
 **Estado: Pendiente**
 
@@ -537,7 +610,7 @@ WHERE status = 'pending'
 
 ---
 
-# ❌ Fase 13 — Hardening
+# Fase 13 — Hardening
 
 **Estado: Pendiente**
 
@@ -551,7 +624,7 @@ Mejoras finales de producción:
 
 ---
 
-# 🧠 Estrategia de Testing
+# Estrategia de Testing
 
 Flujo completo a probar antes de producción:
 
@@ -563,12 +636,25 @@ register → login → get raffle active → get packs
 
 ---
 
-# 🎯 Próximos pasos inmediatos
+# Próximos pasos inmediatos
 
 En orden de prioridad para completar el MVP:
 
 1. **Fase 7 — Packs**: módulo de lectura de packs (desbloqueador de todo el flujo de compra)
-2. **Fase 6 — Purchases real**: validar rifa + crear UserPack + iniciar pago
-3. **Fase 8 — Payments**: webhook + generación de LuckyPasses
-4. **Fase 9 — Prizes**: endpoint de premios y milestones para el frontend
+2. **Fase 6 — Purchases real**: validar rifa activa + crear UserPack + iniciar pago en transacción
+3. **Fase 8 — Payments**: integrar pasarela Flow + webhook + generación de LuckyPasses post-pago
+4. **Milestone unlock automático**: actualizar `is_unlocked` cuando `packs_sold >= required_packs`
 5. **Fase 10 — Draw**: sorteo para cerrar el ciclo del MVP
+
+### Resumen de lo completado
+
+```
+✅ Infraestructura (NestJS + Prisma + Supabase)
+✅ Modelo de datos completo
+✅ Auth (register, login, refresh, JWT guard)
+✅ Raffles con milestones y prizes (lectura)
+✅ LuckyPass (lectura por usuario)
+✅ Purchases (lectura por usuario)
+✅ Frontend integrado — 0 mocks de dominio
+✅ Token refresh automático
+✅ Progreso dinámico (packsSold / goalPacks)

@@ -1,18 +1,4 @@
-import type { Raffle, PricingTier } from '@/types/domain.types'
-
-export const ACTIVE_RAFFLE: Raffle = {
-  id: 'raffle-001',
-  name: 'MacBook Air M5',
-  description: 'MacBook Air M5 13.6" — Apple Chip M5 de 10 núcleos, 16 GB RAM, 512 GB SSD, macOS. Pantalla Liquid Retina. Nuevo sellado con garantía Apple.',
-  prize: 'MacBook Air M5',
-  prizeImage: '/prize-placeholder.webp',
-  ticketPrice: 2990,
-  totalTickets: 5000,
-  soldCount: 1200,
-  progress: 24,
-  drawDate: '2025-04-06T23:00:00.000Z',
-  isActive: true,
-}
+import type { PricingTier } from '@/types/domain.types'
 
 export const PRICING_TIERS: PricingTier[] = [
   {

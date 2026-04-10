@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
 import { TicketModelViewer } from '../components/ticket-model-viewer'
+import { useActiveRaffle } from '@/hooks/use-raffles'
+import { useLuckyPasses } from '@/hooks/use-lucky-passes'
+import { Spinner } from '@/components/ui/spinner'
 
 interface UserTicket {
   id: string
@@ -12,30 +15,35 @@ interface UserTicket {
   purchasedAt: string
 }
 
-const MOCK_USER_TICKETS: UserTicket[] = [
-  { id: 'tk-1', number: 14582, purchasedAt: '2025-03-18' },
-  { id: 'tk-2', number: 7291, purchasedAt: '2025-03-15' },
-  { id: 'tk-3', number: 22045, purchasedAt: '2025-03-12' },
-  { id: 'tk-4', number: 3, purchasedAt: '2025-03-10' },
-  { id: 'tk-5', number: 29999, purchasedAt: '2025-03-08' },
-  { id: 'tk-6', number: 501, purchasedAt: '2025-03-05' },
-  { id: 'tk-7', number: 18320, purchasedAt: '2025-03-02' },
-  { id: 'tk-8', number: 11111, purchasedAt: '2025-02-28' },
-]
-
-const MOCK_RAFFLE = {
-  id: 'raffle-001',
-  prize: 'MacBook Air M5',
-  drawDate: 'Mañana, 20:00',
-  totalTickets: 5000,
-}
-
 export default function RaffleDetailPage() {
   const { id } = useParams<{ id: string }>()
   const user = useAuthStore((s) => s.user)
-  const [selectedTicket, setSelectedTicket] = useState<UserTicket>(MOCK_USER_TICKETS[0])
+  const { raffle, isLoading: isLoadingRaffle } = useActiveRaffle()
+  const { passes, isLoading: isLoadingPasses } = useLuckyPasses()
+  const [selectedTicket, setSelectedTicket] = useState<UserTicket | null>(null)
 
   if (!user) return null
+
+  const isLoading = isLoadingRaffle || isLoadingPasses
+
+  const userTickets: UserTicket[] = passes.map((lp) => ({
+    id: lp.id,
+    number: lp.ticketNumber,
+    purchasedAt: lp.createdAt,
+  }))
+
+  const activeTicket = selectedTicket ?? userTickets[0] ?? null
+  const raffleId = id ?? raffle?.id
+  const raffleTitle = raffle?.title ?? 'Premio por confirmar'
+  const goalPacks = raffle?.goalPacks ?? 0
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-24">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
 
   return (
     <div className="px-4 md:px-8 py-8 md:py-12">
@@ -54,21 +62,21 @@ export default function RaffleDetailPage() {
           <div>
             <Badge variant="gradient" className="mb-3">Premium Entry</Badge>
             <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">
-              LuckyPass {MOCK_RAFFLE.prize}
+              LuckyPass {raffleTitle}
             </h1>
             <div className="flex items-center gap-4 mt-2 text-sm text-text-secondary">
               <span className="flex items-center gap-1">
                 <Calendar className="size-3.5" />
-                Sorteo: {MOCK_RAFFLE.drawDate}
+                Sorteo: Próximamente
               </span>
               <span className="flex items-center gap-1">
                 <Hash className="size-3.5" />
-                {MOCK_RAFFLE.totalTickets.toLocaleString('es-CL')} LuckyPass totales
+                {goalPacks.toLocaleString('es-CL')} LuckyPass totales
               </span>
             </div>
           </div>
 
-          <Link to={`/checkout?raffle=${id ?? MOCK_RAFFLE.id}&tickets=1`}>
+          <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
             <Button variant="primary" size="lg">
               <ShoppingCart className="size-4" />
               Activar otro LuckyPass
@@ -80,19 +88,33 @@ export default function RaffleDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8">
           {/* 3D Viewer */}
           <div className="glass-medium rounded-2xl p-6 overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-text-primary">
-                Tu LuckyPass <span className="text-primary">#{String(selectedTicket.number).padStart(5, '0')}</span>
-              </h2>
-              <Badge variant="outline-primary">Rifa {id ?? MOCK_RAFFLE.id}</Badge>
-            </div>
+            {activeTicket ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-text-primary">
+                    Tu LuckyPass <span className="text-primary">#{String(activeTicket.number).padStart(5, '0')}</span>
+                  </h2>
+                  <Badge variant="outline-primary">Rifa {raffleId}</Badge>
+                </div>
 
-            <TicketModelViewer ticketNumber={selectedTicket.number} />
+                <TicketModelViewer ticketNumber={activeTicket.number} />
 
-            <p className="flex items-center justify-center gap-1.5 text-xs text-text-tertiary mt-3 opacity-60">
-              <Hand className="size-3.5" />
-              Arrastra para girar tu LuckyPass
-            </p>
+                <p className="flex items-center justify-center gap-1.5 text-xs text-text-tertiary mt-3 opacity-60">
+                  <Hand className="size-3.5" />
+                  Arrastra para girar tu LuckyPass
+                </p>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-text-secondary mb-4">Aún no tienes LuckyPass para esta rifa</p>
+                <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
+                  <Button variant="primary" size="lg">
+                    <ShoppingCart className="size-4" />
+                    Activar tu primer LuckyPass
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Ticket list sidebar */}
@@ -101,46 +123,52 @@ export default function RaffleDetailPage() {
               Mis LuckyPass
             </h3>
             <p className="text-xs text-text-tertiary mb-4">
-              {MOCK_USER_TICKETS.length} LuckyPass activados
+              {userTickets.length} LuckyPass activados
             </p>
 
-            <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-1">
-              {MOCK_USER_TICKETS.map((ticket) => {
-                const isActive = ticket.id === selectedTicket.id
-                return (
-                  <button
-                    key={ticket.id}
-                    onClick={() => setSelectedTicket(ticket)}
-                    className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-left transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-primary/10 border border-primary/30 shadow-sm'
-                        : 'hover:bg-bg-purple-soft/50 border border-transparent'
-                    }`}
-                  >
-                    <div>
-                      <span className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-text-primary'}`}>
-                        #{String(ticket.number).padStart(5, '0')}
-                      </span>
-                      <span className="block text-[10px] text-text-tertiary mt-0.5">
-                        {new Date(ticket.purchasedAt).toLocaleDateString('es-CL', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                    {isActive && (
-                      <Badge variant="gradient" className="text-[10px] px-2 py-0.5">
-                        Viendo
-                      </Badge>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+            {userTickets.length > 0 ? (
+              <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-1">
+                {userTickets.map((ticket) => {
+                  const isActive = ticket.id === activeTicket?.id
+                  return (
+                    <button
+                      key={ticket.id}
+                      onClick={() => setSelectedTicket(ticket)}
+                      className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-left transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-primary/10 border border-primary/30 shadow-sm'
+                          : 'hover:bg-bg-purple-soft/50 border border-transparent'
+                      }`}
+                    >
+                      <div>
+                        <span className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-text-primary'}`}>
+                          #{String(ticket.number).padStart(5, '0')}
+                        </span>
+                        <span className="block text-[10px] text-text-tertiary mt-0.5">
+                          {new Date(ticket.purchasedAt).toLocaleDateString('es-CL', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                      {isActive && (
+                        <Badge variant="gradient" className="text-[10px] px-2 py-0.5">
+                          Viendo
+                        </Badge>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-text-tertiary text-center py-8">
+                Sin LuckyPass aún
+              </p>
+            )}
 
             <div className="mt-4 pt-4 border-t border-border-light">
-              <Link to={`/checkout?raffle=${id ?? MOCK_RAFFLE.id}&tickets=1`}>
+              <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
                 <Button variant="secondary" size="md" className="w-full">
                   <ShoppingCart className="size-4" />
                   Activar más LuckyPass

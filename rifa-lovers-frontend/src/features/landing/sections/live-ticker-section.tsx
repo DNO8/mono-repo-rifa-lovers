@@ -1,7 +1,17 @@
 import { useEffect, useRef } from 'react'
 import { Ticket, Zap } from 'lucide-react'
-import { LIVE_ACTIVITIES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+
+// TODO: Replace with real-time feed from backend when available
+interface LiveActivity {
+  id: string
+  name: string
+  action: string
+  ticketCount: number
+  timeAgo: string
+  city: string
+}
+const LIVE_ACTIVITIES: LiveActivity[] = []
 
 function TickerItem({ name, action, ticketCount, timeAgo, city }: {
   name: string

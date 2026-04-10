@@ -5,7 +5,7 @@ export interface CollectiveImpact {
   progress: number
   nextGoal: string
   remaining: number
-  milestones: { label: string; status: 'done' | 'active' | 'pending'; icon: 'check' | 'circle' | 'home' }[]
+  milestones: { id: string; label: string; status: 'done' | 'active' | 'pending'; icon: 'check' | 'circle' | 'home' }[]
 }
 
 const ICON_MAP = {
@@ -39,7 +39,7 @@ export function DashboardImpactSection({ impact }: { impact: CollectiveImpact })
           const Icon = ICON_MAP[m.icon]
           return (
             <div
-              key={m.label}
+              key={m.id}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${STATUS_COLORS[m.status]}`}
             >
               <Icon className="size-3.5" />

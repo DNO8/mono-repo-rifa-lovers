@@ -165,7 +165,10 @@ export interface Hotspot {
   id: string
   label: string
   spec: string
+  description?: string
   position: [number, number, number]
+  cameraPosition: [number, number, number]
+  cameraTarget: [number, number, number]
   side: 'left' | 'right'
   icon: import('./ui.types').LucideIconComponent
   color: string

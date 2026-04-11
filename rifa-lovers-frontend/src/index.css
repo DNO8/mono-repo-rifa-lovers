@@ -1,18 +1,5 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Grand Hotel';
-  src: url('/fonts/Grand_Hotel/GrandHotel-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Stout Deco';
-  src: url('/fonts/stout_deco/StoutDeco.ttf') format('truetype');
-  font-weight: 400;
-  font-display: swap;
-}
 
 /* ═══════════════════════════════════════════════════════════════
    RifaLovers — Design Tokens (Tailwind v4)
@@ -73,7 +60,6 @@
 
   /* ─── Font ─── */
   --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
-  --font-brand: 'Stout Deco', 'Grand Hotel', cursive;
 
   /* ─── Animation ─── */
   --duration-fast: 150ms;

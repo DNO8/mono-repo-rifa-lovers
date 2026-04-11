@@ -14,10 +14,10 @@ export function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-3">
-              <img src="/images/logos/logo-color.webp" alt="RifaLovers" className="h-7 w-auto" />
-              <span className="font-extrabold text-lg gradient-text" style={{ fontFamily: 'var(--font-brand)' }}>Rifa Lovers</span>
+              <img src="/images/logos/logo-v2.webp" alt="RifaLovers" className="h-7 w-auto" />
+              <span className="text-lg gradient-text leading-none" style={{ fontFamily: 'Montserrat, sans-serif' }}><span className="font-bold">Rifa</span><span className="font-semibold"> Lovers</span></span>
             </Link>
-            <p className="text-sm text-text-secondary max-w-xs">
+            <p className="text-sm text-text-secondary max-w-xs" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400 }}>
               Tu suerte crea impacto real. Participa, gana y transforma vidas.
             </p>
           </div>

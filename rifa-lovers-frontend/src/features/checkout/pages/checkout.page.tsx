@@ -6,8 +6,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PRICING_TIERS } from '@/lib/constants'
-import { apiClient } from '@/api/client'
-import { ENDPOINTS } from '@/api/endpoints'
+import { createPurchase } from '@/api/purchases.api'
+import { initiatePayment } from '@/api/payments.api'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { Spinner } from '@/components/ui/spinner'
 import { OrderSummary } from '../components/order-summary'
@@ -49,17 +49,28 @@ export default function CheckoutPage() {
     if (!raffle) return
     setIsProcessing(true)
     try {
-      await apiClient.post(ENDPOINTS.checkout.createOrder, {
+      // 1. Crear la compra
+      const purchase = await createPurchase({
         raffleId: raffle.id,
-        ticketCount,
-        selectedNumber,
+        packId: tier.packId,
+        quantity: tier.tickets,
+        selectedNumber: selectedNumber || undefined,
       })
-      setIsComplete(true)
-      toast.success('¡Compra exitosa!')
+      console.log('Purchase created:', purchase)
+
+      // 2. Iniciar el pago con Flow
+      toast.info('Iniciando pago seguro con Flow...')
+      const payment = await initiatePayment({
+        purchaseId: purchase.id,
+      })
+      console.log('Payment initiated:', payment)
+
+      // 3. Redirigir a Flow
+      toast.success('Redirigiendo a plataforma de pago...')
+      window.location.href = payment.paymentUrl
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al procesar la compra'
       toast.error(message)
-    } finally {
       setIsProcessing(false)
     }
   }

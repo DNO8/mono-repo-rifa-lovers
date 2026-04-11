@@ -46,14 +46,14 @@ function buildImpact(raffle: Raffle | null, progress: RaffleProgress | null): Co
 }
 
 // Helper to map purchase status to display status
-const mapStatus = (status: string): 'finalizado' | 'activo' | 'bloqueado' => {
+const mapStatus = (status: string): 'confirmado' | 'pendiente' | 'fallido' => {
   switch (status) {
     case 'paid':
-      return 'finalizado'
+      return 'confirmado'
     case 'pending':
-      return 'activo'
+      return 'pendiente'
     default:
-      return 'bloqueado'
+      return 'fallido'
   }
 }
 

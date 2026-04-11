@@ -1,11 +1,20 @@
-import { IsUUID, IsNumber, IsNotEmpty } from 'class-validator'
+import { IsUUID, IsNumber, IsNotEmpty, IsOptional, Min } from 'class-validator'
 
 export class CreatePurchaseDto {
   @IsUUID()
   @IsNotEmpty()
   raffleId: string
 
-  @IsNumber()
+  @IsUUID()
   @IsNotEmpty()
-  totalAmount: number
+  packId: string
+
+  @IsNumber()
+  @Min(1)
+  @IsNotEmpty()
+  quantity: number
+
+  @IsNumber()
+  @IsOptional()
+  selectedNumber?: number
 }

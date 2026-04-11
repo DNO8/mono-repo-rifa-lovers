@@ -133,4 +133,68 @@ export class PurchasesRepository {
     })
     return result._sum.totalAmount?.toNumber() || 0
   }
+
+  async createFullPurchase(data: {
+    userId: string
+    raffleId: string
+    packId: string
+    quantity: number
+    totalAmount: number
+    selectedNumber?: number
+    pack: { name: string | null; price: { toNumber(): number } | null; luckyPassQuantity: number }
+  }): Promise<{ purchase: Purchase }> {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Crear Purchase
+      const purchase = await tx.purchase.create({
+        data: {
+          user: { connect: { id: data.userId } },
+          raffle: { connect: { id: data.raffleId } },
+          totalAmount: data.totalAmount,
+          status: 'pending',
+        },
+      })
+
+      // 2. Crear UserPack
+      await tx.userPack.create({
+        data: {
+          user: { connect: { id: data.userId } },
+          raffle: { connect: { id: data.raffleId } },
+          pack: { connect: { id: data.packId } },
+          purchase: { connect: { id: purchase.id } },
+          quantity: data.quantity,
+          totalPaid: data.totalAmount,
+        },
+      })
+
+      // 3. Crear PaymentTransaction (inicialmente status: 'created')
+      await tx.paymentTransaction.create({
+        data: {
+          purchase: { connect: { id: purchase.id } },
+          provider: 'flow',
+          amount: data.totalAmount,
+          status: 'created',
+        },
+      })
+
+      return { purchase }
+    })
+  }
+
+  async updatePaymentTransaction(
+    purchaseId: string,
+    data: {
+      providerTransactionId?: string
+      status?: string
+      paidAt?: Date
+    },
+  ): Promise<void> {
+    await this.prisma.paymentTransaction.updateMany({
+      where: { purchaseId },
+      data: {
+        ...(data.providerTransactionId && { providerTransactionId: data.providerTransactionId }),
+        ...(data.status && { status: data.status as any }),
+        ...(data.paidAt && { createdAt: data.paidAt }), // Nota: el modelo no tiene paidAt, usamos createdAt o agregamos el campo
+      },
+    })
+  }
 }

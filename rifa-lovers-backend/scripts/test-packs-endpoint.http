@@ -1,0 +1,7 @@
+### Test de Endpoints Packs - Fase 7
+
+### Listar todos los packs
+GET http://localhost:3000/packs
+
+### Obtener un pack específico (Pack Popular)
+GET http://localhost:3000/packs/eb473bad-83c1-42b5-a13d-9f803a6b7ea3

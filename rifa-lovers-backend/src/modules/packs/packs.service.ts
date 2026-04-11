@@ -1,0 +1,48 @@
+import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { PacksRepository } from './packs.repository'
+import { PackResponseDto } from './dto/pack-response.dto'
+import { Pack } from '@prisma/client'
+
+@Injectable()
+export class PacksService {
+  private readonly logger = new Logger(PacksService.name)
+
+  constructor(private readonly packsRepository: PacksRepository) {}
+
+  async findAll(): Promise<PackResponseDto[]> {
+    this.logger.debug('Buscando todos los packs')
+
+    const packs = await this.packsRepository.findMany(
+      { isPreSale: false }, // Solo packs activos (no pre-sale)
+      { price: 'asc' }, // Ordenar por precio
+    )
+
+    this.logger.debug(`Encontrados ${packs.length} packs`)
+    return packs.map((pack) => this.mapToResponseDto(pack))
+  }
+
+  async findById(id: string): Promise<PackResponseDto> {
+    this.logger.debug(`Buscando pack por ID: ${id}`)
+
+    const pack = await this.packsRepository.findUnique({ id })
+
+    if (!pack) {
+      this.logger.warn(`Pack no encontrado: ${id}`)
+      throw new NotFoundException(`Pack con ID ${id} no encontrado`)
+    }
+
+    return this.mapToResponseDto(pack)
+  }
+
+  private mapToResponseDto(pack: Pack): PackResponseDto {
+    return {
+      id: pack.id,
+      name: pack.name,
+      price: pack.price?.toNumber() || 0,
+      luckyPassQuantity: pack.luckyPassQuantity,
+      isFeatured: pack.isFeatured,
+      isPreSale: pack.isPreSale,
+      createdAt: pack.createdAt.toISOString(),
+    }
+  }
+}

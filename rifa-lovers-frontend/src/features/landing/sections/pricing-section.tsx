@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router'
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkles, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PRICING_TIERS } from '@/lib/constants'
 import { useActiveRaffle } from '@/hooks/use-raffles'
+import { usePacks } from '@/hooks/use-packs'
 import { useAuthStore } from '@/stores/auth.store'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
+import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
 import { cn } from '@/lib/utils'
 
 export function PricingSection() {
@@ -14,6 +15,10 @@ export function PricingSection() {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { raffle } = useActiveRaffle()
+  const { packs, isLoading, error } = usePacks()
+
+  // Mapear packs de API a PricingTiers
+  const pricingTiers = packs.length > 0 ? mapPacksToPricingTiers(packs) : []
 
   const handleSelect = (tickets: number) => {
     const raffleId = raffle?.id ?? ''
@@ -42,9 +47,24 @@ export function PricingSection() {
           </h2>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="size-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12 text-text-secondary">
+            Error al cargar los packs. Intenta recargar la página.
+          </div>
+        )}
+
         {/* Pricing Cards */}
+        {!isLoading && !error && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
-          {PRICING_TIERS.map((tier) => (
+          {pricingTiers.map((tier) => (
             <Card
               key={tier.id}
               variant={tier.popular ? 'glass' : 'glass-light'}
@@ -109,6 +129,7 @@ export function PricingSection() {
             </Card>
           ))}
         </div>
+        )}
       </div>
     </section>
   )

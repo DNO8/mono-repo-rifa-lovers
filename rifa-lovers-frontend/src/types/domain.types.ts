@@ -24,6 +24,27 @@ export interface Purchase {
   createdAt: string
 }
 
+export interface CreatePurchaseRequest {
+  raffleId: string
+  packId: string
+  quantity: number
+  selectedNumber?: number
+}
+
+export interface CreatePurchaseResponse {
+  id: string
+  raffleId: string
+  raffleName: string
+  totalAmount: number
+  status: string
+  createdAt: string
+  flowOrderId?: string
+  paymentUrl?: string
+  packName: string
+  quantity: number
+  unitPrice: number
+}
+
 export interface RaffleProgress {
   raffleId: string
   packsSold: number
@@ -68,8 +89,20 @@ export interface Milestone {
   icon: string
 }
 
+// Tipo Pack desde el backend API
+export interface Pack {
+  id: string
+  name: string | null
+  price: number
+  luckyPassQuantity: number
+  isFeatured: boolean
+  isPreSale: boolean
+  createdAt: string
+}
+
 export interface PricingTier {
   id: string
+  packId: string  // UUID del pack en el backend
   name: string
   tickets: number
   price: number

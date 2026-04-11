@@ -1,0 +1,36 @@
+### Test de Flujo de Compras - Fase 6
+### Requiere extensión "REST Client" de VS Code
+
+### Paso 1: Login (obtener token)
+### Nota: Actualiza con tu email y password reales
+# @name login
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Paso 2: Crear Compra
+### Usa el token del paso anterior
+POST http://localhost:3000/purchases
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+
+{
+  "raffleId": "c2a8d479-4b52-4024-9a8c-7c20979ab768",
+  "packId": "eb473bad-83c1-42b5-a13d-9f803a6b7ea3",
+  "quantity": 2,
+  "selectedNumber": 1234
+}
+
+### Paso 3: Verificar compras del usuario
+GET http://localhost:3000/purchases/my
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Paso 4: Ver rifa activa (con milestones)
+GET http://localhost:3000/raffles/active
+
+### Paso 5: Ver packs disponibles
+GET http://localhost:3000/packs

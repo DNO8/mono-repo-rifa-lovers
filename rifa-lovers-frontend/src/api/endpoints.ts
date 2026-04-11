@@ -8,6 +8,7 @@ export const ENDPOINTS = {
   },
   purchases: {
     my: '/purchases/my',
+    create: '/purchases',
   },
   luckyPasses: {
     my: '/lucky-passes/my',
@@ -17,6 +18,13 @@ export const ENDPOINTS = {
     active: '/raffles/active',
     activeProgress: '/raffles/active/progress',
     detail: (id: string) => `/raffles/${id}`,
+  },
+  packs: {
+    list: '/packs',
+    detail: (id: string) => `/packs/${id}`,
+  },
+  payments: {
+    initiate: '/payments/initiate',
   },
   checkout: {
     createOrder: '/checkout/create-order',

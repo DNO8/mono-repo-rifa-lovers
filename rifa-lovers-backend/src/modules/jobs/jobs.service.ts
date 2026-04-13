@@ -19,9 +19,9 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       })
     )
     
-    // Auto CLOSED - cada 5 minutos
+    // Auto CLOSED - cada 5 minutos, con 2 min de offset para evitar conflictos con SOLD_OUT
     this.tasks.push(
-      cron.schedule('*/5 * * * *', () => {
+      cron.schedule('2-59/5 * * * *', () => {
         this.autoClosed()
       })
     )

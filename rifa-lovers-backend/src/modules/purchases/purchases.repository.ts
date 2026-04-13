@@ -193,7 +193,7 @@ export class PurchasesRepository {
       data: {
         ...(data.providerTransactionId && { providerTransactionId: data.providerTransactionId }),
         ...(data.status && { status: data.status as any }),
-        ...(data.paidAt && { createdAt: data.paidAt }), // Nota: el modelo no tiene paidAt, usamos createdAt o agregamos el campo
+        ...(data.paidAt && { updatedAt: data.paidAt }), // Usamos updatedAt para registrar cuando se pagó
       },
     })
   }

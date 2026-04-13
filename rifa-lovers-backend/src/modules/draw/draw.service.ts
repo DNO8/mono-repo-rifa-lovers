@@ -98,80 +98,84 @@ export class DrawService {
 
     this.logger.log(`${activePasses.length} LuckyPasses activos participando`)
 
-    // 5. Ejecutar sorteo para cada premio
-    const winners: DrawResult['winners'] = []
-    const usedPassIds = new Set<string>()
+    // 5. Ejecutar sorteo para cada premio (dentro de transacción para garantizar consistencia)
+    const winners = await this.prisma.$transaction(async (tx) => {
+      const drawWinners: DrawResult['winners'] = []
+      const usedPassIds = new Set<string>()
 
-    // Mezclar array de passes de forma aleatoria (Fisher-Yates)
-    const shuffledPasses = [...activePasses]
-    for (let i = shuffledPasses.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[shuffledPasses[i], shuffledPasses[j]] = [shuffledPasses[j], shuffledPasses[i]]
-    }
+      // Mezclar array de passes de forma aleatoria (Fisher-Yates)
+      const shuffledPasses = [...activePasses]
+      for (let i = shuffledPasses.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[shuffledPasses[i], shuffledPasses[j]] = [shuffledPasses[j], shuffledPasses[i]]
+      }
 
-    let passIndex = 0
+      let passIndex = 0
 
-    for (const prize of prizes) {
-      // Buscar siguiente pass disponible
-      while (passIndex < shuffledPasses.length && usedPassIds.has(shuffledPasses[passIndex].id)) {
+      for (const prize of prizes) {
+        // Buscar siguiente pass disponible
+        while (passIndex < shuffledPasses.length && usedPassIds.has(shuffledPasses[passIndex].id)) {
+          passIndex++
+        }
+
+        if (passIndex >= shuffledPasses.length) {
+          this.logger.warn(`No hay suficientes LuckyPasses para todos los premios`)
+          break
+        }
+
+        const winnerPass = shuffledPasses[passIndex]
+        usedPassIds.add(winnerPass.id)
+
+        // Crear registro de ganador
+        await tx.prizeWinner.create({
+          data: {
+            prizeId: prize.id,
+            luckyPassId: winnerPass.id,
+            userId: winnerPass.userId,
+          },
+        })
+
+        // Marcar LuckyPass como ganador
+        await tx.luckyPass.update({
+          where: { id: winnerPass.id },
+          data: {
+            status: 'winner',
+            isWinner: true,
+          },
+        })
+
+        const userFullName = winnerPass.user?.firstName && winnerPass.user?.lastName 
+          ? `${winnerPass.user.firstName} ${winnerPass.user.lastName}`
+          : winnerPass.user?.firstName || winnerPass.user?.lastName || null
+
+        drawWinners.push({
+          prizeId: prize.id,
+          prizeName: prize.name || 'Premio sin nombre',
+          prizeDescription: prize.description,
+          luckyPassId: winnerPass.id,
+          passNumber: winnerPass.ticketNumber ?? 0,
+          userId: winnerPass.userId ?? '',
+          userName: userFullName,
+          userEmail: winnerPass.user?.email ?? null,
+        })
+
+        this.logger.log(`Ganador asignado: Prize=${prize.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email}`)
+
         passIndex++
       }
 
-      if (passIndex >= shuffledPasses.length) {
-        this.logger.warn(`No hay suficientes LuckyPasses para todos los premios`)
-        break
-      }
-
-      const winnerPass = shuffledPasses[passIndex]
-      usedPassIds.add(winnerPass.id)
-
-      // Crear registro de ganador
-      await this.prisma.prizeWinner.create({
+      // 6. Actualizar estado de la rifa a 'drawn'
+      await tx.raffle.update({
+        where: { id: raffleId },
         data: {
-          prizeId: prize.id,
-          luckyPassId: winnerPass.id,
-          userId: winnerPass.userId,
+          status: 'drawn',
         },
       })
 
-      // Marcar LuckyPass como ganador
-      await this.prisma.luckyPass.update({
-        where: { id: winnerPass.id },
-        data: {
-          status: 'winner',
-          isWinner: true,
-        },
-      })
+      this.logger.log(`Sorteo completado para rifa ${raffleId}. ${drawWinners.length} ganadores.`)
 
-      const userFullName = winnerPass.user?.firstName && winnerPass.user?.lastName 
-        ? `${winnerPass.user.firstName} ${winnerPass.user.lastName}`
-        : winnerPass.user?.firstName || winnerPass.user?.lastName || null
-
-      winners.push({
-        prizeId: prize.id,
-        prizeName: prize.name || 'Premio sin nombre',
-        prizeDescription: prize.description,
-        luckyPassId: winnerPass.id,
-        passNumber: winnerPass.ticketNumber ?? 0,
-        userId: winnerPass.userId ?? '',
-        userName: userFullName,
-        userEmail: winnerPass.user?.email ?? null,
-      })
-
-      this.logger.log(`Ganador asignado: Prize=${prize.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email}`)
-
-      passIndex++
-    }
-
-    // 6. Actualizar estado de la rifa a 'drawn'
-    await this.prisma.raffle.update({
-      where: { id: raffleId },
-      data: {
-        status: 'drawn',
-      },
+      return drawWinners
     })
-
-    this.logger.log(`Sorteo completado para rifa ${raffleId}. ${winners.length} ganadores.`)
 
     return {
       raffleId,

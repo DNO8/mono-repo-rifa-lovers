@@ -28,6 +28,36 @@ export class ApiError extends Error {
     super(`API ${status}: ${statusText}`)
     this.name = 'ApiError'
   }
+  
+  /**
+   * Verifica si es error de rate limiting (429)
+   */
+  isRateLimit(): boolean {
+    return this.status === 429
+  }
+  
+  /**
+   * Verifica si es error de autenticación (401)
+   */
+  isAuthError(): boolean {
+    return this.status === 401
+  }
+  
+  /**
+   * Obtiene mensaje amigable según el tipo de error
+   */
+  getUserMessage(): string {
+    if (this.isRateLimit()) {
+      return 'Has realizado demasiadas peticiones. Por favor espera un momento.'
+    }
+    if (this.isAuthError()) {
+      return 'Sesión expirada. Por favor inicia sesión nuevamente.'
+    }
+    if (this.status >= 500) {
+      return 'Error del servidor. Por favor intenta más tarde.'
+    }
+    return (this.body as any)?.message || 'Ha ocurrido un error. Intenta nuevamente.'
+  }
 }
 
 export class FetchHttpClient implements HttpClient {

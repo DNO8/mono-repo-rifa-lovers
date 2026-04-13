@@ -1,17 +1,57 @@
-import { ChevronLeft, ChevronRight, Trophy, Calendar } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trophy, Calendar, Ticket, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { Spinner } from '@/components/ui/spinner'
 import { WINNERS } from '@/lib/constants'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { useCarousel } from '@/hooks/use-carousel'
+import { useDrawResults } from '@/hooks/use-draw'
+import { useActiveRaffle } from '@/hooks/use-raffles'
 import { SplitText } from '@/components/shared/split-text'
 import { cn } from '@/lib/utils'
 
+// Fallback winner type for static data
+interface StaticWinner {
+  id: string
+  prize: string
+  prizeEmoji: string
+  raffleName: string
+  name: string
+  avatar: string
+  date: string
+}
+
+// Transform API draw results to winner format
+function transformDrawResults(results: ReturnType<typeof useDrawResults>['results']) {
+  if (!results?.winners?.length) return null
+  
+  return results.winners.map((winner, index) => ({
+    id: winner.luckyPassId || `winner-${index}`,
+    prize: winner.prizeName,
+    prizeEmoji: '🏆',
+    raffleName: `LuckyPass #${winner.passNumber}`,
+    name: winner.userName || winner.userEmail?.split('@')[0] || 'Ganador',
+    avatar: winner.userName?.[0]?.toUpperCase() || '👤',
+    date: new Date(results.drawnAt).toLocaleDateString('es-CL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }),
+  }))
+}
+
 export function WinnersSection() {
   const sectionRef = useGsapScroll<HTMLElement>()
+  const { raffle } = useActiveRaffle()
+  const { results, isLoading, hasDrawn } = useDrawResults(raffle?.id)
+  
+  // Use API results if available, otherwise fall back to static data
+  const displayWinners: StaticWinner[] = transformDrawResults(results) || WINNERS
+  const isRealDraw = !!results?.winners?.length
+  
   const {
     trackRef, current, setIsPaused, snapTo, goNext, goPrev, dragHandlers,
-  } = useCarousel({ total: WINNERS.length, autoAdvanceMs: 4000 })
+  } = useCarousel({ total: displayWinners.length, autoAdvanceMs: 4000 })
 
   return (
     <section
@@ -47,8 +87,13 @@ export function WinnersSection() {
           className="relative overflow-hidden cursor-grab active:cursor-grabbing"
           {...dragHandlers}
         >
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Spinner size="lg" />
+            </div>
+          ) : (
           <div ref={trackRef} className="flex gap-5 will-change-transform">
-            {WINNERS.map((winner, i) => (
+            {displayWinners.map((winner, i) => (
               <Card
                 key={winner.id}
                 variant="glass"
@@ -66,21 +111,45 @@ export function WinnersSection() {
 
                 {/* Winner info */}
                 <div className="flex items-center justify-center gap-2 text-sm">
-                  <span className="text-2xl">{winner.avatar}</span>
-                  <div>
-                    <span className="font-semibold text-text-primary block">{winner.name}</span>
-                    <span className="text-xs text-text-tertiary flex items-center gap-1">
-                      <Calendar className="size-3" />
-                      {winner.date}
-                    </span>
-                  </div>
+                  {isRealDraw ? (
+                    <div className="flex items-center gap-2 bg-success/10 text-success px-3 py-1.5 rounded-full">
+                      <User className="size-4" />
+                      <span className="font-medium">{winner.name}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-2xl">{winner.avatar}</span>
+                      <div>
+                        <span className="font-semibold text-text-primary block">{winner.name}</span>
+                        <span className="text-xs text-text-tertiary flex items-center gap-1">
+                          <Calendar className="size-3" />
+                          {winner.date}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </Card>
             ))}
           </div>
+          )}
         </div>
 
+        {/* Real draw indicator */}
+        {isRealDraw && !isLoading && (
+          <div className="text-center mt-4">
+            <Badge variant="success" className="gap-1">
+              <Ticket className="size-3" />
+              Resultados oficiales del sorteo
+            </Badge>
+            <p className="text-xs text-text-tertiary mt-1">
+              Realizado el {new Date(results?.drawnAt || '').toLocaleString('es-CL')}
+            </p>
+          </div>
+        )}
+
         {/* Navigation */}
+        {!isLoading && (
         <div className="flex items-center justify-center gap-4 mt-8">
           <button
             onClick={goPrev}
@@ -92,7 +161,7 @@ export function WinnersSection() {
 
           {/* Dots */}
           <div className="flex gap-2">
-            {WINNERS.map((_, i) => (
+            {displayWinners.map((_, i) => (
               <button
                 key={i}
                 onClick={() => snapTo(i)}
@@ -113,6 +182,7 @@ export function WinnersSection() {
             <ChevronRight className="size-5" />
           </button>
         </div>
+        )}
       </div>
     </section>
   )

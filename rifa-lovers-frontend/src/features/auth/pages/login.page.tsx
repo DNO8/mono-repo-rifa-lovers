@@ -29,8 +29,8 @@ export default function LoginPage() {
       <Card variant="glass" className="w-full max-w-md p-8 md:p-10">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <img src="/images/logos/logo-color.webp" alt="RifaLovers" className="h-8 w-auto" />
-            <span className="font-extrabold text-xl gradient-text" style={{ fontFamily: 'var(--font-brand)' }}>Rifa Lovers</span>
+            <img src="/images/logos/logo-v2.webp" alt="RifaLovers" className="h-8 w-auto" />
+            <span className="text-xl gradient-text leading-none" style={{ fontFamily: 'Montserrat, sans-serif' }}><span className="font-bold">Rifa</span><span className="font-semibold"> Lovers</span></span>
           </Link>
           <h1 className="text-2xl font-extrabold text-text-primary tracking-tight">
             Inicia sesión

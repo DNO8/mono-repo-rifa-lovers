@@ -1,42 +1,54 @@
-import { useState, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { Html } from '@react-three/drei'
-import { Cpu, MemoryStick, HardDrive, Monitor, BatteryFull } from 'lucide-react'
-import { useMediaQuery } from '@/hooks/use-media-query'
+import * as THREE from 'three'
+import { Cpu, MemoryStick, HardDrive, Monitor, BatteryFull, Usb, Zap, Camera, X } from 'lucide-react'
 import type { Hotspot } from '@/types/domain.types'
 
 const HOTSPOTS: Hotspot[] = [
   {
     id: 'chip',
-    label: 'Procesador',
-    spec: 'Apple M5 – 10 núcleos',
-    position: [0, -0.5, -0.2],
+    label: 'Chip Apple M5',
+    spec: 'CPU 10 núcleos · GPU 10 núcleos',
+    description: 'Rendimiento ultrarrápido para multitasking, edición de video 4K y apps de IA. Neural Engine de 16 núcleos.',
+    position: [0.05, -0.05, 0.15],
+    cameraPosition: [1.2, 0.6, 2.5],
+    cameraTarget: [0.05, -0.05, 0.15],
     side: 'right',
     icon: Cpu,
     color: '#7B3FE4',
   },
   {
     id: 'ram',
-    label: 'RAM',
-    spec: '16 GB Unificada',
-    position: [0.3, 0.1, 0],
+    label: 'Memoria Unificada',
+    spec: '16 GB RAM',
+    description: 'Memoria compartida entre CPU, GPU y Neural Engine para un rendimiento fluido en todas las tareas.',
+    position: [0.25, -0.1, 0.3],
+    cameraPosition: [1.5, 0.5, 2.5],
+    cameraTarget: [0.25, -0.1, 0.3],
     side: 'right',
     icon: MemoryStick,
     color: '#FF4DA6',
   },
   {
     id: 'storage',
-    label: 'SSD',
+    label: 'Almacenamiento SSD',
     spec: '512 GB SSD',
-    position: [-0.3, 0.05, 0.5],
+    description: 'Almacenamiento ultrarrápido para cargar apps y transferir archivos en segundos.',
+    position: [-0.3, -0.08, 0.4],
+    cameraPosition: [-1.2, 0.5, 2.5],
+    cameraTarget: [-0.3, -0.08, 0.4],
     side: 'left',
     icon: HardDrive,
     color: '#FF8A3D',
   },
   {
     id: 'display',
-    label: 'Pantalla',
-    spec: '13.6" Liquid Retina',
-    position: [0, 0.8, 0.6],
+    label: 'Pantalla Liquid Retina',
+    spec: '13.6" · 1.000 millones de colores',
+    description: 'Resolución impresionante con textos nítidos, colores vibrantes y soporte P3 wide color.',
+    position: [0, 0.5, 0.4],
+    cameraPosition: [0.8, 1.2, 3],
+    cameraTarget: [0, 0.5, 0.4],
     side: 'right',
     icon: Monitor,
     color: '#10B981',
@@ -44,119 +56,97 @@ const HOTSPOTS: Hotspot[] = [
   {
     id: 'battery',
     label: 'Batería',
-    spec: 'Hasta 18h de uso',
-    position: [0, -0.15, 0.3],
+    spec: 'Hasta 18 horas de uso',
+    description: 'Todo el día sin cargador. Reproduce video hasta 18 horas seguidas con una sola carga.',
+    position: [0, -0.2, 0.6],
+    cameraPosition: [0.8, 0.3, 3],
+    cameraTarget: [0, -0.2, 0.6],
     side: 'left',
     icon: BatteryFull,
     color: '#3B82F6',
   },
+  {
+    id: 'usb-c',
+    label: 'Thunderbolt 4',
+    spec: '2× puertos USB-C',
+    description: 'Transferencia de datos de alta velocidad, carga y conexión a monitores externos.',
+    position: [-1, -0.05, 0.3],
+    cameraPosition: [-2, 0.5, 2],
+    cameraTarget: [-1, -0.05, 0.3],
+    side: 'left',
+    icon: Usb,
+    color: '#F59E0B',
+  },
+  {
+    id: 'magsafe',
+    label: 'MagSafe',
+    spec: 'Carga magnética segura',
+    description: 'Conector magnético que se conecta y desconecta fácilmente para proteger tu MacBook.',
+    position: [-1.05, 0.01, 0.2],
+    cameraPosition: [-2, 0.5, 1.5],
+    cameraTarget: [-1.05, 0.01, 0.2],
+    side: 'left',
+    icon: Zap,
+    color: '#EF4444',
+  },
+  {
+    id: 'camera',
+    label: 'Cámara FaceTime HD',
+    spec: '1080p · Encuadre Centrado',
+    description: 'Cámara de alta definición con Encuadre Centrado que te sigue automáticamente en videollamadas.',
+    position: [0, 1.2, 1],
+    cameraPosition: [0.8, 1.8, 3],
+    cameraTarget: [0, 1.2, 1],
+    side: 'right',
+    icon: Camera,
+    color: '#8B5CF6',
+  },
 ]
 
-/* ── SVG layout sizes ── */
-interface AnnotationSize {
-  lineW: number
-  cardW: number
-  cardH: number
-  cardR: number
-  svgW: number
-  iconSize: string
-  iconBox: string
-  labelSize: string
-  specSize: string
-  dotSize: string
-  dotOffset: string
-}
-
-const SIZE_DESKTOP: AnnotationSize = {
-  lineW: 48, cardW: 180, cardH: 44, cardR: 8, svgW: 228,
-  iconSize: 'size-4', iconBox: 'size-7', labelSize: 'text-[11px]', specSize: 'text-[10px]',
-  dotSize: 'size-3', dotOffset: '14px',
-}
-
-const SIZE_MOBILE: AnnotationSize = {
-  lineW: 24, cardW: 110, cardH: 44, cardR: 6, svgW: 134,
-  iconSize: 'size-3', iconBox: 'size-5', labelSize: 'text-[9px]', specSize: 'text-[8px]',
-  dotSize: 'size-2.5', dotOffset: '10px',
-}
-
-/**
- * Rounded-rect path starting from the connector-line side.
- * isRight → starts left-center, clockwise.
- * !isRight → starts right-center, counter-clockwise.
- */
-function cardBorderPath(isRight: boolean, s: AnnotationSize): string {
-  if (isRight) {
-    const x = s.lineW
-    const w = s.cardW
-    const h = s.cardH
-    const r = s.cardR
-    return [
-      `M${x},${h / 2}`,
-      `V${r}`, `Q${x},0,${x + r},0`,
-      `H${x + w - r}`, `Q${x + w},0,${x + w},${r}`,
-      `V${h - r}`, `Q${x + w},${h},${x + w - r},${h}`,
-      `H${x + r}`, `Q${x},${h},${x},${h - r}`,
-      `Z`,
-    ].join('')
-  }
-  const w = s.cardW
-  const h = s.cardH
-  const r = s.cardR
-  return [
-    `M${w},${h / 2}`,
-    `V${r}`, `Q${w},0,${w - r},0`,
-    `H${r}`, `Q0,0,0,${r}`,
-    `V${h - r}`, `Q0,${h},${r},${h}`,
-    `H${w - r}`, `Q${w},${h},${w},${h - r}`,
-    `Z`,
-  ].join('')
-}
-
+/* ── Dot component ── */
 function AnnotationDot({
   hotspot,
   active,
-  onActivate,
-  onDeactivate,
-  size: s,
+  onClick,
 }: {
   hotspot: Hotspot
   active: boolean
-  onActivate: () => void
-  onDeactivate: () => void
-  size: AnnotationSize
+  onClick: () => void
 }) {
   const Icon = hotspot.icon
-  const dotRef = useRef<HTMLDivElement>(null)
-  const [flipped, setFlipped] = useState(false)
 
-  const handlePointerEnter = () => {
-    const el = dotRef.current
-    if (el) {
-      const rect = el.getBoundingClientRect()
-      const vw = window.innerWidth
-      const offset = parseInt(s.dotOffset)
+  // Ref callback: when panel mounts, measure and reposition to stay within canvas bounds
+  const panelRefCallback = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return
+    // Allow the browser to lay out the element first
+    requestAnimationFrame(() => {
+      const container = node.closest('canvas')?.parentElement
+      if (!container) return
+
+      const panelRect = node.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
       const margin = 8
 
-      if (hotspot.side === 'right') {
-        const wouldOverflow = rect.right + offset + s.svgW > vw - margin
-        setFlipped(wouldOverflow)
-      } else {
-        const wouldOverflow = rect.left - offset - s.svgW < margin
-        setFlipped(wouldOverflow)
+      // Horizontal: flip side if overflowing
+      if (panelRect.right > containerRect.right - margin) {
+        node.style.left = 'auto'
+        node.style.right = '20px'
+      } else if (panelRect.left < containerRect.left + margin) {
+        node.style.right = 'auto'
+        node.style.left = '20px'
       }
-    }
-    onActivate()
-  }
 
-  const effectiveSide = flipped
-    ? (hotspot.side === 'right' ? 'left' : 'right')
-    : hotspot.side
-  const isRight = effectiveSide === 'right'
-
-  const cardX = isRight ? s.lineW : 0
-  const lineX1 = isRight ? 0 : s.svgW
-  const lineX2 = isRight ? s.lineW : s.cardW
-  const midY = s.cardH / 2
+      // Vertical: shift if overflowing
+      const freshRect = node.getBoundingClientRect()
+      if (freshRect.top < containerRect.top + margin) {
+        const shift = containerRect.top + margin - freshRect.top
+        node.style.transform = `translateY(calc(-50% + ${shift}px))`
+      } else if (freshRect.bottom > containerRect.bottom - margin) {
+        const shift = containerRect.bottom - margin - freshRect.bottom
+        node.style.transform = `translateY(calc(-50% + ${shift}px))`
+      }
+    })
+  }, [])
 
   return (
     <Html
@@ -165,14 +155,9 @@ function AnnotationDot({
       zIndexRange={active ? [1000, 500] : [10, 0]}
       style={{ pointerEvents: 'auto' }}
     >
-      <div
-        ref={dotRef}
-        className="relative"
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={onDeactivate}
-      >
+      <div className="relative" onClick={onClick}>
         {/* Pulsing dot */}
-        <div className={`relative ${s.dotSize} cursor-pointer`}>
+        <div className="relative size-3.5 cursor-pointer">
           {!active && (
             <div
               className="absolute inset-0 rounded-full animate-ping opacity-40"
@@ -180,107 +165,116 @@ function AnnotationDot({
             />
           )}
           <div
-            className={`relative ${s.dotSize} rounded-full ring-2 ring-white/80 shadow-lg`}
+            className="relative size-3.5 rounded-full ring-2 ring-white/80 shadow-lg"
             style={{
               backgroundColor: hotspot.color,
-              transform: active ? 'scale(1.5)' : 'scale(1)',
-              transition: 'transform 0.15s ease',
+              transform: active ? 'scale(1.6)' : 'scale(1)',
+              transition: 'transform 0.2s ease',
             }}
           />
         </div>
 
-        {/* SVG tooltip — always rendered, CSS transitions drive the draw animation */}
-        <div
-          className="absolute top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ [isRight ? 'left' : 'right']: s.dotOffset }}
-        >
-          <svg
-            width={s.svgW}
-            height={s.cardH}
-            viewBox={`0 0 ${s.svgW} ${s.cardH}`}
-            fill="none"
-            style={{ overflow: 'visible' }}
+        {/* Floating info panel */}
+        {active && (
+          <div
+            ref={panelRefCallback}
+            className="absolute z-50"
+            style={{
+              top: '50%',
+              transform: 'translateY(-50%)',
+              [hotspot.side === 'right' ? 'left' : 'right']: '20px',
+            }}
           >
-            {/* Connector line — draws from dot toward card */}
-            <line
-              x1={lineX1}
-              y1={midY}
-              x2={lineX2}
-              y2={midY}
-              stroke={hotspot.color}
-              strokeWidth={1.5}
-              strokeDasharray={s.lineW}
-              strokeDashoffset={active ? 0 : s.lineW}
-              style={{ transition: 'stroke-dashoffset 0.25s ease-out' }}
-            />
+            <div
+              className="relative w-[220px] sm:w-[250px] rounded-xl overflow-hidden backdrop-blur-xl border border-white/15 shadow-2xl"
+              style={{ background: 'rgba(10, 10, 10, 0.85)' }}
+            >
+              {/* Accent bar */}
+              <div className="h-0.5 w-full" style={{ background: hotspot.color }} />
 
-            {/* Card background fill */}
-            <rect
-              x={cardX}
-              y={0}
-              width={s.cardW}
-              height={s.cardH}
-              rx={s.cardR}
-              fill="rgba(255,255,255,0.95)"
-              opacity={active ? 0.95 : 0}
-              style={{ transition: `opacity 0.15s ease ${active ? '0.35s' : '0s'}` }}
-            />
-
-            {/* Card border — draws to 50% from the connection side */}
-            <path
-              d={cardBorderPath(isRight, s)}
-              stroke={hotspot.color}
-              strokeWidth={1.5}
-              fill="none"
-              pathLength={1}
-              strokeDasharray="0.5 1"
-              strokeDashoffset={active ? 0 : 0.5}
-              style={{ transition: `stroke-dashoffset 0.3s ease-in-out ${active ? '0.2s' : '0s'}` }}
-            />
-
-            {/* Card content */}
-            <foreignObject x={cardX} y={0} width={s.cardW} height={s.cardH}>
-              <div
-                className="flex items-center gap-1.5 px-2 h-full"
-                style={{
-                  opacity: active ? 1 : 0,
-                  transform: active ? 'translateY(0)' : 'translateY(4px)',
-                  transition: `opacity 0.2s ease ${active ? '0.4s' : '0s'}, transform 0.2s ease ${active ? '0.4s' : '0s'}`,
-                }}
+              {/* Close button */}
+              <button
+                className="absolute top-2 right-2 size-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
+                onClick={(e) => { e.stopPropagation(); onClick() }}
               >
-                <div
-                  className={`${s.iconBox} rounded-md flex items-center justify-center shrink-0`}
-                  style={{ backgroundColor: `${hotspot.color}15` }}
-                >
-                  <Icon className={s.iconSize} style={{ color: hotspot.color }} />
-                </div>
-                <div className="min-w-0">
-                  <span
-                    className={`block ${s.labelSize} font-bold leading-tight truncate`}
-                    style={{ color: hotspot.color }}
+                <X className="size-3 text-white/70" />
+              </button>
+
+              {/* Content */}
+              <div className="p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className="size-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${hotspot.color}20` }}
                   >
-                    {hotspot.label}
-                  </span>
-                  <span className={`block ${s.specSize} text-gray-600 leading-snug`}>
-                    {hotspot.spec}
-                  </span>
+                    <Icon className="size-4" style={{ color: hotspot.color }} />
+                  </div>
+                  <div className="min-w-0">
+                    <span
+                      className="block text-xs font-bold leading-tight"
+                      style={{ color: hotspot.color }}
+                    >
+                      {hotspot.label}
+                    </span>
+                    <span className="block text-[10px] text-white/60 leading-snug">
+                      {hotspot.spec}
+                    </span>
+                  </div>
                 </div>
+                {hotspot.description && (
+                  <p className="text-[11px] text-white/50 leading-relaxed">
+                    {hotspot.description}
+                  </p>
+                )}
               </div>
-            </foreignObject>
-          </svg>
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     </Html>
   )
 }
 
-export function ModelAnnotations() {
-  const [activeId, setActiveId] = useState<string | null>(null)
-  const isMobile = useMediaQuery('(max-width: 639px)')
-  const size = isMobile ? SIZE_MOBILE : SIZE_DESKTOP
+/* ── Helper: rotate a point around Y axis ── */
+const _vec = new THREE.Vector3()
+function rotateY(point: [number, number, number], angle: number): [number, number, number] {
+  _vec.set(...point).applyAxisAngle(new THREE.Vector3(0, 1, 0), angle)
+  return [_vec.x, _vec.y, _vec.z]
+}
 
-  const handleActivate = (id: string) => setActiveId(id)
-  const handleDeactivate = () => setActiveId(null)
+/* ── Annotations group ── */
+export function ModelAnnotations({
+  onAnimateCamera,
+  onResetCamera,
+  lock,
+  unlock,
+  pivotRef,
+}: {
+  onAnimateCamera: React.RefObject<((pos: [number, number, number], target: [number, number, number]) => void) | null>
+  onResetCamera: React.RefObject<(() => void) | null>
+  lock: () => void
+  unlock: () => void
+  pivotRef: React.RefObject<THREE.Group | null>
+}) {
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const handleClick = useCallback((hotspot: Hotspot) => {
+    if (activeId === hotspot.id) {
+      // Deactivate — reset camera
+      setActiveId(null)
+      onResetCamera.current?.()
+      unlock()
+    } else {
+      // Activate — lock drag + animate camera
+      // Rotate camera coordinates by the model's current Y rotation
+      const yAngle = pivotRef.current?.rotation.y ?? 0
+      const worldCamPos = rotateY(hotspot.cameraPosition, yAngle)
+      const worldCamTarget = rotateY(hotspot.cameraTarget, yAngle)
+      setActiveId(hotspot.id)
+      lock()
+      onAnimateCamera.current?.(worldCamPos, worldCamTarget)
+    }
+  }, [activeId, onAnimateCamera, onResetCamera, lock, unlock, pivotRef])
 
   return (
     <group>
@@ -289,9 +283,7 @@ export function ModelAnnotations() {
           key={hotspot.id}
           hotspot={hotspot}
           active={activeId === hotspot.id}
-          onActivate={() => handleActivate(hotspot.id)}
-          onDeactivate={handleDeactivate}
-          size={size}
+          onClick={() => handleClick(hotspot)}
         />
       ))}
     </group>

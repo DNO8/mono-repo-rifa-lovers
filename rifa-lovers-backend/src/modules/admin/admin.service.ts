@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../database/prisma.service'
-import { RaffleStatus, UserRole, UserStatus, Prisma } from '@prisma/client'
+import { RaffleStatus, UserStatus, Prisma } from '@prisma/client'
 import { CreateRaffleDto, UpdateRaffleDto, UpdateRaffleStatusDto, UpdateUserRoleDto, UpdateUserStatusDto } from './dto'
 
 export interface KpiData {
@@ -124,17 +124,19 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
-          select: { userPacks: true, luckyPasses: true },
+          select: { luckyPasses: true },
         },
         purchases: {
           where: { status: 'paid' },
-          select: { totalAmount: true },
+          select: { totalAmount: true, userPacks: { select: { quantity: true } } },
         },
       },
     })
 
     return raffles.map((raffle) => {
-      const packsSold = raffle._count.userPacks
+      const packsSold = raffle.purchases.reduce((sum, p) => {
+        return sum + p.userPacks.reduce((s, up) => s + up.quantity, 0)
+      }, 0)
       const progressPercentage = raffle.goalPacks > 0 
         ? Math.min(100, Math.round((packsSold / raffle.goalPacks) * 100))
         : 0
@@ -182,7 +184,9 @@ export class AdminService {
         _sum: { totalAmount: true },
       }),
 
-      this.prisma.userPack.count(),
+      this.prisma.userPack.count({
+        where: { purchase: { status: 'paid' } },
+      }),
 
       this.prisma.user.count({
         where: { status: UserStatus.active },

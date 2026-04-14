@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { PurchasesService } from './purchases.service'
 import { CurrentUser } from '../../common/decorators'
@@ -12,6 +12,12 @@ export class PurchasesController {
   @UseGuards(AuthGuard('jwt'))
   async getMyPurchases(@CurrentUser('id') userId: string): Promise<PurchaseResponseDto[]> {
     return this.purchasesService.findByUser(userId)
+  }
+
+  @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
+  async getById(@Param('id') id: string): Promise<PurchaseResponseDto> {
+    return this.purchasesService.findById(id)
   }
 
   @Post()

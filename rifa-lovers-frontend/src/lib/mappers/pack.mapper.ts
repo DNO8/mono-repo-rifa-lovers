@@ -1,48 +1,37 @@
 import type { Pack, PricingTier } from '@/types/domain.types'
+import { PACK_UI_META, DEFAULT_PACK_UI_META } from '@/lib/constants'
 
 /**
- * Mapea un Pack del backend a un PricingTier para la UI
- * Agrega propiedades de presentación que no vienen del backend
+ * Mapea un Pack del backend a un PricingTier para la UI.
+ * Los datos reales (id, price, luckyPassQuantity) vienen del API.
+ * La metadata de UI (tagline, cta, benefits) viene de PACK_UI_META.
  */
 export function mapPackToPricingTier(pack: Pack, index: number): PricingTier {
-  // Generar tagline basado en el pack
-  const taglines: Record<string, string> = {
-    'Pack Básico': 'Para probar suerte',
-    'Pack Popular': 'El favorito de la comunidad',
-    'Pack Máximo': 'Máximas oportunidades',
-  }
-
-  // Generar CTA basado en el pack
-  const ctas: Record<string, string> = {
-    'Pack Básico': 'Probar ahora',
-    'Pack Popular': 'Participar ahora',
-    'Pack Máximo': 'Maximizar oportunidades',
-  }
-
-  // Benefits solo para el pack popular (índice 1)
-  const benefits = pack.isFeatured
-    ? ['Mejor precio por LuckyPass', 'Generas impacto real']
-    : undefined
-
   const name = pack.name || 'Pack'
+  const meta = PACK_UI_META[name] || DEFAULT_PACK_UI_META
 
   return {
     id: `tier-${index}`,
     packId: pack.id,
-    name: name.replace('Pack ', ''), // Quitar "Pack " para mostrar solo "Básico", "Popular", etc.
+    name: name.replace('Pack ', ''),
     tickets: pack.luckyPassQuantity,
     price: pack.price,
-    bonusTickets: 0, // Por ahora no hay bonus
-    tagline: taglines[name] || 'Participa y gana',
-    cta: ctas[name] || 'Participar ahora',
+    bonusTickets: 0,
+    tagline: meta.tagline,
+    cta: meta.cta,
     popular: pack.isFeatured,
-    benefits,
+    benefits: meta.benefits,
   }
 }
 
 /**
- * Mapea una lista de Packs a PricingTiers
+ * Mapea packs del API a PricingTiers, excluyendo el pack Emprendedor Legend.
+ * Solo muestra los 3 packs más baratos en las cards del landing.
  */
 export function mapPacksToPricingTiers(packs: Pack[]): PricingTier[] {
-  return packs.map((pack, index) => mapPackToPricingTier(pack, index))
+  return packs
+    .filter((p) => !p.name?.toUpperCase().includes('EMPRENDEDOR'))
+    .sort((a, b) => a.price - b.price)
+    .slice(0, 3)
+    .map((pack, index) => mapPackToPricingTier(pack, index))
 }

@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router'
-import { ArrowRight, Sparkles, Loader2 } from 'lucide-react'
+import { useNavigate, Link } from 'react-router'
+import { ArrowRight, Sparkles, Loader2, Rocket } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,9 +20,9 @@ export function PricingSection() {
   // Mapear packs de API a PricingTiers
   const pricingTiers = packs.length > 0 ? mapPacksToPricingTiers(packs) : []
 
-  const handleSelect = (tickets: number) => {
+  const handleSelect = (packId: string) => {
     const raffleId = raffle?.id ?? ''
-    const checkoutUrl = `/checkout?raffle=${raffleId}&tickets=${tickets}`
+    const checkoutUrl = `/checkout?raffle=${raffleId}&packId=${packId}`
     if (isAuthenticated) {
       navigate(checkoutUrl)
     } else {
@@ -121,7 +121,7 @@ export function PricingSection() {
                 variant={tier.popular ? 'primary' : 'secondary'}
                 size="lg"
                 className="w-full"
-                onClick={() => handleSelect(tier.tickets)}
+                onClick={() => handleSelect(tier.packId)}
               >
                 {tier.cta}
                 <ArrowRight className="size-4" />
@@ -129,6 +129,20 @@ export function PricingSection() {
             </Card>
           ))}
         </div>
+        )}
+
+        {/* Emprendedor Legend CTA */}
+        {!isLoading && !error && (
+          <div className="mt-10 text-center">
+            <Link
+              to="/emprendedor"
+              className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-primary transition-colors group cursor-pointer"
+            >
+              <Rocket className="size-4 text-primary/70 group-hover:text-primary transition-colors" />
+              ¿Eres emprendedor? Conoce el Pack Legend
+              <ArrowRight className="size-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+            </Link>
+          </div>
         )}
       </div>
     </section>

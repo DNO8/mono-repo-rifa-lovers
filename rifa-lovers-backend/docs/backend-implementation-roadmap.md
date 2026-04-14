@@ -21,9 +21,9 @@ Stack definitivo:
 | 3 | Auth + Users | ✅ Completo |
 | 4 | Raffles + Milestones + Prizes | ✅ Completo (lectura) |
 | 5 | LuckyPass — lectura | ✅ Completo |
-| 6 | Purchases — lectura + placeholder create | ⚠️ Parcial |
-| 7 | Packs | ❌ Pendiente |
-| 8 | Payments | ❌ Pendiente |
+| 6 | Purchases — CRUD + transacciones | ✅ Completo |
+| 7 | Packs — lectura | ✅ Completo |
+| 8 | Payments — Flow.cl + webhook + LuckyPasses | ✅ Completo |
 | 9 | Frontend ↔ Backend integrado | ✅ Completo |
 | 10 | Draw (Sorteo) | ❌ Pendiente |
 | 11 | Admin | ❌ Pendiente |
@@ -263,74 +263,51 @@ cancelled → compra cancelada o fallida
 
 ---
 
-# Fase 6 — Purchases (parcial)
+# Fase 6 — Purchases
 
-**Estado: Parcial** — lectura funcional, creación placeholder
+**Estado: Completo**
 
 Módulo: `/modules/purchases/`
 
 ### Endpoints implementados
 
 ```
-GET  /purchases/my       → ✅ Historial de compras del usuario (auth requerido)
-POST /purchases          → ⚠️ Crear compra (placeholder — no valida rifa ni crea UserPack)
+GET  /purchases/my       → Historial de compras del usuario (auth requerido)
+POST /purchases          → Crear compra (valida rifa activa + pack + crea UserPack + PaymentTransaction en transacción)
 ```
 
-### Response actual de `GET /purchases/my`
-
-```json
-[
-  {
-    "id": "uuid",
-    "raffleId": "uuid",
-    "raffleName": "Rifa Macbook",
-    "totalAmount": 20000,
-    "status": "paid",
-    "createdAt": "timestamp"
-  }
-]
-```
-
-### Lo que falta implementar (flujo real)
-
-```
-1. Validar que raffle.status = 'active'
-2. Crear Purchase (status: 'pending')
-3. Crear UserPack (userId + raffleId + packId + quantity)
-4. Iniciar PaymentTransaction (status: 'created')
-5. Retornar purchase_id para continuar con pago
-```
-
-La generación de LuckyPasses ocurre **después de confirmar el pago** (Fase 8).
-
-### Request final esperado (POST /purchases)
+### POST /purchases — Request
 
 ```json
 {
   "raffleId": "uuid",
   "packId": "uuid",
-  "quantity": 2
+  "quantity": 1
 }
 ```
 
-### Transacción obligatoria
+### Flujo de creación (transacción)
 
-La creación de `Purchase` + `UserPack` debe ejecutarse en una transacción Prisma.
+```
+1. Validar raffle.status = 'active'
+2. Validar pack existe y tiene precio
+3. Crear Purchase (status: 'pending')
+4. Crear UserPack (userId + raffleId + packId + quantity)
+5. Crear PaymentTransaction (status: 'created', provider: 'flow')
+6. Retornar purchase con datos para iniciar pago
+```
+
+La generación de LuckyPasses ocurre **después de confirmar el pago** (Fase 8).
 
 ---
 
 # Fase 7 — Módulo Packs
 
-**Estado: Pendiente**
+**Estado: Completo**
 
-Módulo a crear: `/modules/packs/`
+Módulo: `/modules/packs/`
 
-### Responsabilidad
-
-- Listar packs disponibles para una rifa
-- Mostrar precio y cantidad de LuckyPasses por pack
-
-### Endpoints
+### Endpoints implementados
 
 ```
 GET /packs          → Lista todos los packs activos
@@ -344,65 +321,64 @@ GET /packs/:id      → Detalle de un pack
   {
     "id": "uuid",
     "name": "Pack Básico",
-    "price": 5000,
+    "price": 2990,
     "luckyPassQuantity": 1,
     "isFeatured": false,
-    "isPreSale": false
+    "isPreSale": false,
+    "createdAt": "timestamp"
   }
 ]
 ```
 
 ---
 
-# Fase 8 — Módulo Payments
+# Fase 8 — Módulo Payments (Flow.cl)
 
-**Estado: Pendiente**
+**Estado: Completo**
 
 Módulo: `/modules/payments/`
 
-### Responsabilidad
-
-- Crear orden de pago en la pasarela (ej: Flow)
-- Recibir y validar webhook de confirmación
-- Confirmar compra y generar LuckyPasses
-
-### Endpoints
+### Endpoints implementados
 
 ```
-POST /payments/create    → Crear orden de pago para una purchase
-POST /payments/webhook   → Recibir confirmación de la pasarela
+POST /payments/initiate   → Crear orden de pago en Flow y retornar paymentUrl
+POST /webhooks/flow       → Recibir webhook de Flow, confirmar pago, generar LuckyPasses
 ```
 
-### Flujo post-confirmación de pago
+### Integración Flow.cl
+
+- **Firma HMAC-SHA256**: parámetros ordenados alfabéticamente, concatenados como `key1value1key2value2...`, firmados con `secretKey` como clave HMAC
+- **apiKey** incluido en los parámetros antes de firmar
+- **Webhook**: Flow envía solo un `token` vía POST. El backend llama `GET /payment/getStatus` con ese token para obtener el estado real
+- **Redirect**: El usuario es redirigido a `${flowOrder.url}?token=${flowOrder.token}`
+- **Return URL**: `${FRONTEND_URL}/payment/return`
+- **Confirmation URL**: `${BACKEND_URL}/webhooks/flow`
+
+### Flujo post-confirmación de pago (en transacción)
 
 ```
-1. Validar firma/autenticidad del webhook
-2. Consultar estado en API de la pasarela
-3. Si aprobado:
-   - PaymentTransaction.status → 'approved'
-   - Purchase.status → 'paid', paidAt = NOW()
-   - Generar LuckyPasses:
-       N = userPack.quantity × pack.luckyPassQuantity
-       Asignar ticket_number único por raffle
-       status = 'active', isWinner = false
-   - Actualizar raffle_progress:
-       packs_sold += userPack.quantity
-       revenue_total += purchase.totalAmount
-       percentage_to_goal = packs_sold / raffle.goalPacks × 100
-4. Si rechazado:
-   - PaymentTransaction.status → 'rejected'
-   - Purchase.status → 'failed'
+1. Idempotencia: si purchase.status == 'paid' → ignorar
+2. Purchase.status → 'paid', paidAt = NOW()
+3. PaymentTransaction.status → 'approved'
+4. Generar LuckyPasses:
+   - N = userPack.quantity × pack.luckyPassQuantity
+   - ticket_number secuencial con SELECT MAX(ticket_number) FOR UPDATE (lock)
+   - status = 'active', isWinner = false
+5. Actualizar raffle_progress:
+   - packs_sold += quantity
+   - revenue_total += totalAmount
+   - percentage_to_goal recalculado
 ```
 
-### Idempotencia
-
-Antes de procesar el webhook, verificar:
+### Variables de entorno requeridas
 
 ```
-if PaymentTransaction.status == 'approved' → ignorar
+FLOW_API_KEY=...
+FLOW_SECRET_KEY=...
+FLOW_BASE_URL=https://sandbox.flow.cl/api  (o https://www.flow.cl/api en producción)
+BACKEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173
 ```
-
-Usar `UNIQUE(provider_transaction_id)` para prevenir duplicados.
 
 ---
 
@@ -640,11 +616,11 @@ register → login → get raffle active → get packs
 
 En orden de prioridad para completar el MVP:
 
-1. **Fase 7 — Packs**: módulo de lectura de packs (desbloqueador de todo el flujo de compra)
-2. **Fase 6 — Purchases real**: validar rifa activa + crear UserPack + iniciar pago en transacción
-3. **Fase 8 — Payments**: integrar pasarela Flow + webhook + generación de LuckyPasses post-pago
-4. **Milestone unlock automático**: actualizar `is_unlocked` cuando `packs_sold >= required_packs`
-5. **Fase 10 — Draw**: sorteo para cerrar el ciclo del MVP
+1. **Milestone unlock automático**: actualizar `is_unlocked` cuando `packs_sold >= required_packs`
+2. **Fase 10 — Draw**: sorteo para cerrar el ciclo del MVP
+3. **Fase 12 — Jobs automáticos**: expirar purchases pendientes, auto sold_out, auto closed
+4. **Fase 11 — Admin**: CRUD de rifas, KPIs
+5. **Fase 13 — Hardening**: rate limiting, logging, validación env vars
 
 ### Resumen de lo completado
 
@@ -654,7 +630,11 @@ En orden de prioridad para completar el MVP:
 ✅ Auth (register, login, refresh, JWT guard)
 ✅ Raffles con milestones y prizes (lectura)
 ✅ LuckyPass (lectura por usuario)
-✅ Purchases (lectura por usuario)
+✅ Purchases (CRUD completo con transacciones)
+✅ Packs (lectura)
+✅ Payments (Flow.cl integrado + webhook + LuckyPass generation)
 ✅ Frontend integrado — 0 mocks de dominio
 ✅ Token refresh automático
 ✅ Progreso dinámico (packsSold / goalPacks)
+✅ Página Emprendedor Legend
+✅ Payment return page

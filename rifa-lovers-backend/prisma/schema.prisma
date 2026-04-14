@@ -114,6 +114,7 @@ model Raffle {
   title           String?      @db.VarChar(255)
   description     String?      @db.Text
   goalPacks       Int          @default(5000) @map("goal_packs")
+  maxTicketNumber Int          @default(30000) @map("max_ticket_number")
   status          RaffleStatus @default(draft)
   startDate       DateTime?    @map("start_date")
   endDate         DateTime?    @map("end_date")
@@ -166,14 +167,15 @@ model Purchase {
 }
 
 model UserPack {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String?  @map("user_id") @db.Uuid
-  raffleId    String?  @map("raffle_id") @db.Uuid
-  packId      String?  @map("pack_id") @db.Uuid
-  purchaseId  String?  @map("purchase_id") @db.Uuid
-  quantity    Int      @default(1)
-  totalPaid   Decimal? @map("total_paid") @db.Decimal(10, 2)
-  createdAt   DateTime @default(now()) @map("created_at")
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String?  @map("user_id") @db.Uuid
+  raffleId        String?  @map("raffle_id") @db.Uuid
+  packId          String?  @map("pack_id") @db.Uuid
+  purchaseId      String?  @map("purchase_id") @db.Uuid
+  quantity        Int      @default(1)
+  totalPaid       Decimal? @map("total_paid") @db.Decimal(10, 2)
+  selectedNumbers Int[]    @default([]) @map("selected_numbers")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   user       User?       @relation(fields: [userId], references: [id])
   raffle     Raffle?     @relation(fields: [raffleId], references: [id])

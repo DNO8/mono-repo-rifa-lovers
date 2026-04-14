@@ -57,14 +57,26 @@ const mapStatus = (status: string): 'confirmado' | 'pendiente' | 'fallido' => {
   }
 }
 
-// Helper to transform purchases to history items
+// Helper to transform purchases to history items — group by raffleId
 const transformPurchasesToHistory = (purchases: Purchase[]): HistoryItem[] => {
-  return purchases.map((p) => ({
-    id: p.id,
-    name: p.raffleName,
-    status: mapStatus(p.status),
-    tickets: 1, // Each purchase = 1 pack for now
-  }))
+  const grouped = new Map<string, HistoryItem>()
+  for (const p of purchases) {
+    if (p.status === 'failed') continue
+    const existing = grouped.get(p.raffleId)
+    if (existing) {
+      existing.tickets += 1
+      // Escalate status: confirmado > pendiente
+      if (p.status === 'paid') existing.status = 'confirmado'
+    } else {
+      grouped.set(p.raffleId, {
+        id: p.raffleId,
+        name: p.raffleName,
+        status: mapStatus(p.status),
+        tickets: 1,
+      })
+    }
+  }
+  return Array.from(grouped.values())
 }
 
 // Helper to transform raffle to card data

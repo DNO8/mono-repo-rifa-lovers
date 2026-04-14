@@ -6,6 +6,7 @@ export class RaffleEntity {
   title: string | null
   description: string | null
   goalPacks: number
+  maxTicketNumber: number
   status: RaffleStatus
   startDate: Date | null
   endDate: Date | null

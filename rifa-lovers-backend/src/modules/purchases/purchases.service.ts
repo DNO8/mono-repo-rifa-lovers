@@ -3,13 +3,14 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common'
 import { PurchasesRepository } from './purchases.repository'
 import { PacksRepository } from '../packs/packs.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
+import { PrismaService } from '../../database/prisma.service'
 import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto } from './dto'
-import { PurchaseEntity } from './entities'
-import { Purchase, Raffle, Pack } from '@prisma/client'
+import { Purchase, Raffle } from '@prisma/client'
 
 // Tipo que incluye la relación raffle
 type PurchaseWithRaffle = Purchase & { raffle: Raffle | null }
@@ -22,6 +23,7 @@ export class PurchasesService {
     private readonly purchasesRepository: PurchasesRepository,
     private readonly packsRepository: PacksRepository,
     private readonly rafflesRepository: RafflesRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   async findByUser(userId: string): Promise<PurchaseResponseDto[]> {
@@ -80,7 +82,7 @@ export class PurchasesService {
         packId: createDto.packId,
         quantity: createDto.quantity,
         totalAmount,
-        selectedNumber: createDto.selectedNumber,
+        selectedNumbers: createDto.selectedNumbers,
         pack,
       })
 
@@ -100,8 +102,10 @@ export class PurchasesService {
         quantity: createDto.quantity,
         unitPrice,
       }
-    } catch (error) {
-      this.logger.error(`Error creando compra: ${error.message}`, error.stack)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      const stack = error instanceof Error ? error.stack : undefined
+      this.logger.error(`Error creando compra: ${msg}`, stack)
       throw error
     }
   }
@@ -159,31 +163,166 @@ export class PurchasesService {
   ): Promise<PurchaseResponseDto> {
     this.logger.debug(`Confirmando pago para compra: ${purchaseId}`)
 
-    // 1. Actualizar el estado de la compra a 'paid'
-    const purchase = await this.purchasesRepository.updateStatus(
-      purchaseId,
-      'paid',
-      new Date(),
+    // 0. Idempotencia: verificar que la compra no ya fue confirmada
+    const existing = await this.purchasesRepository.findUnique(
+      { id: purchaseId },
+      { raffle: true, userPacks: { include: { pack: true } } },
     )
+    if (!existing) {
+      throw new NotFoundException(`Compra ${purchaseId} no encontrada`)
+    }
+    if (existing.status === 'paid') {
+      this.logger.warn(`Compra ${purchaseId} ya fue confirmada, ignorando duplicado`)
+      return this.mapToResponseDto(existing as PurchaseWithRaffle)
+    }
 
-    // 2. Actualizar el PaymentTransaction con los datos del pago
-    await this.purchasesRepository.updatePaymentTransaction(
-      purchaseId,
-      {
-        providerTransactionId: paymentData.providerTransactionId,
-        status: 'approved',
-        paidAt: new Date(),
-      },
-    )
+    // Tx 1: Marcar compra y transacción como pagadas (siempre debe commitear)
+    await this.prisma.$transaction(async (tx) => {
+      await tx.purchase.update({
+        where: { id: purchaseId },
+        data: { status: 'paid', paidAt: new Date() },
+      })
+      await tx.paymentTransaction.updateMany({
+        where: { purchaseId, status: { not: 'approved' } },
+        data: {
+          providerTransactionId: paymentData.providerTransactionId,
+          status: 'approved',
+        },
+      })
+    })
+    this.logger.log(`Compra ${purchaseId} marcada como PAID`)
 
-    // 3. TODO: Generar LuckyPasses (esto se implementará completamente en Fase 8)
-    // Por ahora, solo marcamos la compra como pagada
+    // Tx 2: Generar LuckyPasses (transacción separada)
+    await this.prisma.$transaction(async (tx) => {
 
-    this.logger.log(`✅ Pago confirmado para compra: ${purchaseId}`)
+      // 3. Generar LuckyPasses para cada UserPack
+      const userPacks = await tx.userPack.findMany({
+        where: { purchaseId },
+        include: { pack: true },
+      })
+
+      const raffleId = existing.raffleId
+      if (!raffleId) {
+        throw new BadRequestException('La compra no tiene rifa asociada')
+      }
+
+      let totalLuckyPasses = 0
+
+      for (const userPack of userPacks) {
+        const pack = userPack.pack
+        if (!pack) continue
+
+        const count = userPack.quantity * pack.luckyPassQuantity
+        totalLuckyPasses += count
+
+        const preferred: number[] = (userPack.selectedNumbers as number[] | null) ?? []
+
+        // Lock the raffle row to serialize concurrent ticket assignments
+        await tx.$queryRaw`
+          SELECT id FROM public.raffles WHERE id = ${raffleId}::uuid FOR UPDATE
+        `
+        // Now safely compute the current max ticket number
+        const maxResult = await tx.$queryRaw<[{ max_ticket: string | null }]>`
+          SELECT MAX(ticket_number)::text AS max_ticket
+          FROM public.lucky_passes
+          WHERE raffle_id = ${raffleId}::uuid
+        `
+        const rawMax = maxResult[0]?.max_ticket
+        this.logger.debug(`MAX ticket raw result: ${JSON.stringify(maxResult)}, rawMax=${rawMax}`)
+        let nextTicket = (rawMax ? parseInt(rawMax, 10) : 0) + 1
+        this.logger.debug(`nextTicket calculado: ${nextTicket}, preferred: ${JSON.stringify(preferred)}`)
+
+        // Verificar que los números preferidos siguen disponibles
+        if (preferred.length > 0) {
+          const taken = await tx.luckyPass.findMany({
+            where: {
+              raffleId,
+              ticketNumber: { in: preferred },
+            },
+            select: { ticketNumber: true },
+          })
+          if (taken.length > 0) {
+            const takenNums = taken.map((lp) => lp.ticketNumber).join(', ')
+            throw new ConflictException(
+              `Los números ${takenNums} ya fueron tomados por otro usuario. Por favor elige otros.`,
+            )
+          }
+        }
+
+        // Crear LuckyPasses: usar preferred si existen, si no secuencial
+        const luckyPassData: {
+          raffleId: string
+          userId: string | null
+          userPackId: string
+          ticketNumber: number
+          status: 'active'
+          isWinner: boolean
+        }[] = []
+        for (let i = 0; i < count; i++) {
+          const ticketNumber = preferred[i] !== undefined ? preferred[i] : nextTicket++
+          if (!ticketNumber || isNaN(ticketNumber) || ticketNumber < 1) {
+            throw new BadRequestException(`Número de ticket inválido generado: ${ticketNumber}`)
+          }
+          luckyPassData.push({
+            raffleId,
+            userId: existing.userId,
+            userPackId: userPack.id,
+            ticketNumber,
+            status: 'active',
+            isWinner: false,
+          })
+        }
+
+        await tx.luckyPass.createMany({ data: luckyPassData })
+
+        this.logger.debug(
+          `Generados ${count} LuckyPasses para userPack ${userPack.id} (tickets ${nextTicket - count}-${nextTicket - 1})`,
+        )
+      }
+
+      // 4. Actualizar raffle_progress
+      const raffle = await tx.raffle.findUnique({ where: { id: raffleId } })
+      const totalQuantity = userPacks.reduce((sum, up) => sum + up.quantity, 0)
+      const totalAmount = existing.totalAmount?.toNumber() ?? 0
+
+      await tx.raffleProgress.upsert({
+        where: { raffleId },
+        create: {
+          raffleId,
+          packsSold: totalQuantity,
+          revenueTotal: totalAmount,
+          percentageToGoal: raffle
+            ? (totalQuantity / raffle.goalPacks) * 100
+            : 0,
+        },
+        update: {
+          packsSold: { increment: totalQuantity },
+          revenueTotal: { increment: totalAmount },
+        },
+      })
+
+      // Recalcular percentage_to_goal con el valor actualizado de packsSold
+      if (raffle) {
+        const updatedProgress = await tx.raffleProgress.findUnique({
+          where: { raffleId },
+        })
+        if (updatedProgress) {
+          const pctGoal = (updatedProgress.packsSold / raffle.goalPacks) * 100
+          await tx.raffleProgress.update({
+            where: { raffleId },
+            data: { percentageToGoal: pctGoal },
+          })
+        }
+      }
+
+      this.logger.log(
+        `Pago confirmado: purchase=${purchaseId}, luckyPasses=${totalLuckyPasses}, packsSold=${totalQuantity}`,
+      )
+    })
 
     // Obtener la compra actualizada con la relación
     const purchaseWithRaffle = await this.purchasesRepository.findUnique(
-      { id: purchase.id },
+      { id: purchaseId },
       { raffle: true },
     )
 

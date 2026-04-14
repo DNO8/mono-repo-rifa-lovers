@@ -33,6 +33,7 @@ export class RafflesService {
       title: raffle.title,
       description: raffle.description,
       goalPacks: raffle.goalPacks,
+      maxTicketNumber: raffle.maxTicketNumber,
       status: raffle.status,
       startDate: raffle.startDate,
       endDate: raffle.endDate,
@@ -47,6 +48,7 @@ export class RafflesService {
       title: raffleEntity.title,
       description: raffleEntity.description,
       goalPacks: raffleEntity.goalPacks,
+      maxTicketNumber: raffleEntity.maxTicketNumber,
       status: raffleEntity.status,
       createdAt: raffleEntity.createdAt.toISOString(),
       milestones: raffle.milestones?.map(m => ({
@@ -120,6 +122,7 @@ export class RafflesService {
       title: raffle.title,
       description: raffle.description,
       goalPacks: raffle.goalPacks,
+      maxTicketNumber: raffle.maxTicketNumber,
       status: raffle.status,
       createdAt: raffle.createdAt.toISOString(),
     }
@@ -135,6 +138,7 @@ export class RafflesService {
       title: raffle.title,
       description: raffle.description,
       goalPacks: raffle.goalPacks,
+      maxTicketNumber: raffle.maxTicketNumber,
       status: raffle.status,
       createdAt: raffle.createdAt.toISOString(),
     }))

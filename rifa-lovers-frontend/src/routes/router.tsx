@@ -21,6 +21,8 @@ const LazyRegisterPage = lazy(() => import('@/features/auth/pages/register.page'
 const LazyDashboardPage = lazy(() => import('@/features/dashboard/pages/dashboard.page'))
 const LazyCheckoutPage = lazy(() => import('@/features/checkout/pages/checkout.page'))
 const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffle-detail.page'))
+const LazyPaymentReturnPage = lazy(() => import('@/features/checkout/pages/payment-return.page'))
+const LazyEmprendedorPage = lazy(() => import('@/features/emprendedor/pages/emprendedor.page'))
 
 export const router = createBrowserRouter([
   {
@@ -88,6 +90,22 @@ export const router = createBrowserRouter([
         <ProtectedRoute>
           <LazyCheckoutPage />
         </ProtectedRoute>
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/emprendedor',
+    element: (
+      <PageWithSuspense fallback={<LandingPageSkeleton />}>
+        <LazyEmprendedorPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/payment/return',
+    element: (
+      <PageWithSuspense fallback={<CheckoutPageSkeleton />}>
+        <LazyPaymentReturnPage />
       </PageWithSuspense>
     ),
   },

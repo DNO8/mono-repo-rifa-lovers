@@ -1,71 +1,77 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { toast } from 'react-toastify'
-import { ArrowLeft, CreditCard, CheckCircle, Shuffle, Hash } from 'lucide-react'
+import { ArrowLeft, CreditCard, Hash } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { PRICING_TIERS } from '@/lib/constants'
 import { createPurchase } from '@/api/purchases.api'
 import { initiatePayment } from '@/api/payments.api'
 import { useActiveRaffle } from '@/hooks/use-raffles'
+import { usePacks } from '@/hooks/use-packs'
+import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
 import { Spinner } from '@/components/ui/spinner'
 import { OrderSummary } from '../components/order-summary'
+import { NumberSelectorGrid } from '../components/number-selector-grid'
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
-  const ticketCount = Math.max(1, Math.min(50, Number(searchParams.get('tickets')) || 1))
+  const packIdParam = searchParams.get('packId') || ''
   const bonusTickets = 0
 
-  const { raffle, isLoading } = useActiveRaffle()
+  const { raffle, isLoading: raffleLoading } = useActiveRaffle()
+  const { packs, isLoading: packsLoading } = usePacks()
 
-  const [selectedNumber, setSelectedNumber] = useState<number | ''>('')
+  const [selectedNumbers, setSelectedNumbers] = useState<(number | '')[]>([])
+  const [numbersValid, setNumbersValid] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [isComplete, setIsComplete] = useState(false)
+
+  const isLoading = raffleLoading || packsLoading
+
+  const pricingTiers = packs.length > 0 ? mapPacksToPricingTiers(packs) : []
+  const tier = pricingTiers.find((t) => t.packId === packIdParam) ?? pricingTiers[0]
 
   const raffleTitle = raffle?.title ?? 'Premio por confirmar'
-  const goalPacks = raffle?.goalPacks ?? 5000
-  const tier = PRICING_TIERS.find((t) => t.tickets === ticketCount) ?? PRICING_TIERS[0]
-  const unitPrice = tier.price / tier.tickets
-  const totalPrice = ticketCount * unitPrice
+  const maxTicketNumber = raffle?.maxTicketNumber ?? 30000
+  const ticketCount = tier?.tickets ?? 1
+  const unitPrice = tier ? tier.price / tier.tickets : 0
+  const totalPrice = tier ? tier.price : 0
 
-  const generateRandom = () => {
-    const num = Math.floor(Math.random() * goalPacks) + 1
-    setSelectedNumber(num)
-  }
+  const handleNumbersChange = useCallback((nums: (number | '')[]) => {
+    setSelectedNumbers(nums)
+  }, [])
 
-  const handleNumberChange = (value: string) => {
-    if (value === '') { setSelectedNumber(''); return }
-    const num = parseInt(value, 10)
-    if (isNaN(num)) return
-    if (num < 1 || num > goalPacks) {
-      toast.error(`Elige un número entre 1 y ${goalPacks.toLocaleString('es-CL')}`)
-      return
-    }
-    setSelectedNumber(num)
-  }
+  const handleValidityChange = useCallback((valid: boolean) => {
+    setNumbersValid(valid)
+  }, [])
 
   const handleConfirm = async () => {
-    if (!raffle) return
+    if (!raffle || !tier) return
+    if (!numbersValid) {
+      toast.error('Uno o más números elegidos no están disponibles. Corrígelos antes de continuar.')
+      return
+    }
     setIsProcessing(true)
     try {
-      // 1. Crear la compra
+      // Filtrar los números no vacíos para enviar al backend
+      const filledNumbers = selectedNumbers.filter((n): n is number => n !== '')
+
+      // 1. Crear la compra (quantity=1 pack)
       const purchase = await createPurchase({
         raffleId: raffle.id,
         packId: tier.packId,
-        quantity: tier.tickets,
-        selectedNumber: selectedNumber || undefined,
+        quantity: 1,
+        selectedNumbers: filledNumbers.length > 0 ? filledNumbers : undefined,
       })
-      console.log('Purchase created:', purchase)
 
       // 2. Iniciar el pago con Flow
       toast.info('Iniciando pago seguro con Flow...')
       const payment = await initiatePayment({
         purchaseId: purchase.id,
       })
-      console.log('Payment initiated:', payment)
 
-      // 3. Redirigir a Flow
+      // 3. Guardar purchaseId para la página de retorno y redirigir a Flow
+      sessionStorage.setItem('pending_purchase_id', purchase.id)
       toast.success('Redirigiendo a plataforma de pago...')
       window.location.href = payment.paymentUrl
     } catch (err: unknown) {
@@ -79,46 +85,6 @@ export default function CheckoutPage() {
     return (
       <div className="flex justify-center py-24">
         <Spinner size="lg" />
-      </div>
-    )
-  }
-
-  if (isComplete) {
-    return (
-      <div className="px-4 md:px-8 py-16 md:py-24">
-        <div className="mx-auto max-w-md text-center">
-          <Card variant="soft-purple" className="p-10">
-            <div className="size-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="size-8 text-success" />
-            </div>
-            <h1 className="text-2xl font-extrabold text-text-primary mb-2">
-              ¡Compra exitosa!
-            </h1>
-            <p className="text-text-secondary mb-2">
-              Tus {ticketCount + bonusTickets} LuckyPass para <strong>{raffleTitle}</strong> ya están activos.
-            </p>
-            {selectedNumber && (
-              <p className="text-lg font-bold text-primary mb-2">
-                Tu número: #{String(selectedNumber).padStart(5, '0')}
-              </p>
-            )}
-            <p className="text-sm text-text-tertiary mb-8">
-              Recibirás un correo de confirmación con los detalles de tu participación.
-            </p>
-            <div className="flex flex-col gap-3">
-              <Link to="/dashboard">
-                <Button variant="primary" size="lg" className="w-full">
-                  Ir al Dashboard
-                </Button>
-              </Link>
-              <Link to="/">
-                <Button variant="ghost" size="lg" className="w-full">
-                  Volver al inicio
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        </div>
       </div>
     )
   }
@@ -147,39 +113,22 @@ export default function CheckoutPage() {
             totalPrice={totalPrice}
           />
 
-          {/* Number selector */}
+          {/* Number selector grid — one slot per LuckyPass */}
           <Card variant="glass" className="p-5">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-4">
               <Hash className="size-4 text-primary" />
-              <span className="text-sm font-bold text-text-primary">Elige tu número de la suerte</span>
-              <Badge variant="muted" className="ml-auto text-[10px]">1 — {goalPacks.toLocaleString('es-CL')}</Badge>
+              <span className="text-sm font-bold text-text-primary">Números de la suerte</span>
+              <Badge variant="muted" className="ml-auto text-[10px]">1 — {maxTicketNumber.toLocaleString('es-CL')}</Badge>
             </div>
 
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min={1}
-                max={goalPacks}
-                value={selectedNumber}
-                onChange={(e) => handleNumberChange(e.target.value)}
-                placeholder="Ej: 14582"
-                className="flex-1 h-12 px-4 rounded-xl border border-border bg-white text-text-primary text-lg font-bold placeholder:text-text-tertiary placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            {raffle && (
+              <NumberSelectorGrid
+                count={ticketCount}
+                maxNumber={maxTicketNumber}
+                raffleId={raffle.id}
+                onChange={handleNumbersChange}
+                onValidityChange={handleValidityChange}
               />
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={generateRandom}
-                className="shrink-0"
-              >
-                <Shuffle className="size-4" />
-                Aleatorio
-              </Button>
-            </div>
-
-            {selectedNumber && (
-              <p className="text-xs text-success font-medium mt-2">
-                Número seleccionado: #{String(selectedNumber).padStart(5, '0')}
-              </p>
             )}
           </Card>
 
@@ -198,7 +147,7 @@ export default function CheckoutPage() {
             className="w-full"
             onClick={handleConfirm}
             loading={isProcessing}
-            disabled={!raffle}
+            disabled={!raffle || !numbersValid}
           >
             <CreditCard className="size-4" />
             Confirmar y pagar ${totalPrice.toLocaleString('es-CL')}

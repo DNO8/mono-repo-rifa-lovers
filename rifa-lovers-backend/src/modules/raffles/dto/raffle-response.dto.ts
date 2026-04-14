@@ -19,6 +19,7 @@ export class RaffleResponseDto {
   title: string | null
   description: string | null
   goalPacks: number
+  maxTicketNumber: number
   status: string
   createdAt: string
   milestones?: MilestoneDto[]

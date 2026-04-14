@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common'
+import { Controller, Get, NotFoundException } from '@nestjs/common'
 import { RafflesService } from './raffles.service'
 import { RaffleResponseDto, RaffleProgressDto } from './dto'
 
@@ -7,8 +7,12 @@ export class RafflesController {
   constructor(private readonly rafflesService: RafflesService) {}
 
   @Get('active')
-  async getActive(): Promise<RaffleResponseDto | null> {
-    return this.rafflesService.findActive()
+  async getActive(): Promise<RaffleResponseDto> {
+    const raffle = await this.rafflesService.findActive()
+    if (!raffle) {
+      throw new NotFoundException('No hay rifa activa')
+    }
+    return raffle
   }
 
   @Get('active/progress')

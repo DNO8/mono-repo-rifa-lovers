@@ -19,7 +19,7 @@ export const ENDPOINTS = {
     my: '/purchases/my',
 
     create: '/purchases',
-
+    detail: (id: string) => `/purchases/${id}`,
   },
 
   luckyPasses: {
@@ -27,7 +27,8 @@ export const ENDPOINTS = {
     my: '/lucky-passes/my',
 
     mySummary: '/lucky-passes/my/summary',
-
+    checkAvailability: (raffleId: string, ticketNumber: number) =>
+      `/lucky-passes/check-availability?raffleId=${raffleId}&ticketNumber=${ticketNumber}`,
   },
 
   raffles: {

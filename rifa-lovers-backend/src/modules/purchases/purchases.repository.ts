@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../../database/prisma.service'
-import { Prisma, Purchase, PurchaseStatus } from '@prisma/client'
+import { PaymentStatus, Prisma, Purchase, PurchaseStatus } from '@prisma/client'
 
 @Injectable()
 export class PurchasesRepository {
@@ -140,7 +140,7 @@ export class PurchasesRepository {
     packId: string
     quantity: number
     totalAmount: number
-    selectedNumber?: number
+    selectedNumbers?: number[]
     pack: { name: string | null; price: { toNumber(): number } | null; luckyPassQuantity: number }
   }): Promise<{ purchase: Purchase }> {
     return this.prisma.$transaction(async (tx) => {
@@ -163,6 +163,7 @@ export class PurchasesRepository {
           purchase: { connect: { id: purchase.id } },
           quantity: data.quantity,
           totalPaid: data.totalAmount,
+          selectedNumbers: data.selectedNumbers ?? [],
         },
       })
 
@@ -184,8 +185,7 @@ export class PurchasesRepository {
     purchaseId: string,
     data: {
       providerTransactionId?: string
-      status?: string
-      paidAt?: Date
+      status?: PaymentStatus
     },
   ): Promise<void> {
     await this.prisma.paymentTransaction.updateMany({
@@ -193,7 +193,6 @@ export class PurchasesRepository {
       data: {
         ...(data.providerTransactionId && { providerTransactionId: data.providerTransactionId }),
         ...(data.status && { status: data.status as any }),
-        ...(data.paidAt && { updatedAt: data.paidAt }), // Usamos updatedAt para registrar cuando se pagó
       },
     })
   }

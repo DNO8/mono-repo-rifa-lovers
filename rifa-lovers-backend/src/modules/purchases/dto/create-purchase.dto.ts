@@ -1,4 +1,4 @@
-import { IsUUID, IsNumber, IsNotEmpty, IsOptional, Min } from 'class-validator'
+import { IsUUID, IsNumber, IsNotEmpty, IsOptional, Min, IsArray, ArrayUnique, IsInt } from 'class-validator'
 
 export class CreatePurchaseDto {
   @IsUUID()
@@ -14,7 +14,10 @@ export class CreatePurchaseDto {
   @IsNotEmpty()
   quantity: number
 
-  @IsNumber()
+  @IsArray()
+  @ArrayUnique()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
   @IsOptional()
-  selectedNumber?: number
+  selectedNumbers?: number[]
 }

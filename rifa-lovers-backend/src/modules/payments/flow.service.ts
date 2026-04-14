@@ -2,21 +2,32 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import * as crypto from 'crypto'
 
-interface FlowOrderRequest {
-  commerceOrder: string
-  subject: string
-  currency: string
-  amount: number
-  email: string
-  paymentMethod?: number
-  urlConfirmation: string
-  urlReturn: string
-}
-
 interface FlowOrderResponse {
   token: string
   url: string
   flowOrder: number
+}
+
+// Flow PaymentStatus: status 1=pendiente, 2=pagada, 3=rechazada, 4=anulada
+export interface FlowPaymentStatus {
+  flowOrder: number
+  commerceOrder: string
+  requestDate: string
+  status: number
+  subject: string
+  currency: string
+  amount: number
+  payer: string
+  optional: Record<string, string> | null
+  paymentData: {
+    date: string | null
+    media: string | null
+    amount: number | null
+    currency: string | null
+    fee: number | null
+    balance: number | null
+    transferDate: string | null
+  }
 }
 
 @Injectable()
@@ -45,7 +56,8 @@ export class FlowService {
   ): Promise<FlowOrderResponse> {
     this.logger.debug(`Creando orden de pago Flow: ${commerceOrder}, $${amount}`)
 
-    const params: FlowOrderRequest = {
+    const params: Record<string, any> = {
+      apiKey: this.apiKey,
       commerceOrder,
       subject,
       currency: 'CLP',
@@ -62,17 +74,11 @@ export class FlowService {
     this.logger.debug(`Flow Base URL: ${this.baseUrl}`)
     this.logger.debug(`Signature: ${signature.substring(0, 20)}...`)
     
-    const body = new URLSearchParams({
-      commerceOrder: params.commerceOrder,
-      subject: params.subject,
-      currency: params.currency,
-      amount: params.amount.toString(),
-      email: params.email,
-      urlConfirmation: params.urlConfirmation,
-      urlReturn: params.urlReturn,
-      apiKey: this.apiKey,
-      s: signature,
-    })
+    const body = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      body.append(key, String(value))
+    }
+    body.append('s', signature)
 
     this.logger.debug(`Request body: ${body.toString().substring(0, 100)}...`)
 
@@ -104,10 +110,10 @@ export class FlowService {
   /**
    * Verifica el estado de un pago
    */
-  async getPaymentStatus(token: string): Promise<any> {
+  async getPaymentStatus(token: string): Promise<FlowPaymentStatus> {
     this.logger.debug(`Consultando estado de pago: ${token}`)
 
-    const params = { apiKey: this.apiKey, token }
+    const params: Record<string, string> = { apiKey: this.apiKey, token }
     const signature = this.generateSignature(params)
 
     const url = new URL(`${this.baseUrl}/payment/getStatus`)
@@ -123,19 +129,13 @@ export class FlowService {
         throw new Error(`Flow API error: ${response.status} - ${errorText}`)
       }
 
-      return await response.json()
+      const data = (await response.json()) as FlowPaymentStatus
+      this.logger.debug(`Flow payment status: order=${data.commerceOrder}, status=${data.status}`)
+      return data
     } catch (error: any) {
       this.logger.error(`Error consultando estado Flow: ${error.message}`)
       throw error
     }
-  }
-
-  /**
-   * Valida la firma de un webhook de Flow
-   */
-  validateWebhookSignature(params: Record<string, string>, signature: string): boolean {
-    const calculatedSignature = this.generateSignature(params)
-    return calculatedSignature === signature
   }
 
   /**
@@ -151,10 +151,7 @@ export class FlowService {
       toSign += key + params[key]
     }
 
-    // Agregar secret key al final
-    toSign += this.secretKey
-
-    // Generar HMAC-SHA256
+    // Generar HMAC-SHA256 (secretKey es SOLO la key del HMAC, NO se concatena al string)
     return crypto.createHmac('sha256', this.secretKey).update(toSign).digest('hex')
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common'
+import { Controller, Get, Query, ParseIntPipe, ParseUUIDPipe, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { LuckyPassService } from './lucky-pass.service'
 import { CurrentUser } from '../../common/decorators'
@@ -18,5 +18,13 @@ export class LuckyPassController {
   @UseGuards(AuthGuard('jwt'))
   async getMySummary(@CurrentUser('id') userId: string): Promise<LuckyPassSummaryDto> {
     return this.luckyPassService.getSummary(userId)
+  }
+
+  @Get('check-availability')
+  async checkAvailability(
+    @Query('raffleId', ParseUUIDPipe) raffleId: string,
+    @Query('ticketNumber', ParseIntPipe) ticketNumber: number,
+  ): Promise<{ available: boolean }> {
+    return this.luckyPassService.checkAvailability(raffleId, ticketNumber)
   }
 }

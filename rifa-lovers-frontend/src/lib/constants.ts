@@ -4,7 +4,8 @@
  */
 
 export { NAV_ITEMS } from './content/navigation.content'
-export { PRICING_TIERS } from './content/pricing.content'
+export { PACK_UI_META, DEFAULT_PACK_UI_META } from './content/pricing.content'
+export type { PackUIMeta } from './content/pricing.content'
 export { STEPS } from './content/steps.content'
 export { FAQS } from './content/faq.content'
 export { TESTIMONIALS, WINNERS } from './content/testimonials.content'

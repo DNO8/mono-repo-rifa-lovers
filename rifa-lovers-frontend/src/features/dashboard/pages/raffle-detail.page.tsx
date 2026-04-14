@@ -35,7 +35,7 @@ export default function RaffleDetailPage() {
   const activeTicket = selectedTicket ?? userTickets[0] ?? null
   const raffleId = id ?? raffle?.id
   const raffleTitle = raffle?.title ?? 'Premio por confirmar'
-  const goalPacks = raffle?.goalPacks ?? 0
+  const maxTicketNumber = raffle?.maxTicketNumber ?? 30000
 
   if (isLoading) {
     return (
@@ -71,7 +71,7 @@ export default function RaffleDetailPage() {
               </span>
               <span className="flex items-center gap-1">
                 <Hash className="size-3.5" />
-                {goalPacks.toLocaleString('es-CL')} LuckyPass totales
+                {maxTicketNumber.toLocaleString('es-CL')} números disponibles
               </span>
             </div>
           </div>

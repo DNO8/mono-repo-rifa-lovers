@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Logger, Headers, BadRequestException } from '@nestjs/common'
+import { Controller, Post, Body, Logger, BadRequestException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { FlowService } from './flow.service'
 import { PurchasesService } from '../purchases/purchases.service'
 
@@ -7,50 +8,84 @@ export class WebhookController {
   private readonly logger = new Logger(WebhookController.name)
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly flowService: FlowService,
     private readonly purchasesService: PurchasesService,
   ) {}
 
   /**
    * Webhook para recibir confirmaciones de Flow.cl
+   * Flow envía POST con Content-Type: application/x-www-form-urlencoded
+   * y un solo parámetro: token
    */
   @Post('flow')
-  async handleFlowWebhook(
-    @Body() body: any,
-    @Headers('signature') signature: string,
-  ) {
-    this.logger.debug('Recibido webhook de Flow', body)
+  async handleFlowWebhook(@Body('token') token: string) {
+    this.logger.debug(`Recibido webhook de Flow con token: ${token}`)
 
-    // 1. Validar firma del webhook
-    const isValid = this.flowService.validateWebhookSignature(body, signature)
-    if (!isValid) {
-      this.logger.error('Firma de webhook inválida')
-      throw new BadRequestException('Firma inválida')
+    if (!token) {
+      this.logger.error('Webhook recibido sin token')
+      throw new BadRequestException('Token requerido')
     }
 
-    // 2. Obtener datos del pago
-    const { token, status, commerceOrder } = body
+    // 1. Consultar estado real del pago en Flow API
+    const paymentStatus = await this.flowService.getPaymentStatus(token)
+    const { commerceOrder, status, amount } = paymentStatus
 
-    this.logger.log(`Webhook Flow: token=${token}, status=${status}, order=${commerceOrder}`)
+    this.logger.log(
+      `Flow payment status: order=${commerceOrder}, status=${status}, amount=${amount}`,
+    )
 
-    // 3. Procesar según el estado
-    if (status === 'success') {
-      // Pago exitoso - confirmar compra y generar LuckyPasses
-      await this.purchasesService.confirmPayment(commerceOrder, {
-        providerTransactionId: token,
-        provider: 'flow',
-        status: 'paid',
-      })
-      
-      this.logger.log(`✅ Pago confirmado para compra: ${commerceOrder}`)
-    } else if (status === 'rejected') {
-      // Pago rechazado
-      await this.purchasesService.updateStatus(commerceOrder, 'failed')
-      
-      this.logger.log(`❌ Pago rechazado para compra: ${commerceOrder}`)
+    // Flow status: 1=pendiente, 2=pagada, 3=rechazada, 4=anulada
+    switch (status) {
+      case 2: {
+        // Pago exitoso - confirmar compra y generar LuckyPasses
+        try {
+          await this.purchasesService.confirmPayment(commerceOrder, {
+            providerTransactionId: String(paymentStatus.flowOrder),
+            provider: 'flow',
+            status: 'paid',
+          })
+          this.logger.log(`Pago confirmado para compra: ${commerceOrder}`)
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err)
+          const stack = err instanceof Error ? err.stack : undefined
+          this.logger.error(`ERROR en confirmPayment para ${commerceOrder}: ${msg}`, stack)
+        }
+        break
+      }
+      case 3:
+      case 4: {
+        // Pago rechazado o anulado
+        await this.purchasesService.updateStatus(commerceOrder, 'failed')
+        this.logger.log(`Pago rechazado/anulado para compra: ${commerceOrder}`)
+        break
+      }
+      default: {
+        this.logger.warn(`Estado de pago no procesable: ${status} para orden ${commerceOrder}`)
+      }
     }
 
-    // 4. Responder a Flow (siempre 200 para evitar reintentos)
+    // Responder 200 a Flow para evitar reintentos
     return { received: true }
+  }
+
+  /**
+   * DEV ONLY: Dispara manualmente el webhook de Flow con un token.
+   * Útil cuando localhost no es accesible por Flow sandbox.
+   * Bloqueado en producción.
+   * 
+   * POST /webhooks/flow/trigger-dev
+   * Body: { "token": "<flow_token>" }
+   */
+  @Post('flow/trigger-dev')
+  async triggerDev(@Body('token') token: string) {
+    if (this.configService.get<string>('NODE_ENV') === 'production') {
+      throw new BadRequestException('No disponible en producción')
+    }
+    if (!token) {
+      throw new BadRequestException('Token requerido')
+    }
+    this.logger.warn(`[DEV] Trigger manual de webhook con token: ${token}`)
+    return this.handleFlowWebhook(token)
   }
 }

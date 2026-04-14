@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { LuckyPassRepository } from './lucky-pass.repository'
+import { RafflesRepository } from '../raffles/raffles.repository'
 import { LuckyPassResponseDto, LuckyPassSummaryDto } from './dto'
-import { LuckyPassEntity } from './entities'
 import { LuckyPass, Raffle } from '@prisma/client'
 
 // Tipo que incluye la relación raffle
@@ -11,7 +11,10 @@ type LuckyPassWithRaffle = LuckyPass & { raffle: Raffle | null }
 export class LuckyPassService {
   private readonly logger = new Logger(LuckyPassService.name)
 
-  constructor(private readonly luckyPassRepository: LuckyPassRepository) {}
+  constructor(
+    private readonly luckyPassRepository: LuckyPassRepository,
+    private readonly rafflesRepository: RafflesRepository,
+  ) {}
 
   async findByUser(userId: string): Promise<LuckyPassResponseDto[]> {
     this.logger.debug(`Buscando lucky passes del usuario: ${userId}`)
@@ -81,6 +84,17 @@ export class LuckyPassService {
     })
 
     return passes.map((pass) => this.mapToResponseDto(pass as LuckyPassWithRaffle))
+  }
+
+  async checkAvailability(
+    raffleId: string,
+    ticketNumber: number,
+  ): Promise<{ available: boolean }> {
+    const raffle = await this.rafflesRepository.findUnique({ id: raffleId })
+    if (!raffle) return { available: false }
+    if (ticketNumber < 1 || ticketNumber > raffle.maxTicketNumber) return { available: false }
+    const existing = await this.luckyPassRepository.findByTicketNumber(raffleId, ticketNumber)
+    return { available: existing === null }
   }
 
   async markAsWinner(id: string): Promise<LuckyPassResponseDto> {

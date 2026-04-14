@@ -28,7 +28,7 @@ export interface CreatePurchaseRequest {
   raffleId: string
   packId: string
   quantity: number
-  selectedNumber?: number
+  selectedNumbers?: number[]
 }
 
 export interface CreatePurchaseResponse {
@@ -73,6 +73,7 @@ export interface Raffle {
   title: string | null
   description: string | null
   goalPacks: number
+  maxTicketNumber: number
   status: 'draft' | 'active' | 'sold_out' | 'closed' | 'drawn'
   createdAt: string
   milestones?: RaffleMilestone[]

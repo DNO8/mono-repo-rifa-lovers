@@ -14,4 +14,5 @@ export class CreatePurchaseResponseDto {
   packName: string
   quantity: number
   unitPrice: number
+  luckyPassCount: number
 }

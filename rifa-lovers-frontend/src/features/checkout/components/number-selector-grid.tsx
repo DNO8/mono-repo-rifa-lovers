@@ -116,7 +116,14 @@ export function NumberSelectorGrid({
     }
 
     const num = parseInt(raw, 10)
-    if (isNaN(num) || num < 1 || num > maxNumber) return
+    if (isNaN(num) || num < 1 || num > maxNumber) {
+      setSlots((prev) => {
+        const next = [...prev]
+        next[index] = { value: '', status: 'idle' }
+        return next
+      })
+      return
+    }
 
     setSlots((prev) => {
       const next = [...prev]

@@ -1,5 +1,8 @@
 import type { Testimonial, Winner } from '@/types/domain.types'
 
+export const SHOW_WINNERS = false
+export const SHOW_TESTIMONIALS = false
+
 export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't-1',

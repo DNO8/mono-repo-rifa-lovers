@@ -3,10 +3,12 @@ import { HeroSection } from '../sections/hero-section'
 import { LiveTickerSection } from '../sections/live-ticker-section'
 import { CountdownSection } from '../sections/countdown-section'
 import { StepsSection } from '../sections/steps-section'
+import { HowItWorksSection } from '../sections/how-it-works-section'
 import { WinnersSection } from '../sections/winners-section'
 import { TestimonialsSection } from '../sections/testimonials-section'
 import { PricingSection } from '../sections/pricing-section'
 import { MilestoneTimeline } from '../components/ticket-selector'
+import { SHOW_WINNERS, SHOW_TESTIMONIALS } from '@/lib/constants'
 
 export default function LandingPage() {
   return (
@@ -22,11 +24,21 @@ export default function LandingPage() {
       <SectionDivider />
       <StepsSection />
       <SectionDivider />
-      <WinnersSection />
-      <SectionDivider />
-      <TestimonialsSection />
+      <HowItWorksSection />
       <SectionDivider />
       <PricingSection />
+      {SHOW_WINNERS && (
+        <>
+          <SectionDivider />
+          <WinnersSection />
+        </>
+      )}
+      {SHOW_TESTIMONIALS && (
+        <>
+          <SectionDivider />
+          <TestimonialsSection />
+        </>
+      )}
     </>
   )
 }

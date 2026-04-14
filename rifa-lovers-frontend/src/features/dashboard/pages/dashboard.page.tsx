@@ -62,9 +62,10 @@ const transformPurchasesToHistory = (purchases: Purchase[]): HistoryItem[] => {
   const grouped = new Map<string, HistoryItem>()
   for (const p of purchases) {
     if (p.status === 'failed') continue
+    const lpCount = p.luckyPassCount ?? 1
     const existing = grouped.get(p.raffleId)
     if (existing) {
-      existing.tickets += 1
+      existing.tickets += lpCount
       // Escalate status: confirmado > pendiente
       if (p.status === 'paid') existing.status = 'confirmado'
     } else {
@@ -72,7 +73,7 @@ const transformPurchasesToHistory = (purchases: Purchase[]): HistoryItem[] => {
         id: p.raffleId,
         name: p.raffleName,
         status: mapStatus(p.status),
-        tickets: 1,
+        tickets: lpCount,
       })
     }
   }
@@ -80,12 +81,12 @@ const transformPurchasesToHistory = (purchases: Purchase[]): HistoryItem[] => {
 }
 
 // Helper to transform raffle to card data
-const transformRaffleToCardData = (raffle: Raffle | null, progress: RaffleProgress | null): RaffleCardData | null => {
+const transformRaffleToCardData = (raffle: Raffle | null, userLuckyPassTotal: number): RaffleCardData | null => {
   if (!raffle) return null
   return {
     id: raffle.id,
     prize: raffle.title || 'Premio por confirmar',
-    ticketCount: progress?.packsSold || 0,
+    ticketCount: userLuckyPassTotal,
     uniqueId: `RL-${raffle.id.slice(-4).toUpperCase()}`,
     drawLabel: 'Próximo sorteo',
     drawTime: '20:00',
@@ -114,7 +115,7 @@ export default function DashboardPage() {
   const points = (luckyPassSummary?.active || 0) * 10 // 10 points per active ticket
 
   const historyItems = transformPurchasesToHistory(purchases)
-  const raffleCardData = transformRaffleToCardData(raffle, progress)
+  const raffleCardData = transformRaffleToCardData(raffle, totalTickets)
 
   return (
     <div className="px-4 md:px-8 py-8 md:py-12">

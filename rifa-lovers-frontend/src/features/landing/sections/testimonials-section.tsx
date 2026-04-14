@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Star, Trophy, MapPin } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { TESTIMONIALS } from '@/lib/constants'
+import { TESTIMONIALS, SHOW_TESTIMONIALS } from '@/lib/constants'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { useCarousel } from '@/hooks/use-carousel'
 import { SplitText } from '@/components/shared/split-text'
@@ -69,6 +69,8 @@ export function TestimonialsSection() {
   const {
     trackRef, current, setIsPaused, snapTo, goNext, goPrev, dragHandlers,
   } = useCarousel({ total: TESTIMONIALS.length, autoAdvanceMs: 5000 })
+
+  if (!SHOW_TESTIMONIALS) return null
 
   return (
     <section

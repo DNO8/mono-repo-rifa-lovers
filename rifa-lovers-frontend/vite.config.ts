@@ -18,5 +18,8 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ['.tunnelmole.net'],
+    hmr: {
+      clientPort: 443,
+    },
   },
 })

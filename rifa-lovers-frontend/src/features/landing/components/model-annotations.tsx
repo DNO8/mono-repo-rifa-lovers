@@ -186,7 +186,7 @@ function AnnotationDot({
             }}
           >
             <div
-              className="relative w-[220px] sm:w-[250px] rounded-xl overflow-hidden backdrop-blur-xl border border-white/15 shadow-2xl"
+              className="relative w-[160px] min-[375px]:w-[200px] sm:w-[240px] rounded-xl overflow-hidden backdrop-blur-xl border border-white/15 shadow-2xl"
               style={{ background: 'rgba(10, 10, 10, 0.85)' }}
             >
               {/* Accent bar */}
@@ -211,18 +211,18 @@ function AnnotationDot({
                   </div>
                   <div className="min-w-0">
                     <span
-                      className="block text-xs font-bold leading-tight"
+                      className="block text-[10px] min-[375px]:text-xs font-bold leading-tight"
                       style={{ color: hotspot.color }}
                     >
                       {hotspot.label}
                     </span>
-                    <span className="block text-[10px] text-white/60 leading-snug">
+                    <span className="block text-[9px] min-[375px]:text-[10px] text-white/60 leading-snug">
                       {hotspot.spec}
                     </span>
                   </div>
                 </div>
                 {hotspot.description && (
-                  <p className="text-[11px] text-white/50 leading-relaxed">
+                  <p className="hidden min-[375px]:block text-[10px] text-white/50 leading-relaxed">
                     {hotspot.description}
                   </p>
                 )}

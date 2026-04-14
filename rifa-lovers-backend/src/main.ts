@@ -19,8 +19,18 @@ async function bootstrap() {
   });
 
   // Enable CORS
+  const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'http://localhost:5173',
+  ]
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.tunnelmole.net') || origin.endsWith('.ngrok-free.app') || origin.endsWith('.getflow.cl') || origin.endsWith('.flow.cl')) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
     credentials: true,
   });
 

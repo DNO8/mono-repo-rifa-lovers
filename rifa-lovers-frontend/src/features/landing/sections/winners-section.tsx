@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Trophy, Calendar, Ticket, User } from 'lucid
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
-import { WINNERS } from '@/lib/constants'
+import { WINNERS, SHOW_WINNERS } from '@/lib/constants'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { useCarousel } from '@/hooks/use-carousel'
 import { useDrawResults } from '@/hooks/use-draw'
@@ -43,15 +43,17 @@ function transformDrawResults(results: ReturnType<typeof useDrawResults>['result
 export function WinnersSection() {
   const sectionRef = useGsapScroll<HTMLElement>()
   const { raffle } = useActiveRaffle()
-  const { results, isLoading, hasDrawn } = useDrawResults(raffle?.id)
+  const { results, isLoading } = useDrawResults(raffle?.id)
   
-  // Use API results if available, otherwise fall back to static data
-  const displayWinners: StaticWinner[] = transformDrawResults(results) || WINNERS
   const isRealDraw = !!results?.winners?.length
+  const shouldShow = isRealDraw || SHOW_WINNERS
+  const displayWinners: StaticWinner[] = (shouldShow ? transformDrawResults(results) || WINNERS : [])
   
   const {
     trackRef, current, setIsPaused, snapTo, goNext, goPrev, dragHandlers,
   } = useCarousel({ total: displayWinners.length, autoAdvanceMs: 4000 })
+
+  if (!shouldShow) return null
 
   return (
     <section

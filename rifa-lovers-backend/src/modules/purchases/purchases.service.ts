@@ -10,10 +10,11 @@ import { PacksRepository } from '../packs/packs.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
 import { PrismaService } from '../../database/prisma.service'
 import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto } from './dto'
-import { Purchase, Raffle } from '@prisma/client'
+import { Purchase, Raffle, UserPack, Pack } from '@prisma/client'
 
 // Tipo que incluye la relación raffle
-type PurchaseWithRaffle = Purchase & { raffle: Raffle | null }
+
+type PurchaseWithRaffle = Purchase & { raffle: Raffle | null; userPacks?: (UserPack & { pack: Pack | null })[] }
 
 @Injectable()
 export class PurchasesService {
@@ -31,6 +32,7 @@ export class PurchasesService {
 
     const purchases = await this.purchasesRepository.findByUser(userId, {
       raffle: true,
+      userPacks: { include: { pack: true } },
     })
 
     this.logger.debug(`Encontradas ${purchases.length} compras para el usuario ${userId}`)
@@ -101,6 +103,7 @@ export class PurchasesService {
         packName: pack.name || 'Pack sin nombre',
         quantity: createDto.quantity,
         unitPrice,
+        luckyPassCount: createDto.quantity * (pack.luckyPassQuantity ?? 1),
       }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error'
@@ -334,6 +337,7 @@ export class PurchasesService {
   }
 
   private mapToResponseDto(purchase: PurchaseWithRaffle): PurchaseResponseDto {
+    const luckyPassCount = purchase.userPacks?.reduce((sum, up) => sum + up.quantity * (up.pack?.luckyPassQuantity ?? 1), 0) ?? 1
     return {
       id: purchase.id,
       raffleId: purchase.raffleId || '',
@@ -341,6 +345,7 @@ export class PurchasesService {
       totalAmount: purchase.totalAmount?.toNumber() || 0,
       status: purchase.status,
       createdAt: purchase.createdAt.toISOString(),
+      luckyPassCount,
     }
   }
 }

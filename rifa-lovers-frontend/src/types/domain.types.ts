@@ -22,6 +22,7 @@ export interface Purchase {
   totalAmount: number
   status: 'pending' | 'paid' | 'failed' | 'refunded'
   createdAt: string
+  luckyPassCount: number
 }
 
 export interface CreatePurchaseRequest {

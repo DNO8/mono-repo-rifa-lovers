@@ -25,10 +25,10 @@ Stack definitivo:
 | 7 | Packs — lectura | ✅ Completo |
 | 8 | Payments — Flow.cl + webhook + LuckyPasses | ✅ Completo |
 | 9 | Frontend ↔ Backend integrado | ✅ Completo |
-| 10 | Draw (Sorteo) | ❌ Pendiente |
-| 11 | Admin | ❌ Pendiente |
-| 12 | Jobs Automáticos | ❌ Pendiente |
-| 13 | Hardening | ❌ Pendiente |
+| 10 | Draw (Sorteo) | ✅ Completo (backend) |
+| 11 | Admin | ✅ Completo (backend) |
+| 12 | Jobs Automáticos | ✅ Completo |
+| 13 | Hardening | 🟡 Parcial |
 
 ---
 
@@ -456,88 +456,56 @@ flash     → premio especial no asociado a milestone
 
 # Fase 10 — Draw (Sorteo)
 
-**Estado: Pendiente**
+**Estado: ✅ Completo (backend) — Sin UI frontend**
 
-Módulo: `/modules/draw/` (o endpoint en admin)
+Módulo: `/modules/draw/`
 
-### Responsabilidad
+### Endpoints implementados
 
-- Ejecutar el sorteo de una rifa
-- Solo puede ejecutarse si `raffle.status = 'closed'`
-- Seleccionar ganadores aleatoriamente entre LuckyPasses activos
+```
+POST /admin/raffles/:id/draw       → Ejecutar sorteo (Admin only)
+GET  /admin/raffles/:id/draw/check → Verificar si el sorteo puede ejecutarse
+GET  /raffles/:id/winners          → Ganadores públicos de una rifa
+GET  /raffles/:id/draw/results     → Resultados completos del sorteo
+```
+
+### Implementación
+
+- Requiere `raffle.status = 'closed'` para ejecutar
+- Selección de ganadores con algoritmo Fisher-Yates shuffle entre LuckyPasses activos
 - Solo participan premios de milestones desbloqueados
+- Idempotencia: no permite re-sortear una rifa ya sorteada
+- Post-sorteo: `raffle.status → 'drawn'`
+- `UNIQUE(lucky_pass_id)` en `prize_winners` — un LP no puede ganar dos premios
 
-### Endpoint
+### Pendiente
 
-```
-POST /admin/raffles/:id/draw    → Ejecutar sorteo (Admin only)
-```
-
-### Flujo del sorteo
-
-```sql
--- 1. Obtener premios de milestones desbloqueados
-SELECT p.*
-FROM prizes p
-JOIN milestones m ON p.milestone_id = m.id
-WHERE m.raffle_id = $1 AND m.is_unlocked = true
-ORDER BY m.sort_order;
-
--- 2. Por cada premio, seleccionar un LuckyPass ganador
-SELECT id, user_id
-FROM lucky_passes
-WHERE raffle_id = $1 AND status = 'active'
-ORDER BY random()
-LIMIT 1;
-
--- 3. Registrar ganador
-INSERT INTO prize_winners (prize_id, lucky_pass_id, user_id)
-VALUES ($prize_id, $lucky_pass_id, $user_id);
-
--- 4. Marcar LuckyPass como ganador
-UPDATE lucky_passes
-SET status = 'winner', is_winner = true
-WHERE id = $lucky_pass_id;
-```
-
-Post-sorteo:
-
-```
-raffle.status → 'drawn'
-```
-
-### Constraint de integridad
-
-```
-UNIQUE(lucky_pass_id) en prize_winners — un LuckyPass no puede ganar dos premios
-```
+- UI frontend para mostrar resultados del sorteo al público
 
 ---
 
 # Fase 11 — Admin
 
-**Estado: Pendiente**
+**Estado: ✅ Completo (backend) — Sin UI frontend**
 
 Módulo: `/modules/admin/`
 
-### Responsabilidad
-
-- Gestión de rifas (crear, editar, cambiar estado)
-- KPIs del sistema
-- Gestión de usuarios (bloquear, cambiar rol)
-
-### Endpoints
+### Endpoints implementados
 
 ```
 POST  /admin/raffles             → Crear rifa
+GET   /admin/raffles             → Listar todas las rifas con stats (solo packs de compras pagadas)
 PATCH /admin/raffles/:id         → Actualizar rifa
 PATCH /admin/raffles/:id/status  → Cambiar estado (DRAFT→ACTIVE, ACTIVE→CLOSED, etc.)
 GET   /admin/kpis                → Métricas globales
+GET   /admin/users               → Listar usuarios
 PATCH /admin/users/:id/role      → Cambiar rol de usuario
-PATCH /admin/users/:id/block     → Bloquear usuario
+PATCH /admin/users/:id/block     → Bloquear/desbloquear usuario
+GET   /admin/jobs/status         → Estado de los jobs automáticos
+POST  /admin/jobs/run/:jobName   → Ejecutar job manualmente
 ```
 
-### KPIs esperados
+### KPIs implementados
 
 ```json
 {
@@ -548,55 +516,55 @@ PATCH /admin/users/:id/block     → Bloquear usuario
 }
 ```
 
+### Notas
+
+- `packsSold` en KPIs y listado de rifas filtra solo compras con `status = 'paid'`
+- Gestión de jobs expuesta vía endpoints admin
+
+### Pendiente
+
+- UI frontend para panel de administración
+
 ---
 
 # Fase 12 — Jobs Automáticos
 
-**Estado: Pendiente**
+**Estado: ✅ Completo**
 
-Implementar con `@nestjs/schedule` (cron jobs).
+Módulo: `/modules/jobs/` — implementado con `node-cron`.
 
-### Jobs necesarios
+### Jobs activos
 
 **Auto SOLD_OUT** — cada 5 minutos:
-```sql
-UPDATE raffles
-SET status = 'sold_out'
-FROM raffle_progress
-WHERE raffles.id = raffle_progress.raffle_id
-  AND raffle_progress.packs_sold >= raffles.goal_packs
-  AND raffles.status = 'active';
-```
+- Marca rifas como `sold_out` cuando `packs_sold >= goal_packs`
 
 **Auto CLOSED** — cada 5 minutos:
-```sql
-UPDATE raffles
-SET status = 'closed'
-WHERE status IN ('active', 'sold_out')
-  AND end_date <= NOW();
-```
+- Cierra rifas cuyo `end_date <= NOW()` y status es `active` o `sold_out`
+- ⚠️ Mantener `end_date` actualizado en Supabase para evitar cierres prematuros en desarrollo
 
-**Expirar purchases no pagadas** — cada 15 minutos:
-```sql
-UPDATE purchases
-SET status = 'failed'
-WHERE status = 'pending'
-  AND created_at < NOW() - INTERVAL '30 minutes';
-```
+**Expirar purchases pendientes** — cada 15 minutos:
+- Marca como `failed` compras `pending` con más de 30 minutos sin pagar
+
+### Notas
+
+- Jobs exponibles y ejecutables manualmente vía `POST /admin/jobs/run/:jobName`
+- Estado visible en `GET /admin/jobs/status`
 
 ---
 
 # Fase 13 — Hardening
 
-**Estado: Pendiente**
+**Estado: 🟡 Parcial**
 
-Mejoras finales de producción:
-
-- **Rate limiting** → `@nestjs/throttler`
-- **Logging** → `nestjs-pino`
-- **Validación DTO** → `class-validator` (ya implementado, revisar cobertura)
-- **Manejo de errores** → filtros de excepciones globales
-- **Variables de entorno** → validación con `Joi` o `zod`
+| Mejora | Estado |
+|--------|--------|
+| Rate limiting (`@nestjs/throttler`) | ✅ Instalado y configurado |
+| Logging estructurado (`nestjs-pino`) | ✅ Instalado y activo |
+| Validación DTO (`class-validator`) | ✅ Implementado |
+| Manejo de errores global | ✅ `AllExceptionsFilter` activo |
+| Validación de entorno (`zod`) | ✅ Instalado, configurado en `env.validation.ts` |
+| SSL en conexión a Supabase | ✅ Configurado en `PrismaService` (`rejectUnauthorized: false`) |
+| Producción (Flow real, HTTPS, secrets) | ❌ Pendiente |
 
 ---
 
@@ -617,20 +585,20 @@ register → login → get raffle active → get packs
 En orden de prioridad para completar el MVP:
 
 1. **Milestone unlock automático**: actualizar `is_unlocked` cuando `packs_sold >= required_packs`
-2. **Fase 10 — Draw**: sorteo para cerrar el ciclo del MVP
-3. **Fase 12 — Jobs automáticos**: expirar purchases pendientes, auto sold_out, auto closed
-4. **Fase 11 — Admin**: CRUD de rifas, KPIs
-5. **Fase 13 — Hardening**: rate limiting, logging, validación env vars
+2. **UI frontend Admin**: panel de administración (rifas, KPIs, usuarios)
+3. **UI frontend Draw**: página de resultados del sorteo
+4. **Configuración producción**: Flow real, dominio, HTTPS, secrets seguros
+5. **Email service**: configurar SMTP para notificaciones
 
 ### Resumen de lo completado
 
 ```
-✅ Infraestructura (NestJS + Prisma + Supabase)
+✅ Infraestructura (NestJS + Prisma + Supabase + SSL)
 ✅ Modelo de datos completo
 ✅ Auth (register, login, refresh, JWT guard)
 ✅ Raffles con milestones y prizes (lectura)
-✅ LuckyPass (lectura por usuario)
-✅ Purchases (CRUD completo con transacciones)
+✅ LuckyPass (lectura por usuario, resumen correcto)
+✅ Purchases (CRUD completo con transacciones, luckyPassCount en response)
 ✅ Packs (lectura)
 ✅ Payments (Flow.cl integrado + webhook + LuckyPass generation)
 ✅ Frontend integrado — 0 mocks de dominio
@@ -638,3 +606,10 @@ En orden de prioridad para completar el MVP:
 ✅ Progreso dinámico (packsSold / goalPacks)
 ✅ Página Emprendedor Legend
 ✅ Payment return page
+✅ Draw (sorteo backend — Fisher-Yates, idempotente)
+✅ Admin backend (CRUD rifas, KPIs, usuarios, jobs)
+✅ Jobs automáticos (sold_out, closed, expire purchases)
+✅ Hardening parcial (throttler, pino, zod, error filter)
+✅ Fix: packsSold en KPIs/admin solo cuenta compras pagadas
+✅ Fix: luckyPassCount correcto en dashboard (historial y hero card)
+✅ Fix: validación input número ticket (no queda stuck en 'checking')

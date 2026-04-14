@@ -63,14 +63,14 @@ export function PricingSection() {
 
         {/* Pricing Cards */}
         {!isLoading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
           {pricingTiers.map((tier) => (
             <Card
               key={tier.id}
               variant={tier.popular ? 'glass' : 'glass-light'}
               className={cn(
-                'relative p-6 md:p-8 glass-hover',
-                tier.popular && 'md:scale-105 md:-my-4 shadow-glow ring-1 ring-primary/20 z-10'
+                'relative p-6 md:p-8 glass-hover flex flex-col',
+                tier.popular && 'shadow-glow ring-1 ring-primary/20 z-10'
               )}
             >
               {/* Popular badge */}
@@ -117,6 +117,7 @@ export function PricingSection() {
               )}
 
               {/* CTA */}
+              <div className="mt-auto pt-4">
               <Button
                 variant={tier.popular ? 'primary' : 'secondary'}
                 size="lg"
@@ -126,6 +127,7 @@ export function PricingSection() {
                 {tier.cta}
                 <ArrowRight className="size-4" />
               </Button>
+              </div>
             </Card>
           ))}
         </div>

@@ -5,4 +5,5 @@ export class PurchaseResponseDto {
   totalAmount: number
   status: string
   createdAt: string
+  luckyPassCount: number
 }

@@ -25,7 +25,7 @@ import {
   Ban,
   UserCheck,
 } from 'lucide-react'
-import type { RaffleWithStats, CreateRaffleRequest, UpdateRaffleRequest } from '@/api/admin.api'
+import type { RaffleWithStats, CreateRaffleRequest, UpdateRaffleRequest, UpdateRaffleStatusRequest } from '@/api/admin.api'
 
 // ─── KPI Card ────────────────────────────────────────────────────────────────
 
@@ -191,7 +191,7 @@ function RaffleFormModal({
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={saving}>
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={saving}>
               Cancelar
             </Button>
             <Button type="submit" variant="primary" className="flex-1" loading={saving}>
@@ -310,7 +310,7 @@ export function AdminDashboardPage() {
 
   const handleStatusChange = async (raffleId: string, newStatus: string) => {
     try {
-      await updateStatus(raffleId, { status: newStatus as RaffleWithStats['status'] })
+      await updateStatus(raffleId, { status: newStatus as UpdateRaffleStatusRequest['status'] })
       setStatusDropdown(null)
       toast.success(`Estado actualizado a ${RAFFLE_STATUS_CONFIG[newStatus]?.label}`)
       refreshRaffles()
@@ -328,7 +328,7 @@ export function AdminDashboardPage() {
           {(['overview', 'raffles', 'users'] as Tab[]).map(tab => (
             <Button
               key={tab}
-              variant={activeTab === tab ? 'primary' : 'outline'}
+              variant={activeTab === tab ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => setActiveTab(tab)}
             >

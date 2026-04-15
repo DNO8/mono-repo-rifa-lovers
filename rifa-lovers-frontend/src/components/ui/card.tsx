@@ -50,4 +50,8 @@ function CardContent({ className, ref, ...props }: CardSubProps) {
   return <div ref={ref} className={cn(className)} {...props} />
 }
 
-export { Card, CardHeader, CardContent, cardVariants }
+function CardTitle({ className, ref, ...props }: CardSubProps) {
+  return <h3 ref={ref} className={cn('font-semibold text-text-primary', className)} {...props} />
+}
+
+export { Card, CardHeader, CardContent, CardTitle, cardVariants }

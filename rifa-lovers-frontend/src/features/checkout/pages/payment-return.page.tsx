@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { CheckCircle, XCircle, Clock, ArrowLeft, ArrowRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'

@@ -25,6 +25,7 @@ import {
   Ban,
   UserCheck,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { RaffleWithStats, CreateRaffleRequest, UpdateRaffleRequest, UpdateRaffleStatusRequest } from '@/api/admin.api'
 
 // ─── KPI Card ────────────────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ function KpiCard({
 }: {
   title: string
   value: number
-  icon: React.ElementType
+  icon: LucideIcon
   color?: 'blue' | 'green' | 'purple' | 'orange' | 'red'
   suffix?: string
 }) {
@@ -60,7 +61,7 @@ function KpiCard({
             </p>
           </div>
           <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-            <Icon className="w-6 h-6" />
+            <Icon className="w-6 h-6" aria-hidden="true" />
           </div>
         </div>
       </CardContent>
@@ -263,7 +264,7 @@ function DrawModal({ raffleId, onClose }: { raffleId: string; onClose: () => voi
             </>
           ) : null}
           <div className="flex gap-3 pt-2">
-            <Button variant="outline" className="flex-1" onClick={onClose} disabled={executing}>
+            <Button variant="secondary" className="flex-1" onClick={onClose} disabled={executing}>
               Cancelar
             </Button>
             <Button

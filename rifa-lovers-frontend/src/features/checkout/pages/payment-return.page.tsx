@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { CheckCircle, XCircle, Clock, ArrowLeft, ArrowRight } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, ArrowLeft, ArrowRight, type LucideIcon } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -71,7 +71,7 @@ export default function PaymentReturnPage() {
   }
 
   const config: Record<Exclude<PaymentResult, 'loading'>, {
-    icon: React.ElementType
+    icon: LucideIcon
     iconColor: string
     iconBg: string
     title: string

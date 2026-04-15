@@ -14,7 +14,7 @@ export default function LandingPage() {
   return (
     <>
       <HeroSection />
-      <section className="px-4 md:px-8 py-10 md:py-14">
+      <section className="px-4 md:px-8 py-4 md:py-14">
         <div className="mx-auto max-w-4xl">
           <MilestoneTimeline />
         </div>

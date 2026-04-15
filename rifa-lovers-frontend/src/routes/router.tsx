@@ -24,6 +24,7 @@ const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffl
 const LazyPaymentReturnPage = lazy(() => import('@/features/checkout/pages/payment-return.page'))
 const LazyEmprendedorPage = lazy(() => import('@/features/emprendedor/pages/emprendedor.page'))
 const LazyAdminDashboardPage = lazy(() => import('@/features/admin/pages/admin-dashboard.page').then(m => ({ default: m.AdminDashboardPage })))
+const LazyNotFoundPage = lazy(() => import('@/features/errors/pages/not-found.page'))
 
 export const router = createBrowserRouter([
   {
@@ -127,6 +128,14 @@ export const router = createBrowserRouter([
         <ProtectedRoute>
           <LazyRaffleDetailPage />
         </ProtectedRoute>
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '*',
+    element: (
+      <PageWithSuspense fallback={null}>
+        <LazyNotFoundPage />
       </PageWithSuspense>
     ),
   },

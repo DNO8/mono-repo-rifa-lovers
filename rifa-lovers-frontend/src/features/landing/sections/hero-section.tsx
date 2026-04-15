@@ -51,7 +51,7 @@ export function HeroSection() {
     <section
       ref={sectionRef}
       id="hero"
-      className="relative min-h-screen overflow-hidden"
+      className="relative min-h-[85vh] lg:min-h-screen overflow-hidden"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -70,7 +70,7 @@ export function HeroSection() {
 
       {/* ── Desktop: text overlay left + model right ── */}
       {/* ── Mobile: stacked — text top, model bottom ── */}
-      <div className="relative min-h-screen flex flex-col lg:flex-row">
+      <div className="relative min-h-[85vh] lg:min-h-screen flex flex-col lg:flex-row">
         {/* Left: Copy overlay */}
         <div className="relative z-20 flex flex-col justify-center px-6 md:px-12 lg:px-10 xl:px-16 pt-24 pb-8 lg:py-0 lg:w-[38%] xl:w-[40%]">
           <div data-gsap>

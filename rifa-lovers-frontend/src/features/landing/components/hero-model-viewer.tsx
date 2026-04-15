@@ -160,7 +160,7 @@ export function HeroModelViewer() {
 
   return (
     <div
-      className="relative mx-auto w-full h-[320px] sm:h-[380px] md:h-[460px] lg:h-[540px] xl:h-[600px]"
+      className="relative mx-auto w-full h-[260px] sm:h-[320px] md:h-[460px] lg:h-[540px] xl:h-[600px]"
       style={{ cursor: locked.current ? 'default' : undefined }}
       {...pointerHandlers}
     >

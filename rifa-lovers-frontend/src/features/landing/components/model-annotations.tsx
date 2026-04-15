@@ -186,7 +186,7 @@ function AnnotationDot({
             }}
           >
             <div
-              className="relative w-[160px] min-[375px]:w-[200px] sm:w-[240px] rounded-xl overflow-hidden backdrop-blur-xl border border-white/15 shadow-2xl"
+              className="relative w-[120px] min-[375px]:w-[140px] sm:w-[160px] rounded-xl overflow-hidden backdrop-blur-xl border border-white/15 shadow-2xl"
               style={{ background: 'rgba(10, 10, 10, 0.85)' }}
             >
               {/* Accent bar */}
@@ -194,38 +194,33 @@ function AnnotationDot({
 
               {/* Close button */}
               <button
-                className="absolute top-2 right-2 size-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
+                className="absolute top-1.5 right-1.5 size-4 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
                 onClick={(e) => { e.stopPropagation(); onClick() }}
               >
                 <X className="size-3 text-white/70" />
               </button>
 
               {/* Content */}
-              <div className="p-3">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="p-2">
+                <div className="flex items-center gap-1.5 mb-1">
                   <div
-                    className="size-8 rounded-lg flex items-center justify-center shrink-0"
+                    className="size-5 rounded-md flex items-center justify-center shrink-0"
                     style={{ backgroundColor: `${hotspot.color}20` }}
                   >
-                    <Icon className="size-4" style={{ color: hotspot.color }} />
+                    <Icon className="size-3" style={{ color: hotspot.color }} />
                   </div>
                   <div className="min-w-0">
                     <span
-                      className="block text-[10px] min-[375px]:text-xs font-bold leading-tight"
+                      className="block text-[9px] font-bold leading-tight"
                       style={{ color: hotspot.color }}
                     >
                       {hotspot.label}
                     </span>
-                    <span className="block text-[9px] min-[375px]:text-[10px] text-white/60 leading-snug">
+                    <span className="block text-[8px] text-white/60 leading-snug">
                       {hotspot.spec}
                     </span>
                   </div>
                 </div>
-                {hotspot.description && (
-                  <p className="hidden min-[375px]:block text-[10px] text-white/50 leading-relaxed">
-                    {hotspot.description}
-                  </p>
-                )}
               </div>
             </div>
           </div>

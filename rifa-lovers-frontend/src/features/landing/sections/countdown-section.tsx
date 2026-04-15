@@ -51,8 +51,8 @@ export function CountdownSection() {
   const { raffle } = useActiveRaffle()
   const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 
-  const targetMs = raffle?.createdAt
-    ? new Date(raffle.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000
+  const targetMs = raffle?.endDate
+    ? new Date(raffle.endDate).getTime()
     : FALLBACK_TARGET_MS
 
   useEffect(() => {

@@ -102,6 +102,7 @@ export interface Raffle {
   maxTicketNumber: number
   status: RaffleStatus
   createdAt: string
+  endDate: string | null
   milestones?: RaffleMilestone[]
 }
 

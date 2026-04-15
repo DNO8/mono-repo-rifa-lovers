@@ -17,7 +17,7 @@ import {
   type UpdateUserRoleRequest,
   type UpdateUserStatusRequest,
 } from '@/api/admin.api'
-import { useAsyncData } from './use-async-data'
+import { useAsyncData } from '../../../hooks/use-async-data'
 
 // ==================== RIFAS ====================
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
-import { useAdminKPIs, useAdminRaffles, useAdminUsers } from '@/hooks/use-admin'
+import { useAdminKPIs, useAdminRaffles, useAdminUsers } from '@/features/admin/hooks/use-admin'
 import { checkDrawAvailability, executeDraw } from '@/api/draw.api'
 import type { DrawCheckResponse } from '@/api/draw.api'
 import { Spinner } from '@/components/ui/spinner'

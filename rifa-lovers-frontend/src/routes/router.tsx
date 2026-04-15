@@ -23,6 +23,7 @@ const LazyCheckoutPage = lazy(() => import('@/features/checkout/pages/checkout.p
 const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffle-detail.page'))
 const LazyPaymentReturnPage = lazy(() => import('@/features/checkout/pages/payment-return.page'))
 const LazyEmprendedorPage = lazy(() => import('@/features/emprendedor/pages/emprendedor.page'))
+const LazyAdminDashboardPage = lazy(() => import('@/features/admin/pages/admin-dashboard.page').then(m => ({ default: m.AdminDashboardPage })))
 
 export const router = createBrowserRouter([
   {
@@ -98,6 +99,16 @@ export const router = createBrowserRouter([
     element: (
       <PageWithSuspense fallback={<LandingPageSkeleton />}>
         <LazyEmprendedorPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/admin',
+    element: (
+      <PageWithSuspense fallback={<DashboardPageSkeleton />}>
+        <ProtectedRoute requiredRole="admin">
+          <LazyAdminDashboardPage />
+        </ProtectedRoute>
       </PageWithSuspense>
     ),
   },

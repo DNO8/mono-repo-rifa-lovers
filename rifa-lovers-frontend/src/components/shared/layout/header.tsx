@@ -1,45 +1,45 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router'
-import { Menu, X, Smile, User, LogIn, LogOut } from 'lucide-react'
+import { Menu, X, Smile, User, LogIn, LogOut, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { NAV_ITEMS } from '@/lib/constants'
 import { useActiveRaffle } from '@/hooks/use-raffles'
+import { useShallow } from 'zustand/react/shallow'
 import { useAuthStore } from '@/stores/auth.store'
 import { cn } from '@/lib/utils'
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const logout = useAuthStore((s) => s.logout)
+  const { isAuthenticated, user, logout } = useAuthStore(
+    useShallow((s) => ({ isAuthenticated: s.isAuthenticated, user: s.user, logout: s.logout }))
+  )
+  const isAdmin = user?.role === 'admin'
   const navigate = useNavigate()
   const location = useLocation()
   const { progress } = useActiveRaffle()
   const smileCount = progress?.packsSold ?? 0
 
-  const handleNavClick = useCallback(
-    (e: React.MouseEvent, href: string) => {
-      const hashIndex = href.indexOf('#')
-      if (hashIndex === -1) return
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    const hashIndex = href.indexOf('#')
+    if (hashIndex === -1) return
 
-      e.preventDefault()
-      const hash = href.slice(hashIndex + 1)
-      const basePath = href.slice(0, hashIndex) || '/'
+    e.preventDefault()
+    const hash = href.slice(hashIndex + 1)
+    const basePath = href.slice(0, hashIndex) || '/'
 
-      const scrollTo = () => {
-        const el = document.getElementById(hash)
-        el?.scrollIntoView({ behavior: 'smooth' })
-      }
+    const scrollTo = () => {
+      const el = document.getElementById(hash)
+      el?.scrollIntoView({ behavior: 'smooth' })
+    }
 
-      if (location.pathname === basePath) {
-        scrollTo()
-      } else {
-        navigate(basePath)
-        setTimeout(scrollTo, 100)
-      }
-    },
-    [location.pathname, navigate],
-  )
+    if (location.pathname === basePath) {
+      scrollTo()
+    } else {
+      navigate(basePath)
+      setTimeout(scrollTo, 100)
+    }
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-bg/60 border-b border-white/10">
@@ -68,12 +68,22 @@ export function Header() {
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex flex-col lg:flex-row items-end lg:items-center gap-0.2 lg:gap-3">
             {isAuthenticated ? (
-              <Link to="/dashboard">
-                <Button variant="secondary" size="sm">
-                  <User className="size-3.5" />
-                  Mi cuenta
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="ghost" size="sm">
+                      <Settings className="size-3.5" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/dashboard">
+                  <Button variant="secondary" size="sm">
+                    <User className="size-3.5" />
+                    Mi cuenta
+                  </Button>
+                </Link>
+              </div>
             ) : (
               <Link to="/login">
                 <Button variant="primary" size="sm">
@@ -123,6 +133,14 @@ export function Header() {
           <div className="mt-2 px-4 space-y-2">
             {isAuthenticated ? (
               <>
+                {isAdmin && (
+                  <Link to="/admin" onClick={() => setMobileOpen(false)}>
+                    <Button variant="ghost" size="md" className="w-full">
+                      <Settings className="size-4" />
+                      Panel Admin
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
                   <Button variant="secondary" size="md" className="w-full">
                     <User className="size-4" />

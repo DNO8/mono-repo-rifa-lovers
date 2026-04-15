@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { ClipboardList, Gift, Radio, Award } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Badge } from '@/components/ui/badge'
@@ -165,9 +165,7 @@ export function StepsSection() {
   const animFrameRef = useRef(0)
   const [activeCard, setActiveCard] = useState<number | null>(null)
 
-  const handleCardHover = useCallback((index: number | null) => {
-    setActiveCard(index)
-  }, [])
+  const handleCardHover = (index: number | null) => setActiveCard(index)
 
   // --- Canvas aurora loop ---
   useEffect(() => {

@@ -16,6 +16,7 @@ export interface HttpClient {
   get<T>(path: string, options?: HttpRequestOptions): Promise<T>
   post<T>(path: string, body?: unknown, options?: HttpRequestOptions): Promise<T>
   put<T>(path: string, body?: unknown, options?: HttpRequestOptions): Promise<T>
+  patch<T>(path: string, body?: unknown, options?: HttpRequestOptions): Promise<T>
   delete<T>(path: string, options?: HttpRequestOptions): Promise<T>
 }
 
@@ -56,7 +57,7 @@ export class ApiError extends Error {
     if (this.status >= 500) {
       return 'Error del servidor. Por favor intenta más tarde.'
     }
-    return (this.body as any)?.message || 'Ha ocurrido un error. Intenta nuevamente.'
+    return (this.body as Record<string, unknown>)?.message as string || 'Ha ocurrido un error. Intenta nuevamente.'
   }
 }
 
@@ -79,6 +80,10 @@ export class FetchHttpClient implements HttpClient {
     return this.request<T>(path, { method: 'PUT', body, ...options })
   }
 
+  async patch<T>(path: string, body?: unknown, options?: HttpRequestOptions): Promise<T> {
+    return this.request<T>(path, { method: 'PATCH', body, ...options })
+  }
+
   async delete<T>(path: string, options?: HttpRequestOptions): Promise<T> {
     return this.request<T>(path, { method: 'DELETE', ...options })
   }
@@ -89,7 +94,6 @@ export class FetchHttpClient implements HttpClient {
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true',
       ...(options.headers ?? {}),
     }
 

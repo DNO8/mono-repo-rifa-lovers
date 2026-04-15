@@ -61,7 +61,7 @@ const mapStatus = (status: string): 'confirmado' | 'pendiente' | 'fallido' => {
 const transformPurchasesToHistory = (purchases: Purchase[]): HistoryItem[] => {
   const grouped = new Map<string, HistoryItem>()
   for (const p of purchases) {
-    if (p.status === 'failed') continue
+    if (p.status !== 'paid') continue
     const lpCount = p.luckyPassCount ?? 1
     const existing = grouped.get(p.raffleId)
     if (existing) {
@@ -111,7 +111,7 @@ export default function DashboardPage() {
   if (!user) return null
 
   const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle
-  const totalTickets = luckyPassSummary?.total || 0
+  const totalTickets = luckyPassSummary?.active || 0
   const points = (luckyPassSummary?.active || 0) * 10 // 10 points per active ticket
 
   const historyItems = transformPurchasesToHistory(purchases)

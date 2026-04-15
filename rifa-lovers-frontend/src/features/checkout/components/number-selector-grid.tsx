@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Shuffle, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { checkTicketAvailability } from '@/api/purchases.api'
@@ -57,51 +57,46 @@ export function NumberSelectorGrid({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slots])
 
-  const checkSlot = useCallback(
-    async (index: number, value: number, currentSlots: SlotState[]) => {
-      // Check duplicate within own inputs
-      const otherValues = currentSlots
-        .filter((_, i) => i !== index)
-        .map((s) => s.value)
-      if (otherValues.includes(value)) {
-        setSlots((prev) => {
-          const next = [...prev]
-          next[index] = { value, status: 'duplicate' }
-          return next
-        })
-        return
-      }
-
+  const checkSlot = async (index: number, value: number, currentSlots: SlotState[]) => {
+    const otherValues = currentSlots
+      .filter((_, i) => i !== index)
+      .map((s) => s.value)
+    if (otherValues.includes(value)) {
       setSlots((prev) => {
         const next = [...prev]
-        next[index] = { value, status: 'checking' }
+        next[index] = { value, status: 'duplicate' }
         return next
       })
+      return
+    }
 
-      try {
-        const { available } = await checkTicketAvailability(raffleId, value)
-        setSlots((prev) => {
-          const next = [...prev]
-          // Re-check duplicate after async (another slot may have been set meanwhile)
-          const otherVals = next.filter((_, i) => i !== index).map((s) => s.value)
-          const status: SlotStatus = otherVals.includes(value)
-            ? 'duplicate'
-            : available
-            ? 'available'
-            : 'taken'
-          next[index] = { value, status }
-          return next
-        })
-      } catch {
-        setSlots((prev) => {
-          const next = [...prev]
-          next[index] = { value, status: 'idle' }
-          return next
-        })
-      }
-    },
-    [raffleId],
-  )
+    setSlots((prev) => {
+      const next = [...prev]
+      next[index] = { value, status: 'checking' }
+      return next
+    })
+
+    try {
+      const { available } = await checkTicketAvailability(raffleId, value)
+      setSlots((prev) => {
+        const next = [...prev]
+        const otherVals = next.filter((_, i) => i !== index).map((s) => s.value)
+        const status: SlotStatus = otherVals.includes(value)
+          ? 'duplicate'
+          : available
+          ? 'available'
+          : 'taken'
+        next[index] = { value, status }
+        return next
+      })
+    } catch {
+      setSlots((prev) => {
+        const next = [...prev]
+        next[index] = { value, status: 'idle' }
+        return next
+      })
+    }
+  }
 
   const handleChange = (index: number, raw: string) => {
     if (debounceTimers.current[index]) clearTimeout(debounceTimers.current[index]!)

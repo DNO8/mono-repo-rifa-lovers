@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Logger, NotFoundException, UseGuards, Res } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import type { Response } from 'express'
 import { ConfigService } from '@nestjs/config'
 import { AuthGuard } from '@nestjs/passport'
@@ -24,6 +25,7 @@ export class PaymentsController {
 
   @Post('initiate')
   @UseGuards(AuthGuard('jwt'))
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async initiatePayment(
     @CurrentUser('id') userId: string,
     @Body() dto: InitiatePaymentDto,

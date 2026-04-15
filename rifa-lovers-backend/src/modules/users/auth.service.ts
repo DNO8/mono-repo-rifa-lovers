@@ -2,7 +2,8 @@ import { Injectable, UnauthorizedException, ConflictException, NotFoundException
 import { PrismaService } from '../../database/prisma.service';
 import { SupabaseService } from '../../config/supabase.service';
 import { RegisterDto, LoginDto, UpdateUserDto, AuthResponseDto, UserResponseDto } from './dto';
-import { User, UserStatus } from '@prisma/client';
+import { mapUserToDto } from './mappers/user.mapper';
+import { Prisma, User, UserStatus } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -47,7 +48,7 @@ export class AuthService {
     });
 
     return {
-      user: this.mapToUserResponse(user),
+      user: mapUserToDto(user),
       accessToken: supabaseData.session?.access_token || '',
       refreshToken: supabaseData.session?.refresh_token || '',
     };
@@ -78,7 +79,7 @@ export class AuthService {
     }
 
     return {
-      user: this.mapToUserResponse(user),
+      user: mapUserToDto(user),
       accessToken: supabaseData.session?.access_token || '',
       refreshToken: supabaseData.session?.refresh_token || '',
     };
@@ -105,7 +106,7 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    return this.mapToUserResponse(user);
+    return mapUserToDto(user);
   }
 
   async updateProfile(userId: string, updateData: UpdateUserDto): Promise<UserResponseDto> {
@@ -127,11 +128,11 @@ export class AuthService {
       }
     }
 
-    const updateDataPrisma: any = {
+    const updateDataPrisma: Prisma.UserUpdateInput = {
       email: updateData.email?.toLowerCase() || user.email,
       firstName: updateData.firstName || user.firstName,
       lastName: updateData.lastName || user.lastName,
-      phone: updateData.phone || user.phone,
+      phone: updateData.phone ? parseFloat(updateData.phone) : user.phone,
     };
 
     if (updateData.email) {
@@ -151,7 +152,7 @@ export class AuthService {
       data: updateDataPrisma,
     });
 
-    return this.mapToUserResponse(updatedUser);
+    return mapUserToDto(updatedUser);
   }
 
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
@@ -166,16 +167,4 @@ export class AuthService {
     };
   }
 
-  private mapToUserResponse(user: User): UserResponseDto {
-    return {
-      id: user.id,
-      email: user.email ?? '',
-      firstName: user.firstName ?? '',
-      lastName: user.lastName ?? '',
-      phone: user.phone ?? 0,
-      role: user.role,
-      status: user.status,
-      createdAt: user.createdAt,
-    };
-  }
 }

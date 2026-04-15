@@ -1,7 +1,15 @@
+export const LUCKY_PASS_STATUS = {
+  ACTIVE: 'active',
+  USED: 'used',
+  WINNER: 'winner',
+  CANCELLED: 'cancelled',
+} as const
+export type LuckyPassStatus = (typeof LUCKY_PASS_STATUS)[keyof typeof LUCKY_PASS_STATUS]
+
 export interface LuckyPass {
   id: string
   ticketNumber: number
-  status: 'active' | 'used' | 'winner' | 'cancelled'
+  status: LuckyPassStatus
   isWinner: boolean
   raffleId: string
   raffleName: string
@@ -15,12 +23,20 @@ export interface LuckyPassSummary {
   winners: number
 }
 
+export const PURCHASE_STATUS = {
+  PENDING: 'pending',
+  PAID: 'paid',
+  FAILED: 'failed',
+  REFUNDED: 'refunded',
+} as const
+export type PurchaseStatus = (typeof PURCHASE_STATUS)[keyof typeof PURCHASE_STATUS]
+
 export interface Purchase {
   id: string
   raffleId: string
   raffleName: string
   totalAmount: number
-  status: 'pending' | 'paid' | 'failed' | 'refunded'
+  status: PurchaseStatus
   createdAt: string
   luckyPassCount: number
 }
@@ -37,7 +53,7 @@ export interface CreatePurchaseResponse {
   raffleId: string
   raffleName: string
   totalAmount: number
-  status: string
+  status: PurchaseStatus
   createdAt: string
   flowOrderId?: string
   paymentUrl?: string
@@ -69,16 +85,32 @@ export interface RaffleMilestone {
   prizes: MilestonePrize[]
 }
 
+export const RAFFLE_STATUS = {
+  DRAFT: 'draft',
+  ACTIVE: 'active',
+  SOLD_OUT: 'sold_out',
+  CLOSED: 'closed',
+  DRAWN: 'drawn',
+} as const
+export type RaffleStatus = (typeof RAFFLE_STATUS)[keyof typeof RAFFLE_STATUS]
+
 export interface Raffle {
   id: string
   title: string | null
   description: string | null
   goalPacks: number
   maxTicketNumber: number
-  status: 'draft' | 'active' | 'sold_out' | 'closed' | 'drawn'
+  status: RaffleStatus
   createdAt: string
   milestones?: RaffleMilestone[]
 }
+
+export const MILESTONE_STATUS = {
+  COMPLETED: 'completed',
+  ACTIVE: 'active',
+  LOCKED: 'locked',
+} as const
+export type MilestoneStatus = (typeof MILESTONE_STATUS)[keyof typeof MILESTONE_STATUS]
 
 export interface Milestone {
   id: string
@@ -87,7 +119,7 @@ export interface Milestone {
   name: string
   title: string
   description: string
-  status: 'completed' | 'active' | 'locked'
+  status: MilestoneStatus
   icon: string
 }
 
@@ -177,14 +209,27 @@ export interface LiveActivity {
   city: string
 }
 
+export const USER_ROLE = {
+  CUSTOMER: 'customer',
+  ADMIN: 'admin',
+  OPERATOR: 'operator',
+} as const
+export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE]
+
+export const USER_STATUS = {
+  ACTIVE: 'active',
+  BLOCKED: 'blocked',
+} as const
+export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS]
+
 export interface User {
   id: string
   email: string
   firstName: string | null
   lastName: string | null
   phone: string
-  role: 'customer' | 'admin' | 'operator'
-  status: 'active' | 'blocked'
+  role: UserRole
+  status: UserStatus
   createdAt: string
 }
 

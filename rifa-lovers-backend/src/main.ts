@@ -7,8 +7,8 @@ import { validateEnv } from './config/env.validation';
 try {
   validateEnv();
   Logger.log('✅ Variables de entorno validadas correctamente', 'Bootstrap');
-} catch (error) {
-  Logger.error('❌ Error validando variables de entorno:', error.message, 'Bootstrap');
+} catch (error: unknown) {
+  Logger.error('❌ Error validando variables de entorno:', error instanceof Error ? error.message : String(error), 'Bootstrap');
   process.exit(1);
 }
 
@@ -22,16 +22,28 @@ async function bootstrap() {
   const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'http://localhost:5173',
+    'http://localhost:3000',
   ]
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.tunnelmole.net') || origin.endsWith('.ngrok-free.app') || origin.endsWith('.getflow.cl') || origin.endsWith('.flow.cl')) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.onrender.com') ||
+        origin.endsWith('.flow.cl') ||
+        origin.endsWith('.getflow.cl')
+      ) {
         callback(null, true)
       } else {
         callback(new Error('Not allowed by CORS'))
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Global validation pipe
@@ -46,4 +58,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();

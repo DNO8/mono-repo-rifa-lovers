@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { Request } from 'express';
 import { Strategy } from 'passport-custom';
 import { SupabaseService } from '../../../config/supabase.service';
 import { AuthService } from '../auth.service';
@@ -14,7 +15,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     super();
   }
 
-  async validate(req: any): Promise<User> {
+  async validate(req: Request): Promise<User> {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

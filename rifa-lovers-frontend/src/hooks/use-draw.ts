@@ -1,42 +1,32 @@
-import { useState, useEffect } from 'react'
-import { getDrawResults, type DrawResults, type DrawCheckResponse } from '@/api/draw.api'
+import { getDrawResults, type DrawResults } from '@/api/draw.api'
+import { ApiError } from '@/api/client'
+import { useAsyncData } from './use-async-data'
+
+type DrawResultsData = { results: DrawResults | null; hasDrawn: boolean }
+
+const INITIAL: DrawResultsData = { results: null, hasDrawn: false }
+
+async function fetchDrawResults(raffleId: string): Promise<DrawResultsData> {
+  try {
+    const data = await getDrawResults(raffleId)
+    if (data && 'winners' in data) {
+      return { results: data, hasDrawn: true }
+    }
+    return INITIAL
+  } catch (err: unknown) {
+    const is404 = err instanceof ApiError && err.status === 404
+    const isNotExecuted = err instanceof Error && err.message.includes('no se ha ejecutado')
+    if (is404 || isNotExecuted) return INITIAL
+    throw err
+  }
+}
 
 export function useDrawResults(raffleId: string | undefined) {
-  const [results, setResults] = useState<DrawResults | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [hasDrawn, setHasDrawn] = useState(false)
+  const { data, isLoading, error } = useAsyncData<DrawResultsData>(
+    () => raffleId ? fetchDrawResults(raffleId) : Promise.resolve(INITIAL),
+    INITIAL,
+    [raffleId],
+  )
 
-  useEffect(() => {
-    if (!raffleId) {
-      setIsLoading(false)
-      return
-    }
-
-    const fetchResults = async () => {
-      try {
-        setIsLoading(true)
-        const data = await getDrawResults(raffleId)
-        
-        if (data && 'winners' in data) {
-          setResults(data)
-          setHasDrawn(true)
-        } else {
-          setHasDrawn(false)
-        }
-      } catch (err: any) {
-        if (err.message?.includes('no se ha ejecutado') || err.status === 404) {
-          setHasDrawn(false)
-        } else {
-          setError(err.message || 'Error al cargar resultados')
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchResults()
-  }, [raffleId])
-
-  return { results, isLoading, error, hasDrawn }
+  return { results: data.results, hasDrawn: data.hasDrawn, isLoading, error }
 }

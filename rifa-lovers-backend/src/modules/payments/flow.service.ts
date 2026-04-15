@@ -8,6 +8,16 @@ interface FlowOrderResponse {
   flowOrder: number
 }
 
+export interface FlowPaymentData {
+  date: string | null
+  media: string | null
+  amount: number | null
+  currency: string | null
+  fee: number | null
+  balance: number | null
+  transferDate: string | null
+}
+
 // Flow PaymentStatus: status 1=pendiente, 2=pagada, 3=rechazada, 4=anulada
 export interface FlowPaymentStatus {
   flowOrder: number
@@ -19,15 +29,7 @@ export interface FlowPaymentStatus {
   amount: number
   payer: string
   optional: Record<string, string> | null
-  paymentData: {
-    date: string | null
-    media: string | null
-    amount: number | null
-    currency: string | null
-    fee: number | null
-    balance: number | null
-    transferDate: string | null
-  }
+  paymentData: FlowPaymentData
 }
 
 @Injectable()
@@ -56,7 +58,7 @@ export class FlowService {
   ): Promise<FlowOrderResponse> {
     this.logger.debug(`Creando orden de pago Flow: ${commerceOrder}, $${amount}`)
 
-    const params: Record<string, any> = {
+    const params: Record<string, string | number> = {
       apiKey: this.apiKey,
       commerceOrder,
       subject,
@@ -97,12 +99,12 @@ export class FlowService {
         throw new Error(`Flow API error: ${response.status} - ${errorText}`)
       }
 
-      const data: FlowOrderResponse = await response.json()
+      const data = (await response.json()) as FlowOrderResponse
       this.logger.log(`Orden Flow creada: ${data.flowOrder}, token: ${data.token}`)
 
       return data
-    } catch (error: any) {
-      this.logger.error(`Error creando orden Flow: ${error.message}`)
+    } catch (error: unknown) {
+      this.logger.error(`Error creando orden Flow: ${error instanceof Error ? error.message : String(error)}`)
       throw error
     }
   }
@@ -132,8 +134,8 @@ export class FlowService {
       const data = (await response.json()) as FlowPaymentStatus
       this.logger.debug(`Flow payment status: order=${data.commerceOrder}, status=${data.status}`)
       return data
-    } catch (error: any) {
-      this.logger.error(`Error consultando estado Flow: ${error.message}`)
+    } catch (error: unknown) {
+      this.logger.error(`Error consultando estado Flow: ${error instanceof Error ? error.message : String(error)}`)
       throw error
     }
   }
@@ -141,7 +143,7 @@ export class FlowService {
   /**
    * Genera la firma HMAC-SHA256 para Flow
    */
-  private generateSignature(params: Record<string, any>): string {
+  private generateSignature(params: Record<string, string | number>): string {
     // Ordenar las keys alfabéticamente
     const sortedKeys = Object.keys(params).sort()
     

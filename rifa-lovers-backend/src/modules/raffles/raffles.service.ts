@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { RafflesRepository } from './raffles.repository'
 import { RaffleResponseDto, RaffleProgressDto } from './dto'
 import { RaffleEntity } from './entities'
-import { Raffle, RaffleProgress, Milestone, Prize } from '@prisma/client'
+import { Raffle, RaffleProgress, Milestone, Prize, RaffleStatus } from '@prisma/client'
 
 // Tipo que incluye las relaciones progress y milestones
 type RaffleWithProgressAndMilestones = Raffle & { 
@@ -128,10 +128,10 @@ export class RafflesService {
     }
   }
 
-  async findByStatus(status: string): Promise<RaffleResponseDto[]> {
+  async findByStatus(status: RaffleStatus): Promise<RaffleResponseDto[]> {
     this.logger.debug(`Buscando rifas con estado: ${status}`)
 
-    const raffles = await this.rafflesRepository.findByStatus(status as any)
+    const raffles = await this.rafflesRepository.findByStatus(status)
 
     return raffles.map((raffle) => ({
       id: raffle.id,

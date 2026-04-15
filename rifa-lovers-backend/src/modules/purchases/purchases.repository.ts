@@ -192,7 +192,7 @@ export class PurchasesRepository {
       where: { purchaseId },
       data: {
         ...(data.providerTransactionId && { providerTransactionId: data.providerTransactionId }),
-        ...(data.status && { status: data.status as any }),
+        ...(data.status && { status: data.status }),
       },
     })
   }

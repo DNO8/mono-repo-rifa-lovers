@@ -21,8 +21,8 @@ export function ContactForm() {
         message: formData.get('message'),
       })
       toast.success('¡Mensaje enviado! Te responderemos pronto.')
-    } catch (err: any) {
-      toast.error(err.message || 'Error al enviar el mensaje. Intenta más tarde.')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al enviar el mensaje. Intenta más tarde.')
     } finally {
       setIsLoading(false)
       setSubmitted(true)

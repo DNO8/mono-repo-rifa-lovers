@@ -23,6 +23,10 @@ export class LoggingDecorator implements HttpClient {
     return this.withLogging('PUT', path, () => this.client.put<T>(path, body, options))
   }
 
+  async patch<T>(path: string, body?: unknown, options?: HttpRequestOptions): Promise<T> {
+    return this.withLogging('PATCH', path, () => this.client.patch<T>(path, body, options))
+  }
+
   async delete<T>(path: string, options?: HttpRequestOptions): Promise<T> {
     return this.withLogging('DELETE', path, () => this.client.delete<T>(path, options))
   }

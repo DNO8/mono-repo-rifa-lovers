@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import {
   getAllRaffles,
   createRaffle,
@@ -13,160 +13,83 @@ import {
   type UpdateRaffleStatusRequest,
   type RaffleWithStats,
   type KpiData,
-  type UserWithStats,
   type UsersResponse,
   type UpdateUserRoleRequest,
   type UpdateUserStatusRequest,
 } from '@/api/admin.api'
+import { useAsyncData } from './use-async-data'
 
 // ==================== RIFAS ====================
 
 export function useAdminRaffles() {
-  const [raffles, setRaffles] = useState<RaffleWithStats[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: raffles, isLoading, error, refresh } = useAsyncData<RaffleWithStats[]>(getAllRaffles, [])
 
-  const fetchRaffles = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const data = await getAllRaffles()
-      setRaffles(data)
-      setError(null)
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar rifas')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchRaffles()
-  }, [fetchRaffles])
+  const [localRaffles, setLocalRaffles] = useState<RaffleWithStats[] | null>(null)
+  const current = localRaffles ?? raffles
 
   const create = async (data: CreateRaffleRequest) => {
     const newRaffle = await createRaffle(data)
-    setRaffles(prev => [newRaffle, ...prev])
+    setLocalRaffles(prev => [newRaffle, ...(prev ?? raffles)])
     return newRaffle
   }
 
   const update = async (raffleId: string, data: UpdateRaffleRequest) => {
     const updated = await updateRaffle(raffleId, data)
-    setRaffles(prev => prev.map(r => r.id === raffleId ? updated : r))
+    setLocalRaffles(prev => (prev ?? raffles).map(r => r.id === raffleId ? updated : r))
     return updated
   }
 
   const updateStatus = async (raffleId: string, data: UpdateRaffleStatusRequest) => {
     const updated = await updateRaffleStatus(raffleId, data)
-    setRaffles(prev => prev.map(r => r.id === raffleId ? updated : r))
+    setLocalRaffles(prev => (prev ?? raffles).map(r => r.id === raffleId ? updated : r))
     return updated
   }
 
-  return {
-    raffles,
-    isLoading,
-    error,
-    refresh: fetchRaffles,
-    create,
-    update,
-    updateStatus,
+  const handleRefresh = () => {
+    setLocalRaffles(null)
+    refresh()
   }
+
+  return { raffles: current, isLoading, error, refresh: handleRefresh, create, update, updateStatus }
 }
 
 // ==================== KPIs ====================
 
 export function useAdminKPIs() {
-  const [kpis, setKpis] = useState<KpiData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchKpis = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const data = await getKpis()
-      setKpis(data)
-      setError(null)
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar KPIs')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchKpis()
-  }, [fetchKpis])
-
-  return {
-    kpis,
-    isLoading,
-    error,
-    refresh: fetchKpis,
-  }
+  const { data: kpis, isLoading, error, refresh } = useAsyncData<KpiData | null>(getKpis, null)
+  return { kpis, isLoading, error, refresh }
 }
 
 // ==================== USUARIOS ====================
 
 export function useAdminUsers(initialSkip = 0, initialTake = 50) {
-  const [usersData, setUsersData] = useState<UsersResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [skip, setSkip] = useState(initialSkip)
-  const [take, setTake] = useState(initialTake)
+  const take = initialTake
 
-  const fetchUsers = useCallback(async (newSkip = skip, newTake = take) => {
-    try {
-      setIsLoading(true)
-      const data = await getAllUsers(newSkip, newTake)
-      setUsersData(data)
-      setError(null)
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar usuarios')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [skip, take])
-
-  useEffect(() => {
-    fetchUsers()
-  }, [fetchUsers])
+  const { data: usersData, isLoading, error, refresh } = useAsyncData<UsersResponse | null>(
+    () => getAllUsers(skip, take),
+    null,
+    [skip, take],
+  )
 
   const updateRole = async (userId: string, data: UpdateUserRoleRequest) => {
-    const updated = await updateUserRole(userId, data)
-    setUsersData(prev => {
-      if (!prev) return prev
-      return {
-        ...prev,
-        users: prev.users.map(u => u.id === userId ? { ...u, role: updated.role } : u),
-      }
-    })
-    return updated
+    return updateUserRole(userId, data)
   }
 
   const updateStatus = async (userId: string, data: UpdateUserStatusRequest) => {
-    const updated = await updateUserStatus(userId, data)
-    setUsersData(prev => {
-      if (!prev) return prev
-      return {
-        ...prev,
-        users: prev.users.map(u => u.id === userId ? { ...u, status: updated.status } : u),
-      }
-    })
-    return updated
+    return updateUserStatus(userId, data)
   }
 
-  const goToPage = (newSkip: number) => {
-    setSkip(newSkip)
-    fetchUsers(newSkip, take)
-  }
+  const goToPage = (newSkip: number) => setSkip(newSkip)
 
   return {
-    users: usersData?.users || [],
-    total: usersData?.total || 0,
+    users: usersData?.users ?? [],
+    total: usersData?.total ?? 0,
     skip,
     take,
     isLoading,
     error,
-    refresh: () => fetchUsers(skip, take),
+    refresh,
     updateRole,
     updateStatus,
     goToPage,

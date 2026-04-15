@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Logger, BadRequestException } from '@nestjs/common'
+import { SkipThrottle, Throttle } from '@nestjs/throttler'
 import { ConfigService } from '@nestjs/config'
 import { FlowService } from './flow.service'
 import { PurchasesService } from '../purchases/purchases.service'
@@ -19,6 +20,7 @@ export class WebhookController {
    * y un solo parámetro: token
    */
   @Post('flow')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   async handleFlowWebhook(@Body('token') token: string) {
     this.logger.debug(`Recibido webhook de Flow con token: ${token}`)
 
@@ -78,6 +80,7 @@ export class WebhookController {
    * Body: { "token": "<flow_token>" }
    */
   @Post('flow/trigger-dev')
+  @SkipThrottle()
   async triggerDev(@Body('token') token: string) {
     if (this.configService.get<string>('NODE_ENV') === 'production') {
       throw new BadRequestException('No disponible en producción')

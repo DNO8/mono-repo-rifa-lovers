@@ -11,6 +11,7 @@ import { RafflesRepository } from '../raffles/raffles.repository'
 import { PrismaService } from '../../database/prisma.service'
 import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto } from './dto'
 import { Purchase, Raffle, UserPack, Pack } from '@prisma/client'
+import { mapPurchaseToDto } from './mappers/purchase.mapper'
 
 // Tipo que incluye la relación raffle
 
@@ -37,7 +38,7 @@ export class PurchasesService {
 
     this.logger.debug(`Encontradas ${purchases.length} compras para el usuario ${userId}`)
 
-    return purchases.map((purchase) => this.mapToResponseDto(purchase as PurchaseWithRaffle))
+    return purchases.map((purchase) => mapPurchaseToDto(purchase as PurchaseWithRaffle))
   }
 
   async create(userId: string, createDto: CreatePurchaseDto): Promise<CreatePurchaseResponseDto> {
@@ -126,7 +127,7 @@ export class PurchasesService {
       throw new NotFoundException(`Compra con ID ${id} no encontrada`)
     }
 
-    return this.mapToResponseDto(purchase as PurchaseWithRaffle)
+    return mapPurchaseToDto(purchase as PurchaseWithRaffle)
   }
 
   async updateStatus(
@@ -153,7 +154,7 @@ export class PurchasesService {
       throw new NotFoundException('Error al recuperar la compra actualizada')
     }
 
-    return this.mapToResponseDto(purchaseWithRaffle as PurchaseWithRaffle)
+    return mapPurchaseToDto(purchaseWithRaffle as PurchaseWithRaffle)
   }
 
   async confirmPayment(
@@ -176,7 +177,7 @@ export class PurchasesService {
     }
     if (existing.status === 'paid') {
       this.logger.warn(`Compra ${purchaseId} ya fue confirmada, ignorando duplicado`)
-      return this.mapToResponseDto(existing as PurchaseWithRaffle)
+      return mapPurchaseToDto(existing as PurchaseWithRaffle)
     }
 
     // Tx 1: Marcar compra y transacción como pagadas (siempre debe commitear)
@@ -318,6 +319,21 @@ export class PurchasesService {
         }
       }
 
+      // 5. Desbloquear milestones automáticamente según packsSold actualizado
+      if (raffle) {
+        const updatedProgress = await tx.raffleProgress.findUnique({ where: { raffleId } })
+        if (updatedProgress) {
+          await tx.milestone.updateMany({
+            where: {
+              raffleId,
+              isUnlocked: false,
+              requiredPacks: { lte: updatedProgress.packsSold },
+            },
+            data: { isUnlocked: true },
+          })
+        }
+      }
+
       this.logger.log(
         `Pago confirmado: purchase=${purchaseId}, luckyPasses=${totalLuckyPasses}, packsSold=${totalQuantity}`,
       )
@@ -333,19 +349,6 @@ export class PurchasesService {
       throw new NotFoundException('Error al recuperar la compra actualizada')
     }
 
-    return this.mapToResponseDto(purchaseWithRaffle as PurchaseWithRaffle)
-  }
-
-  private mapToResponseDto(purchase: PurchaseWithRaffle): PurchaseResponseDto {
-    const luckyPassCount = purchase.userPacks?.reduce((sum, up) => sum + up.quantity * (up.pack?.luckyPassQuantity ?? 1), 0) ?? 1
-    return {
-      id: purchase.id,
-      raffleId: purchase.raffleId || '',
-      raffleName: purchase.raffle?.title || 'Rifa sin nombre',
-      totalAmount: purchase.totalAmount?.toNumber() || 0,
-      status: purchase.status,
-      createdAt: purchase.createdAt.toISOString(),
-      luckyPassCount,
-    }
+    return mapPurchaseToDto(purchaseWithRaffle as PurchaseWithRaffle)
   }
 }

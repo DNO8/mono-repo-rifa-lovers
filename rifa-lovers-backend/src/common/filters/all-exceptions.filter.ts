@@ -25,7 +25,7 @@ interface ErrorResponse {
   requestId?: string
   // Solo en desarrollo
   stack?: string
-  details?: any
+  details?: Record<string, unknown>
 }
 
 @Catch()
@@ -61,7 +61,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error,
       timestamp: new Date().toISOString(),
       path: request.url,
-      requestId: request['requestId'] || crypto.randomUUID(),
+      requestId: (request['requestId'] as string | undefined) || crypto.randomUUID(),
     }
 
     // Agregar detalles solo en desarrollo
@@ -69,7 +69,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (exception instanceof HttpException) {
         const exceptionResponse = exception.getResponse()
         if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-          errorResponse.details = exceptionResponse
+          errorResponse.details = exceptionResponse as Record<string, unknown>
         }
       }
       if (exception instanceof Error) {

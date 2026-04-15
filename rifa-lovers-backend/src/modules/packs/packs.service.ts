@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { PacksRepository } from './packs.repository'
 import { PackResponseDto } from './dto/pack-response.dto'
-import { Pack } from '@prisma/client'
+import { mapPackToDto } from './mappers/pack.mapper'
 
 @Injectable()
 export class PacksService {
@@ -18,7 +18,7 @@ export class PacksService {
     )
 
     this.logger.debug(`Encontrados ${packs.length} packs`)
-    return packs.map((pack) => this.mapToResponseDto(pack))
+    return packs.map(mapPackToDto)
   }
 
   async findById(id: string): Promise<PackResponseDto> {
@@ -31,18 +31,6 @@ export class PacksService {
       throw new NotFoundException(`Pack con ID ${id} no encontrado`)
     }
 
-    return this.mapToResponseDto(pack)
-  }
-
-  private mapToResponseDto(pack: Pack): PackResponseDto {
-    return {
-      id: pack.id,
-      name: pack.name,
-      price: pack.price?.toNumber() || 0,
-      luckyPassQuantity: pack.luckyPassQuantity,
-      isFeatured: pack.isFeatured,
-      isPreSale: pack.isPreSale,
-      createdAt: pack.createdAt.toISOString(),
-    }
+    return mapPackToDto(pack)
   }
 }

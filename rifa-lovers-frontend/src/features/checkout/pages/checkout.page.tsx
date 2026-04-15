@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { toast } from 'react-toastify'
 import { ArrowLeft, CreditCard, Hash } from 'lucide-react'
@@ -37,13 +37,8 @@ export default function CheckoutPage() {
   const unitPrice = tier ? tier.price / tier.tickets : 0
   const totalPrice = tier ? tier.price : 0
 
-  const handleNumbersChange = useCallback((nums: (number | '')[]) => {
-    setSelectedNumbers(nums)
-  }, [])
-
-  const handleValidityChange = useCallback((valid: boolean) => {
-    setNumbersValid(valid)
-  }, [])
+  const handleNumbersChange = (nums: (number | '')[]) => setSelectedNumbers(nums)
+  const handleValidityChange = (valid: boolean) => setNumbersValid(valid)
 
   const handleConfirm = async () => {
     if (!raffle || !tier) return

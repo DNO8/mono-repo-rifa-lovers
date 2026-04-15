@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect } from 'react'
 import { ArrowRight, Bell, Hand } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Button } from '@/components/ui/button'
@@ -31,7 +31,7 @@ export function HeroSection() {
     return () => { tween.kill() }
   }, [])
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const spot = spotlightRef.current
     const section = sectionRef.current
     if (!spot || !section) return
@@ -40,12 +40,12 @@ export function HeroSection() {
     const y = e.clientY - rect.top
     spot.style.transform = `translate(${x - 25}px, ${y -25}px)`
     spot.style.opacity = '1'
-  }, [])
+  }
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = () => {
     const spot = spotlightRef.current
     if (spot) spot.style.opacity = '0'
-  }, [])
+  }
 
   return (
     <section

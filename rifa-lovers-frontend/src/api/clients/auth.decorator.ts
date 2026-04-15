@@ -36,6 +36,10 @@ export class AuthDecorator implements HttpClient {
     return this.client.put<T>(path, body, this.injectAuth(options))
   }
 
+  async patch<T>(path: string, body?: unknown, options?: HttpRequestOptions): Promise<T> {
+    return this.client.patch<T>(path, body, this.injectAuth(options))
+  }
+
   async delete<T>(path: string, options?: HttpRequestOptions): Promise<T> {
     return this.client.delete<T>(path, this.injectAuth(options))
   }

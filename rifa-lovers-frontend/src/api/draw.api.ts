@@ -29,19 +29,19 @@ export interface DrawCheckResponse {
  * Obtener resultados del sorteo (público)
  */
 export async function getDrawResults(raffleId: string): Promise<DrawResults | null> {
-  return apiClient.get<DrawResults>(ENDPOINTS.draw.results(raffleId))
+  return apiClient.get<DrawResults>(ENDPOINTS.raffles.draw.results(raffleId))
 }
 
 /**
  * Verificar si se puede ejecutar sorteo (admin)
  */
 export async function checkDrawAvailability(raffleId: string): Promise<DrawCheckResponse> {
-  return apiClient.get<DrawCheckResponse>(ENDPOINTS.draw.check(raffleId))
+  return apiClient.get<DrawCheckResponse>(ENDPOINTS.raffles.draw.check(raffleId))
 }
 
 /**
  * Ejecutar sorteo (admin only)
  */
 export async function executeDraw(raffleId: string): Promise<DrawResults> {
-  return apiClient.post<DrawResults>(ENDPOINTS.draw.execute(raffleId))
+  return apiClient.post<DrawResults>(ENDPOINTS.raffles.draw.execute(raffleId))
 }

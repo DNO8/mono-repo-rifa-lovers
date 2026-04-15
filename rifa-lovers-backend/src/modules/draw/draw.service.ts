@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common'
+import { randomInt } from 'crypto'
 import { PrismaService } from '../../database/prisma.service'
 
 export interface DrawResult {
@@ -21,6 +22,13 @@ export class DrawService {
   private readonly logger = new Logger(DrawService.name)
 
   constructor(private readonly prisma: PrismaService) {}
+
+  private buildUserFullName(user: { firstName?: string | null; lastName?: string | null } | null): string | null {
+    if (!user) return null
+    const { firstName, lastName } = user
+    if (firstName && lastName) return `${firstName} ${lastName}`
+    return firstName || lastName || null
+  }
 
   /**
    * Ejecuta el sorteo de una rifa
@@ -106,7 +114,7 @@ export class DrawService {
       // Mezclar array de passes de forma aleatoria (Fisher-Yates)
       const shuffledPasses = [...activePasses]
       for (let i = shuffledPasses.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
+        const j = randomInt(0, i + 1)
         ;[shuffledPasses[i], shuffledPasses[j]] = [shuffledPasses[j], shuffledPasses[i]]
       }
 
@@ -144,9 +152,7 @@ export class DrawService {
           },
         })
 
-        const userFullName = winnerPass.user?.firstName && winnerPass.user?.lastName 
-          ? `${winnerPass.user.firstName} ${winnerPass.user.lastName}`
-          : winnerPass.user?.firstName || winnerPass.user?.lastName || null
+        const userFullName = this.buildUserFullName(winnerPass.user ?? null)
 
         drawWinners.push({
           prizeId: prize.id,
@@ -220,9 +226,7 @@ export class DrawService {
       raffleId,
       drawnAt: winners[0]?.createdAt || new Date(),
       winners: winners.map((w) => {
-        const userFullName = w.user?.firstName && w.user?.lastName 
-          ? `${w.user.firstName} ${w.user.lastName}`
-          : w.user?.firstName || w.user?.lastName || null
+        const userFullName = this.buildUserFullName(w.user ?? null)
 
         return {
           prizeId: w.prizeId || '',

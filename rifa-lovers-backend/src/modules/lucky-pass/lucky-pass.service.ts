@@ -3,6 +3,7 @@ import { LuckyPassRepository } from './lucky-pass.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
 import { LuckyPassResponseDto, LuckyPassSummaryDto } from './dto'
 import { LuckyPass, Raffle } from '@prisma/client'
+import { mapLuckyPassToDto } from './mappers/lucky-pass.mapper'
 
 // Tipo que incluye la relación raffle
 type LuckyPassWithRaffle = LuckyPass & { raffle: Raffle | null }
@@ -25,7 +26,7 @@ export class LuckyPassService {
 
     this.logger.debug(`Encontrados ${passes.length} lucky passes para el usuario ${userId}`)
 
-    return passes.map((pass) => this.mapToResponseDto(pass as LuckyPassWithRaffle))
+    return passes.map((pass) => mapLuckyPassToDto(pass as LuckyPassWithRaffle))
   }
 
   async getSummary(userId: string): Promise<LuckyPassSummaryDto> {
@@ -66,7 +67,7 @@ export class LuckyPassService {
       throw new NotFoundException(`Lucky pass con ID ${id} no encontrado`)
     }
 
-    return this.mapToResponseDto(pass as LuckyPassWithRaffle)
+    return mapLuckyPassToDto(pass as LuckyPassWithRaffle)
   }
 
   async findByRaffle(raffleId: string): Promise<LuckyPassResponseDto[]> {
@@ -83,7 +84,7 @@ export class LuckyPassService {
       },
     })
 
-    return passes.map((pass) => this.mapToResponseDto(pass as LuckyPassWithRaffle))
+    return passes.map((pass) => mapLuckyPassToDto(pass as LuckyPassWithRaffle))
   }
 
   async checkAvailability(
@@ -114,18 +115,6 @@ export class LuckyPassService {
       throw new NotFoundException('Error al recuperar el lucky pass actualizado')
     }
 
-    return this.mapToResponseDto(passWithRaffle as LuckyPassWithRaffle)
-  }
-
-  private mapToResponseDto(pass: LuckyPassWithRaffle): LuckyPassResponseDto {
-    return {
-      id: pass.id,
-      ticketNumber: pass.ticketNumber || 0,
-      status: pass.status,
-      isWinner: pass.isWinner,
-      raffleId: pass.raffleId || '',
-      raffleName: pass.raffle?.title || 'Rifa sin nombre',
-      createdAt: pass.createdAt.toISOString(),
-    }
+    return mapLuckyPassToDto(passWithRaffle as LuckyPassWithRaffle)
   }
 }

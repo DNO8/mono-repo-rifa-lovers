@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common'
 import { PrismaService } from '../../database/prisma.service'
+import { RaffleStatus, PurchaseStatus } from '@prisma/client'
 import * as cron from 'node-cron'
 
 @Injectable()
@@ -15,21 +16,21 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     // Auto SOLD_OUT - cada 5 minutos
     this.tasks.push(
       cron.schedule('*/5 * * * *', () => {
-        this.autoSoldOut()
+        void this.autoSoldOut()
       })
     )
     
     // Auto CLOSED - cada 5 minutos, con 2 min de offset para evitar conflictos con SOLD_OUT
     this.tasks.push(
       cron.schedule('2-59/5 * * * *', () => {
-        this.autoClosed()
+        void this.autoClosed()
       })
     )
     
     // Expire Purchases - cada 15 minutos
     this.tasks.push(
       cron.schedule('*/15 * * * *', () => {
-        this.expirePendingPurchases()
+        void this.expirePendingPurchases()
       })
     )
     
@@ -41,7 +42,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
 
   onModuleDestroy() {
     this.logger.log('Deteniendo jobs automáticos...')
-    this.tasks.forEach(task => task.stop())
+    for (const task of this.tasks) void task.stop()
     this.logger.log('✅ Jobs detenidos')
   }
 
@@ -58,7 +59,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
         SELECT r.id, r.title, rp.packs_sold, r.goal_packs
         FROM raffles r
         JOIN raffle_progress rp ON r.id = rp.raffle_id
-        WHERE r.status = 'active'
+        WHERE r.status = ${RaffleStatus.active}
           AND rp.packs_sold >= r.goal_packs
       `
 
@@ -71,7 +72,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       for (const raffle of rafflesToUpdate) {
         await this.prisma.raffle.update({
           where: { id: raffle.id },
-          data: { status: 'sold_out' },
+          data: { status: RaffleStatus.sold_out },
         })
 
         this.logger.log(
@@ -99,7 +100,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       const rafflesToClose = await this.prisma.raffle.findMany({
         where: {
           status: {
-            in: ['active', 'sold_out'],
+            in: [RaffleStatus.active, RaffleStatus.sold_out],
           },
           endDate: {
             lte: now,
@@ -122,7 +123,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       for (const raffle of rafflesToClose) {
         await this.prisma.raffle.update({
           where: { id: raffle.id },
-          data: { status: 'closed' },
+          data: { status: RaffleStatus.closed },
         })
 
         this.logger.log(
@@ -149,7 +150,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       // Buscar purchases pendientes de más de 30 minutos
       const purchasesToExpire = await this.prisma.purchase.findMany({
         where: {
-          status: 'pending',
+          status: PurchaseStatus.pending,
           createdAt: {
             lt: thirtyMinutesAgo,
           },
@@ -171,7 +172,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       for (const purchase of purchasesToExpire) {
         await this.prisma.purchase.update({
           where: { id: purchase.id },
-          data: { status: 'failed' },
+          data: { status: PurchaseStatus.failed },
         })
 
         this.logger.log(
@@ -214,18 +215,10 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   /**
    * Obtener estado de los jobs (para monitoreo)
    */
-  async getJobsStatus(): Promise<{
-    lastRun: {
-      soldOut: Date | null
-      closed: Date | null
-      expirePurchases: Date | null
-    }
-    nextRun: {
-      soldOut: Date
-      closed: Date
-      expirePurchases: Date
-    }
-  }> {
+  getJobsStatus(): {
+    lastRun: { soldOut: Date | null; closed: Date | null; expirePurchases: Date | null }
+    nextRun: { soldOut: Date; closed: Date; expirePurchases: Date }
+  } {
     const now = new Date()
     
     // Calcular próximas ejecuciones (cron cada 5, 5, 15 min)

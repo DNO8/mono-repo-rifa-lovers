@@ -77,6 +77,10 @@ export class RefreshDecorator implements HttpClient {
     return this.withRefresh(() => this.client.put<T>(path, body, options), path)
   }
 
+  async patch<T>(path: string, body?: unknown, options?: HttpRequestOptions): Promise<T> {
+    return this.withRefresh(() => this.client.patch<T>(path, body, options), path)
+  }
+
   async delete<T>(path: string, options?: HttpRequestOptions): Promise<T> {
     return this.withRefresh(() => this.client.delete<T>(path, options), path)
   }

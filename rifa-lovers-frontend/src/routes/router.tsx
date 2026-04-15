@@ -25,6 +25,7 @@ const LazyPaymentReturnPage = lazy(() => import('@/features/checkout/pages/payme
 const LazyEmprendedorPage = lazy(() => import('@/features/emprendedor/pages/emprendedor.page'))
 const LazyAdminDashboardPage = lazy(() => import('@/features/admin/pages/admin-dashboard.page').then(m => ({ default: m.AdminDashboardPage })))
 const LazyNotFoundPage = lazy(() => import('@/features/errors/pages/not-found.page'))
+const LazyWinnersPage = lazy(() => import('@/features/raffles/pages/winners.page'))
 
 export const router = createBrowserRouter([
   {
@@ -128,6 +129,14 @@ export const router = createBrowserRouter([
         <ProtectedRoute>
           <LazyRaffleDetailPage />
         </ProtectedRoute>
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/raffle/:id/winners',
+    element: (
+      <PageWithSuspense fallback={null}>
+        <LazyWinnersPage />
       </PageWithSuspense>
     ),
   },

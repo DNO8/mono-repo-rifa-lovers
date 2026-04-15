@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { useAdminKPIs, useAdminRaffles, useAdminUsers } from '@/features/admin/hooks/use-admin'
 import { checkDrawAvailability, executeDraw } from '@/api/draw.api'
-import type { DrawCheckResponse } from '@/api/draw.api'
+import type { DrawCheckResponse, DrawResults } from '@/api/draw.api'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -211,6 +211,7 @@ function DrawModal({ raffleId, onClose }: { raffleId: string; onClose: () => voi
   const [check, setCheck] = useState<DrawCheckResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [executing, setExecuting] = useState(false)
+  const [result, setResult] = useState<DrawResults | null>(null)
 
   useEffect(() => {
     checkDrawAvailability(raffleId)
@@ -222,9 +223,9 @@ function DrawModal({ raffleId, onClose }: { raffleId: string; onClose: () => voi
   const handleDraw = async () => {
     setExecuting(true)
     try {
-      const result = await executeDraw(raffleId)
-      toast.success(`Sorteo completado — ${result.winners.length} ganadores`)
-      onClose()
+      const res = await executeDraw(raffleId)
+      setResult(res)
+      toast.success(`¡Sorteo completado! ${res.winners.length} ganadores asignados`)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Error al ejecutar sorteo')
     } finally {
@@ -234,49 +235,84 @@ function DrawModal({ raffleId, onClose }: { raffleId: string; onClose: () => voi
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div className="p-6 border-b">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+        <div className="p-6 border-b flex items-center justify-between">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Trophy className="w-5 h-5 text-yellow-500" />
-            Ejecutar Sorteo
+            {result ? 'Resultados del Sorteo' : 'Ejecutar Sorteo'}
           </h2>
         </div>
-        <div className="p-6 space-y-4">
-          {loading ? (
-            <div className="flex justify-center py-6"><Spinner size="lg" /></div>
-          ) : check ? (
+
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+          {/* Phase 1: checking */}
+          {!result && (
             <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-primary">{check.prizesCount}</p>
-                  <p className="text-xs text-gray-500 mt-1">Premios desbloqueados</p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-3 text-center">
-                  <p className="text-2xl font-bold text-primary">{check.activePassesCount}</p>
-                  <p className="text-xs text-gray-500 mt-1">LuckyPasses activos</p>
-                </div>
+              {loading ? (
+                <div className="flex justify-center py-6"><Spinner size="lg" /></div>
+              ) : check ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-primary">{check.prizesCount}</p>
+                      <p className="text-xs text-gray-500 mt-1">Premios desbloqueados</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-primary">{check.activePassesCount}</p>
+                      <p className="text-xs text-gray-500 mt-1">LuckyPasses activos</p>
+                    </div>
+                  </div>
+                  {!check.canDraw && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-sm text-red-700">{check.reason}</p>
+                    </div>
+                  )}
+                </>
+              ) : null}
+              <div className="flex gap-3 pt-2">
+                <Button variant="secondary" className="flex-1" onClick={onClose} disabled={executing}>
+                  Cancelar
+                </Button>
+                <Button
+                  variant="primary"
+                  className="flex-1"
+                  disabled={!check?.canDraw || executing}
+                  loading={executing}
+                  onClick={handleDraw}
+                >
+                  Sortear ahora
+                </Button>
               </div>
-              {!check.canDraw && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-red-700">{check.reason}</p>
-                </div>
-              )}
             </>
-          ) : null}
-          <div className="flex gap-3 pt-2">
-            <Button variant="secondary" className="flex-1" onClick={onClose} disabled={executing}>
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              className="flex-1"
-              disabled={!check?.canDraw || executing}
-              loading={executing}
-              onClick={handleDraw}
-            >
-              Sortear ahora
-            </Button>
-          </div>
+          )}
+
+          {/* Phase 2: results */}
+          {result && (
+            <>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                <p className="font-bold text-green-700">{result.winners.length} ganador{result.winners.length !== 1 ? 'es' : ''} seleccionado{result.winners.length !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-green-600 mt-1">{new Date(result.drawnAt).toLocaleString('es-CL')}</p>
+              </div>
+              <div className="space-y-3">
+                {result.winners.map((w, i) => (
+                  <div key={w.luckyPassId} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center shrink-0 text-sm font-bold text-yellow-700">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 truncate">{w.prizeName}</p>
+                      <p className="text-xs text-gray-500">{w.userName ?? 'Usuario'} · {w.userEmail ?? '—'}</p>
+                      <p className="text-xs text-primary font-mono mt-0.5">LuckyPass #{w.passNumber}</p>
+                    </div>
+                    <Trophy className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                  </div>
+                ))}
+              </div>
+              <Button variant="primary" className="w-full" onClick={onClose}>
+                Cerrar
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ interface AuthState {
   logout: () => void
   setToken: (token: string) => void
   clearError: () => void
+  refreshUser: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -65,6 +66,15 @@ export const useAuthStore = create<AuthState>()(
     setToken: (token: string) => set({ token }),
 
     clearError: () => set({ error: null }),
+
+    refreshUser: async () => {
+      try {
+        const user = await apiClient.get<User>(ENDPOINTS.users.me)
+        set({ user })
+      } catch {
+        // silently fail — token may be expired, refresh decorator handles it
+      }
+    },
     }),
     {
       name: 'auth-storage',

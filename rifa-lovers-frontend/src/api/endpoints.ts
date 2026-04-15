@@ -6,6 +6,10 @@ export const ENDPOINTS = {
     refresh: '/auth/refresh',
   },
 
+  users: {
+    me: '/users/me',
+  },
+
   purchases: {
     my: '/purchases/my',
     create: '/purchases',

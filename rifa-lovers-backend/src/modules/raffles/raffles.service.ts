@@ -57,7 +57,7 @@ export class RafflesService {
         name: m.name,
         requiredPacks: m.requiredPacks,
         sortOrder: m.sortOrder,
-        isUnlocked: m.isUnlocked,
+        isUnlocked: (raffle.progress?.packsSold ?? 0) >= m.requiredPacks,
         prizes: m.prizes?.map(p => ({
           id: p.id,
           name: p.name,
@@ -89,11 +89,14 @@ export class RafflesService {
       `Progreso rifa ${raffle.id}: ${progress?.packsSold ?? 0} packs vendidos`,
     )
 
+    const packsSold = progress?.packsSold ?? 0
+    const percentageToGoal = raffle.goalPacks > 0 ? Math.min((packsSold / raffle.goalPacks) * 100, 100) : 0
+
     return {
       raffleId: raffle.id,
-      packsSold: progress?.packsSold ?? 0,
+      packsSold,
       revenueTotal: progress?.revenueTotal?.toNumber() ?? 0,
-      percentageToGoal: progress?.percentageToGoal?.toNumber() ?? 0,
+      percentageToGoal,
     }
   }
 

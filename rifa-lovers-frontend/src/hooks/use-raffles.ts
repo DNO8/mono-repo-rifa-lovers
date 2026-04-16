@@ -13,9 +13,9 @@ async function fetchActiveRaffle(): Promise<ActiveRaffleData> {
 }
 
 export function useActiveRaffle() {
-  const { data, isLoading, error } = useAsyncData<ActiveRaffleData>(
+  const { data, isLoading, error, refresh } = useAsyncData<ActiveRaffleData>(
     fetchActiveRaffle,
     { raffle: null, progress: null },
   )
-  return { raffle: data.raffle, progress: data.progress, isLoading, error }
+  return { raffle: data.raffle, progress: data.progress, isLoading, error, refresh }
 }

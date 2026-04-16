@@ -1,7 +1,10 @@
 import { Radio, Play } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { useActiveRaffle } from '@/hooks/use-raffles'
 
 export function HeroLiveFrame({ children }: { children: React.ReactNode }) {
+  const { raffle, progress } = useActiveRaffle()
+  const remaining = raffle && progress ? Math.max(0, raffle.goalPacks - progress.packsSold) : 0
   return (
     <div className="relative group">
       {/* Animated glowing border */}
@@ -34,7 +37,7 @@ export function HeroLiveFrame({ children }: { children: React.ReactNode }) {
           </div>
           <Badge className="bg-secondary/90 text-white text-[9px] sm:text-[10px] px-2 py-0.5 border-0 shrink-0">
             <Radio className="size-2.5" />
-            Quedan 75 cupos
+            Quedan {remaining.toLocaleString('es-CL')} cupos
           </Badge>
         </div>
       </div>

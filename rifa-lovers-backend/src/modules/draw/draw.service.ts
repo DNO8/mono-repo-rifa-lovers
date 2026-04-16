@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common'
 import { randomInt } from 'crypto'
 import { PrismaService } from '../../database/prisma.service'
+import { NotificationsService } from '../notifications/notifications.service'
 
 export interface DrawResult {
   raffleId: string
@@ -21,7 +22,10 @@ export interface DrawResult {
 export class DrawService {
   private readonly logger = new Logger(DrawService.name)
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   private buildUserFullName(user: { firstName?: string | null; lastName?: string | null } | null): string | null {
     if (!user) return null
@@ -183,11 +187,27 @@ export class DrawService {
       return drawWinners
     })
 
-    return {
+    const result: DrawResult = {
       raffleId,
       drawnAt: new Date(),
       winners,
     }
+
+    // Send winner notification emails (non-blocking)
+    const drawnRaffle = await this.prisma.raffle.findUnique({ where: { id: raffleId } })
+    for (const winner of winners) {
+      if (winner.userEmail) {
+        void this.notifications.sendWinnerEmail({
+          toEmail: winner.userEmail,
+          toName: winner.userName ?? 'Ganador',
+          prizeName: winner.prizeName,
+          passNumber: winner.passNumber,
+          raffleName: drawnRaffle?.title ?? null,
+        })
+      }
+    }
+
+    return result
   }
 
   /**

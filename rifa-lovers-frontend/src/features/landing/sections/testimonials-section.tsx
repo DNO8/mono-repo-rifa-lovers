@@ -7,6 +7,10 @@ import { useCarousel } from '@/hooks/use-carousel'
 import { SplitText } from '@/components/shared/split-text'
 import { cn } from '@/lib/utils'
 import type { Testimonial } from '@/types/domain.types'
+import { useActiveRaffle } from '@/hooks/use-raffles'
+import { getPublishedTestimonials } from '@/api/testimonials.api'
+import type { TestimonialResponse } from '@/api/testimonials.api'
+import { useAsyncData } from '@/hooks/use-async-data'
 
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
@@ -64,13 +68,38 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   )
 }
 
+function toStaticTestimonial(t: TestimonialResponse, i: number): Testimonial {
+  return {
+    id: t.id,
+    name: t.userName ?? `Ganador ${i + 1}`,
+    avatar: '🏆',
+    location: 'Chile',
+    text: t.text,
+    rating: t.rating,
+    isWinner: true,
+  }
+}
+
 export function TestimonialsSection() {
   const sectionRef = useGsapScroll<HTMLElement>()
+  const { raffle } = useActiveRaffle()
+
+  const { data: apiTestimonials } = useAsyncData<TestimonialResponse[]>(
+    () => raffle?.id ? getPublishedTestimonials(raffle.id) : Promise.resolve([]),
+    [],
+    [raffle?.id],
+  )
+
+  const hasRealTestimonials = apiTestimonials.length > 0
+  const displayTestimonials: Testimonial[] = hasRealTestimonials
+    ? apiTestimonials.map(toStaticTestimonial)
+    : SHOW_TESTIMONIALS ? TESTIMONIALS : []
+
   const {
     trackRef, current, setIsPaused, snapTo, goNext, goPrev, dragHandlers,
-  } = useCarousel({ total: TESTIMONIALS.length, autoAdvanceMs: 5000 })
+  } = useCarousel({ total: displayTestimonials.length, autoAdvanceMs: 5000 })
 
-  if (!SHOW_TESTIMONIALS) return null
+  if (displayTestimonials.length === 0) return null
 
   return (
     <section
@@ -101,7 +130,7 @@ export function TestimonialsSection() {
           {...dragHandlers}
         >
           <div ref={trackRef} className="flex gap-5 will-change-transform">
-            {TESTIMONIALS.map((t) => (
+            {displayTestimonials.map((t) => (
               <TestimonialCard key={t.id} testimonial={t} />
             ))}
           </div>
@@ -119,7 +148,7 @@ export function TestimonialsSection() {
 
           {/* Dots */}
           <div className="flex gap-2">
-            {TESTIMONIALS.map((_, i) => (
+            {displayTestimonials.map((_, i) => (
               <button
                 key={i}
                 onClick={() => snapTo(i)}

@@ -100,7 +100,7 @@ export class AdminService {
       [RaffleStatus.draft]: [RaffleStatus.active],
       [RaffleStatus.active]: [RaffleStatus.sold_out, RaffleStatus.closed],
       [RaffleStatus.sold_out]: [RaffleStatus.closed],
-      [RaffleStatus.closed]: [RaffleStatus.drawn],
+      [RaffleStatus.closed]: [RaffleStatus.drawn, RaffleStatus.active],
       [RaffleStatus.drawn]: [],
     }
 

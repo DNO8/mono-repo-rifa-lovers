@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow'
 import { useAuthStore } from '@/stores/auth.store'
 import { DashboardGreetingSection } from '../sections/dashboard-greeting-section'
 import { DashboardImpactSection } from '../sections/dashboard-impact-section'
@@ -95,8 +96,9 @@ const transformRaffleToCardData = (raffle: Raffle | null, userLuckyPassTotal: nu
 }
 
 export default function DashboardPage() {
-  const user = useAuthStore((s) => s.user)
-  const logout = useAuthStore((s) => s.logout)
+  const { user, logout } = useAuthStore(
+    useShallow((s) => ({ user: s.user, logout: s.logout }))
+  )
   const navigate = useNavigate()
 
   const { purchases, isLoading: isLoadingPurchases } = usePurchases()

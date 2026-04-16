@@ -13,6 +13,7 @@ import { RafflesModule } from './modules/raffles/raffles.module';
 import { PacksModule } from './modules/packs/packs.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { DrawModule } from './modules/draw/draw.module';
+import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -40,6 +41,7 @@ import { throttlerConfig } from './config/throttler.config';
     PacksModule,
     PaymentsModule,
     DrawModule,
+    TestimonialsModule,
     AdminModule,
     JobsModule,
   ],

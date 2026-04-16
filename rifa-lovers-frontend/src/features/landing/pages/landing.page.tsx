@@ -8,7 +8,7 @@ import { WinnersSection } from '../sections/winners-section'
 import { TestimonialsSection } from '../sections/testimonials-section'
 import { PricingSection } from '../sections/pricing-section'
 import { MilestoneTimeline } from '../components/ticket-selector'
-import { SHOW_WINNERS, SHOW_TESTIMONIALS } from '@/lib/constants'
+
 
 export default function LandingPage() {
   return (
@@ -27,18 +27,10 @@ export default function LandingPage() {
       <HowItWorksSection />
       <SectionDivider />
       <PricingSection />
-      {SHOW_WINNERS && (
-        <>
-          <SectionDivider />
-          <WinnersSection />
-        </>
-      )}
-      {SHOW_TESTIMONIALS && (
-        <>
-          <SectionDivider />
-          <TestimonialsSection />
-        </>
-      )}
+      <SectionDivider />
+      <WinnersSection />
+      <SectionDivider />
+      <TestimonialsSection />
     </>
   )
 }

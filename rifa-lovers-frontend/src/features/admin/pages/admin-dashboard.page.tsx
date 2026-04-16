@@ -83,7 +83,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   draft:    ['active'],
   active:   ['closed'],
   sold_out: ['closed'],
-  closed:   ['drawn'],
+  closed:   ['active', 'drawn'],
   drawn:    [],
 }
 
@@ -357,17 +357,18 @@ export function AdminDashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
+    <div className="px-3 py-4 sm:p-6 space-y-4 sm:space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Panel de Administración</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl sm:text-2xl font-bold">Panel de Administración</h1>
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {(['overview', 'raffles', 'users'] as Tab[]).map(tab => (
             <Button
               key={tab}
               variant={activeTab === tab ? 'primary' : 'secondary'}
               size="sm"
               onClick={() => setActiveTab(tab)}
+              className="shrink-0"
             >
               {tab === 'overview' && <TrendingUp className="w-4 h-4 mr-1.5" />}
               {tab === 'raffles' && <Calendar className="w-4 h-4 mr-1.5" />}
@@ -381,13 +382,13 @@ export function AdminDashboardPage() {
       {/* ── Overview ── */}
       {activeTab === 'overview' && kpis && (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <KpiCard title="Ventas Totales" value={kpis.totalSales} icon={DollarSign} color="green" suffix=" CLP" />
             <KpiCard title="Packs Vendidos" value={kpis.packsSold} icon={Package} color="blue" />
             <KpiCard title="Usuarios Activos" value={kpis.activeUsers} icon={Users} color="purple" />
             <KpiCard title="Rifas Activas" value={kpis.activeRaffles} icon={Calendar} color="orange" />
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <KpiCard title="Total Compras" value={kpis.totalPurchases} icon={ShoppingCart} color="blue" />
             <KpiCard title="Pendientes" value={kpis.pendingPurchases} icon={Clock} color="orange" />
             <KpiCard title="Completadas" value={kpis.completedPurchases} icon={CheckCircle} color="green" />
@@ -417,8 +418,79 @@ export function AdminDashboardPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="p-0 sm:p-6">
+            {/* Mobile: cards */}
+            <div className="sm:hidden divide-y">
+              {raffles.map((raffle) => {
+                const transitions = VALID_TRANSITIONS[raffle.status] || []
+                return (
+                  <div key={raffle.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-sm">{raffle.title || 'Sin título'}</p>
+                        <p className="text-xs text-gray-400">{new Date(raffle.createdAt).toLocaleDateString('es-CL')}</p>
+                      </div>
+                      <RaffleStatusBadge status={raffle.status} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full" style={{ width: `${raffle.progressPercentage}%` }} />
+                      </div>
+                      <span className="text-xs text-gray-600 shrink-0">{raffle.progressPercentage}%</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>Packs: <strong className="text-gray-800">{raffle.packsSold}</strong> / {raffle.goalPacks}</span>
+                      <span>Ingresos: <strong className="text-gray-800">${raffle.totalRevenue.toLocaleString('es-CL')}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        className="flex-1 py-1.5 text-xs border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1"
+                        onClick={() => setRaffleModal(raffle)}
+                      >
+                        <Pencil className="w-3 h-3" /> Editar
+                      </button>
+                      {transitions.length > 0 && (
+                        <div className="relative flex-1">
+                          <button
+                            className="w-full py-1.5 text-xs border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1"
+                            onClick={() => setStatusDropdown(statusDropdown === raffle.id ? null : raffle.id)}
+                          >
+                            <ChevronDown className="w-3 h-3" /> Estado
+                          </button>
+                          {statusDropdown === raffle.id && (
+                            <div className="absolute left-0 mt-1 bg-white border rounded-lg shadow-lg z-10 min-w-[140px]">
+                              {transitions.map(t => (
+                                <button
+                                  key={t}
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                                  onClick={() => handleStatusChange(raffle.id, t)}
+                                >
+                                  → {RAFFLE_STATUS_CONFIG[t]?.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {raffle.status === 'closed' && (
+                        <button
+                          className="flex-1 py-1.5 text-xs border border-yellow-200 rounded-lg hover:bg-yellow-50 text-yellow-700 flex items-center justify-center gap-1"
+                          onClick={() => setDrawRaffleId(raffle.id)}
+                        >
+                          <Play className="w-3 h-3" /> Sortear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+              {raffles.length === 0 && (
+                <p className="py-12 text-center text-gray-400 text-sm">No hay rifas creadas</p>
+              )}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-gray-500">
@@ -440,9 +512,7 @@ export function AdminDashboardPage() {
                           <div className="font-medium">{raffle.title || 'Sin título'}</div>
                           <div className="text-xs text-gray-400">{new Date(raffle.createdAt).toLocaleDateString('es-CL')}</div>
                         </td>
-                        <td className="py-3 px-4">
-                          <RaffleStatusBadge status={raffle.status} />
-                        </td>
+                        <td className="py-3 px-4"><RaffleStatusBadge status={raffle.status} /></td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -456,20 +526,13 @@ export function AdminDashboardPage() {
                         <td className="py-3 px-4 text-right font-medium">${raffle.totalRevenue.toLocaleString('es-CL')}</td>
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-center gap-1.5">
-                            {/* Edit */}
-                            <button
-                              className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700"
-                              title="Editar"
-                              onClick={() => setRaffleModal(raffle)}
-                            >
+                            <button className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title="Editar" onClick={() => setRaffleModal(raffle)}>
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
-
-                            {/* Estado dropdown */}
                             {transitions.length > 0 && (
                               <div className="relative">
                                 <button
-                                  className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 flex items-center gap-0.5"
+                                  className="p-1.5 rounded hover:bg-gray-100 text-gray-500 flex items-center gap-0.5"
                                   title="Cambiar estado"
                                   onClick={() => setStatusDropdown(statusDropdown === raffle.id ? null : raffle.id)}
                                 >
@@ -478,11 +541,7 @@ export function AdminDashboardPage() {
                                 {statusDropdown === raffle.id && (
                                   <div className="absolute right-0 mt-1 bg-white border rounded-lg shadow-lg z-10 min-w-[140px]">
                                     {transitions.map(t => (
-                                      <button
-                                        key={t}
-                                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                                        onClick={() => handleStatusChange(raffle.id, t)}
-                                      >
+                                      <button key={t} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={() => handleStatusChange(raffle.id, t)}>
                                         → {RAFFLE_STATUS_CONFIG[t]?.label}
                                       </button>
                                     ))}
@@ -490,14 +549,8 @@ export function AdminDashboardPage() {
                                 )}
                               </div>
                             )}
-
-                            {/* Sortear */}
                             {raffle.status === 'closed' && (
-                              <button
-                                className="p-1.5 rounded hover:bg-yellow-50 text-yellow-600"
-                                title="Ejecutar sorteo"
-                                onClick={() => setDrawRaffleId(raffle.id)}
-                              >
+                              <button className="p-1.5 rounded hover:bg-yellow-50 text-yellow-600" title="Ejecutar sorteo" onClick={() => setDrawRaffleId(raffle.id)}>
                                 <Play className="w-3.5 h-3.5" />
                               </button>
                             )}
@@ -507,9 +560,7 @@ export function AdminDashboardPage() {
                     )
                   })}
                   {raffles.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-gray-400">No hay rifas creadas</td>
-                    </tr>
+                    <tr><td colSpan={7} className="py-12 text-center text-gray-400">No hay rifas creadas</td></tr>
                   )}
                 </tbody>
               </table>
@@ -527,8 +578,73 @@ export function AdminDashboardPage() {
               <span className="text-sm text-gray-500">{usersTotal} usuarios en total</span>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="p-0 sm:p-6">
+            {/* Mobile: cards */}
+            <div className="sm:hidden divide-y">
+              {users.map((user) => (
+                <div key={user.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">{user.firstName || ''} {user.lastName || ''}</p>
+                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                        user.role === 'operator' ? 'bg-blue-100 text-blue-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>{user.role}</span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}>{user.status === 'active' ? 'Activo' : 'Bloqueado'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>Compras: <strong className="text-gray-800">{user._count.purchases}</strong></span>
+                    <span>LuckyPasses: <strong className="text-gray-800">{user._count.luckyPasses}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    {user.role === 'customer' && (
+                      <button
+                        className="flex-1 py-1.5 text-xs border border-blue-200 rounded-lg hover:bg-blue-50 text-blue-600 flex items-center justify-center gap-1"
+                        onClick={async () => { try { await updateRole(user.id, { role: 'operator' }); toast.success('Rol actualizado a operador') } catch { toast.error('Error al actualizar rol') } }}
+                      >
+                        <Shield className="w-3 h-3" /> Hacer operador
+                      </button>
+                    )}
+                    {user.role === 'operator' && (
+                      <button
+                        className="flex-1 py-1.5 text-xs border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1"
+                        onClick={async () => { try { await updateRole(user.id, { role: 'customer' }); toast.success('Rol actualizado a customer') } catch { toast.error('Error al actualizar rol') } }}
+                      >
+                        <UserCheck className="w-3 h-3" /> Bajar a customer
+                      </button>
+                    )}
+                    <button
+                      className={`flex-1 py-1.5 text-xs border rounded-lg flex items-center justify-center gap-1 ${
+                        user.status === 'active' ? 'border-red-200 hover:bg-red-50 text-red-600' : 'border-green-200 hover:bg-green-50 text-green-600'
+                      }`}
+                      onClick={async () => {
+                        try {
+                          const newStatus = user.status === 'active' ? 'blocked' : 'active'
+                          await updateUserStatus(user.id, { status: newStatus })
+                          toast.success(`Usuario ${newStatus === 'active' ? 'desbloqueado' : 'bloqueado'}`)
+                        } catch { toast.error('Error al cambiar estado') }
+                      }}
+                    >
+                      <Ban className="w-3 h-3" />
+                      {user.status === 'active' ? 'Bloquear' : 'Desbloquear'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {users.length === 0 && (
+                <p className="py-12 text-center text-gray-400 text-sm">No hay usuarios</p>
+              )}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-gray-500">
@@ -552,56 +668,29 @@ export function AdminDashboardPage() {
                           user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
                           user.role === 'operator' ? 'bg-blue-100 text-blue-700' :
                           'bg-gray-100 text-gray-700'
-                        }`}>
-                          {user.role}
-                        </span>
+                        }`}>{user.role}</span>
                       </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                           user.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {user.status === 'active' ? 'Activo' : 'Bloqueado'}
-                        </span>
+                        }`}>{user.status === 'active' ? 'Activo' : 'Bloqueado'}</span>
                       </td>
                       <td className="py-3 px-4 text-right">{user._count.purchases}</td>
                       <td className="py-3 px-4 text-right">{user._count.luckyPasses}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-center gap-1.5">
-                          {/* Promover a operator */}
                           {user.role === 'customer' && (
-                            <button
-                              className="p-1.5 rounded hover:bg-blue-50 text-blue-500"
-                              title="Promover a operador"
-                              onClick={async () => {
-                                try {
-                                  await updateRole(user.id, { role: 'operator' })
-                                  toast.success('Rol actualizado a operador')
-                                } catch {
-                                  toast.error('Error al actualizar rol')
-                                }
-                              }}
-                            >
+                            <button className="p-1.5 rounded hover:bg-blue-50 text-blue-500" title="Promover a operador"
+                              onClick={async () => { try { await updateRole(user.id, { role: 'operator' }); toast.success('Rol actualizado a operador') } catch { toast.error('Error al actualizar rol') } }}>
                               <Shield className="w-3.5 h-3.5" />
                             </button>
                           )}
-                          {/* Degradar a customer */}
                           {user.role === 'operator' && (
-                            <button
-                              className="p-1.5 rounded hover:bg-gray-100 text-gray-500"
-                              title="Degradar a customer"
-                              onClick={async () => {
-                                try {
-                                  await updateRole(user.id, { role: 'customer' })
-                                  toast.success('Rol actualizado a customer')
-                                } catch {
-                                  toast.error('Error al actualizar rol')
-                                }
-                              }}
-                            >
+                            <button className="p-1.5 rounded hover:bg-gray-100 text-gray-500" title="Degradar a customer"
+                              onClick={async () => { try { await updateRole(user.id, { role: 'customer' }); toast.success('Rol actualizado a customer') } catch { toast.error('Error al actualizar rol') } }}>
                               <UserCheck className="w-3.5 h-3.5" />
                             </button>
                           )}
-                          {/* Bloquear / desbloquear */}
                           <button
                             className={`p-1.5 rounded ${user.status === 'active' ? 'hover:bg-red-50 text-red-500' : 'hover:bg-green-50 text-green-500'}`}
                             title={user.status === 'active' ? 'Bloquear usuario' : 'Desbloquear usuario'}
@@ -610,9 +699,7 @@ export function AdminDashboardPage() {
                                 const newStatus = user.status === 'active' ? 'blocked' : 'active'
                                 await updateUserStatus(user.id, { status: newStatus })
                                 toast.success(`Usuario ${newStatus === 'active' ? 'desbloqueado' : 'bloqueado'}`)
-                              } catch {
-                                toast.error('Error al cambiar estado')
-                              }
+                              } catch { toast.error('Error al cambiar estado') }
                             }}
                           >
                             <Ban className="w-3.5 h-3.5" />
@@ -622,9 +709,7 @@ export function AdminDashboardPage() {
                     </tr>
                   ))}
                   {users.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="py-12 text-center text-gray-400">No hay usuarios</td>
-                    </tr>
+                    <tr><td colSpan={6} className="py-12 text-center text-gray-400">No hay usuarios</td></tr>
                   )}
                 </tbody>
               </table>

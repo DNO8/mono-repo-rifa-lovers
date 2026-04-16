@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, ShoppingCart, Hand, Calendar, Hash } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Hand, Calendar, Hash, Trophy, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
@@ -8,11 +8,13 @@ import { TicketModelViewer } from '../components/ticket-model-viewer'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
 import { Spinner } from '@/components/ui/spinner'
+import { TestimonialForm } from '../components/testimonial-form'
 
 interface UserTicket {
   id: string
   number: number
   purchasedAt: string
+  isWinner: boolean
 }
 
 export default function RaffleDetailPage() {
@@ -30,6 +32,7 @@ export default function RaffleDetailPage() {
     id: lp.id,
     number: lp.ticketNumber,
     purchasedAt: lp.createdAt,
+    isWinner: lp.isWinner,
   }))
 
   const activeTicket = selectedTicket ?? userTickets[0] ?? null
@@ -135,13 +138,16 @@ export default function RaffleDetailPage() {
                       key={ticket.id}
                       onClick={() => setSelectedTicket(ticket)}
                       className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-left transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-primary/10 border border-primary/30 shadow-sm'
-                          : 'hover:bg-bg-purple-soft/50 border border-transparent'
+                        ticket.isWinner
+                          ? 'bg-yellow-50 border border-yellow-300 shadow-md ring-1 ring-yellow-200'
+                          : isActive
+                            ? 'bg-primary/10 border border-primary/30 shadow-sm'
+                            : 'hover:bg-bg-purple-soft/50 border border-transparent'
                       }`}
                     >
                       <div>
-                        <span className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-text-primary'}`}>
+                        <span className={`text-sm font-bold flex items-center gap-1.5 ${ticket.isWinner ? 'text-yellow-600' : isActive ? 'text-primary' : 'text-text-primary'}`}>
+                          {ticket.isWinner && <Trophy className="size-3.5 text-yellow-500" />}
                           #{String(ticket.number).padStart(5, '0')}
                         </span>
                         <span className="block text-[10px] text-text-tertiary mt-0.5">
@@ -152,11 +158,15 @@ export default function RaffleDetailPage() {
                           })}
                         </span>
                       </div>
-                      {isActive && (
+                      {ticket.isWinner ? (
+                        <Badge variant="success" className="text-[10px] px-2 py-0.5 animate-pulse">
+                          🏆 Ganador
+                        </Badge>
+                      ) : isActive ? (
                         <Badge variant="gradient" className="text-[10px] px-2 py-0.5">
                           Viendo
                         </Badge>
-                      )}
+                      ) : null}
                     </button>
                   )
                 })}
@@ -177,6 +187,32 @@ export default function RaffleDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Winner section: shown when selected ticket is a winner */}
+        {activeTicket?.isWinner && raffleId && (
+          <div className="mt-6 rounded-2xl overflow-hidden border border-yellow-200 bg-yellow-50/60">
+            {/* Header */}
+            <div className="flex items-center gap-3 px-6 py-5 border-b border-yellow-200 bg-yellow-50">
+              <div className="size-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                <Trophy className="size-5 text-yellow-500" />
+              </div>
+              <div>
+                <p className="font-bold text-yellow-800 text-lg leading-tight">¡Felicitaciones, ganaste!</p>
+                <p className="text-xs text-yellow-600 mt-0.5">Tu LuckyPass #{String(activeTicket.number).padStart(5, '0')} fue seleccionado en el sorteo</p>
+              </div>
+            </div>
+
+            {/* Testimonial form */}
+            <div className="px-6 py-5">
+              <p className="text-sm font-semibold text-yellow-800 mb-1 flex items-center gap-1.5">
+                <Star className="size-4 text-yellow-500" />
+                Comparte tu experiencia
+              </p>
+              <p className="text-xs text-yellow-700/70 mb-4">Tu testimonio puede aparecer en la página principal e inspirar a otros participantes.</p>
+              <TestimonialForm raffleId={raffleId} luckyPassId={activeTicket.id} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

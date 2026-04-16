@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Trophy, Calendar, Ticket, User } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trophy, Calendar, Ticket, User, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
@@ -152,38 +153,52 @@ export function WinnersSection() {
 
         {/* Navigation */}
         {!isLoading && (
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <button
-            onClick={goPrev}
-            className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/30 transition-colors shadow-sm"
-            aria-label="Anterior ganador"
-          >
-            <ChevronLeft className="size-5" />
-          </button>
-
-          {/* Dots */}
-          <div className="flex gap-2">
-            {displayWinners.map((_, i) => (
+          <>
+            <div className="flex items-center justify-center gap-4 mt-8">
               <button
-                key={i}
-                onClick={() => snapTo(i)}
-                className={cn(
-                  'h-2 rounded-full transition-all duration-300',
-                  i === current ? 'w-6 bg-primary' : 'w-2 bg-border hover:bg-text-tertiary'
-                )}
-                aria-label={`Ganador ${i + 1}`}
-              />
-            ))}
-          </div>
+                onClick={goPrev}
+                className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/30 transition-colors shadow-sm"
+                aria-label="Anterior ganador"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
 
-          <button
-            onClick={goNext}
-            className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/30 transition-colors shadow-sm"
-            aria-label="Siguiente ganador"
-          >
-            <ChevronRight className="size-5" />
-          </button>
-        </div>
+              {/* Dots */}
+              <div className="flex gap-2">
+                {displayWinners.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => snapTo(i)}
+                    className={cn(
+                      'h-2 rounded-full transition-all duration-300',
+                      i === current ? 'w-6 bg-primary' : 'w-2 bg-border hover:bg-text-tertiary'
+                    )}
+                    aria-label={`Ganador ${i + 1}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={goNext}
+                className="size-10 rounded-full bg-white border border-border-light flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/30 transition-colors shadow-sm"
+                aria-label="Siguiente ganador"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </div>
+
+            {isRealDraw && raffle?.id && (
+              <div className="flex justify-center mt-6">
+                <Link
+                  to={`/raffle/${raffle.id}/winners`}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                >
+                  Ver todos los ganadores
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

@@ -53,6 +53,13 @@ export const ENDPOINTS = {
     initiate: '/payments/initiate',
   },
 
+  testimonials: {
+    create: '/testimonials',
+    byRaffle: (raffleId: string) => `/raffles/${raffleId}/testimonials`,
+    adminAll: '/admin/testimonials',
+    adminPublish: (id: string) => `/admin/testimonials/${id}/publish`,
+  },
+
   contact: '/contact',
 
 } as const

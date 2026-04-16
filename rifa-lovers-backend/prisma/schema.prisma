@@ -103,6 +103,7 @@ model User {
   userPacks    UserPack[]
   luckyPasses  LuckyPass[]
   prizeWinners PrizeWinner[]
+  testimonials Testimonial[]
 
   @@map("users")
   @@schema("public")
@@ -128,6 +129,7 @@ model Raffle {
   milestones   Milestone[]
   prizes       Prize[]
   progress     RaffleProgress?
+  testimonials Testimonial[]
 
   @@map("raffles")
   @@schema("public")
@@ -201,6 +203,7 @@ model LuckyPass {
   user       User?         @relation(fields: [userId], references: [id])
   userPack   UserPack?     @relation(fields: [userPackId], references: [id])
   prizeWinners PrizeWinner[]
+  testimonial  Testimonial?
 
   @@index([raffleId], map: "idx_lucky_raffle")
   @@index([userId], map: "idx_lucky_user")
@@ -257,6 +260,25 @@ model PrizeWinner {
 
   @@unique([luckyPassId], map: "unique_lucky_pass_winner")
   @@map("prize_winners")
+  @@schema("public")
+}
+
+model Testimonial {
+  id          String   @id @default(uuid()) @db.Uuid
+  raffleId    String   @map("raffle_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  luckyPassId String   @map("lucky_pass_id") @db.Uuid
+  text        String   @db.Text
+  rating      Int      @default(5)
+  isPublished Boolean  @default(false) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  raffle    Raffle    @relation(fields: [raffleId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+  luckyPass LuckyPass @relation(fields: [luckyPassId], references: [id])
+
+  @@unique([luckyPassId])
+  @@map("testimonials")
   @@schema("public")
 }
 

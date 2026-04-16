@@ -1,14 +1,17 @@
 import { Navigate, useLocation } from 'react-router'
+import { useShallow } from 'zustand/react/shallow'
 import { useAuthStore } from '@/stores/auth.store'
+import type { UserRole } from '@/types/domain.types'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  requiredRole?: 'admin' | 'operator'
+  requiredRole?: Extract<UserRole, 'admin' | 'operator'>
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const user = useAuthStore((s) => s.user)
+  const { isAuthenticated, user } = useAuthStore(
+    useShallow((s) => ({ isAuthenticated: s.isAuthenticated, user: s.user }))
+  )
   const location = useLocation()
 
   if (!isAuthenticated) {

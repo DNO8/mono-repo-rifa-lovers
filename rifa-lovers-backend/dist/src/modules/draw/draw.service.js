@@ -124,6 +124,7 @@ let DrawService = DrawService_1 = class DrawService {
                     luckyPassId: winnerPass.id,
                     passNumber: winnerPass.ticketNumber ?? 0,
                     userId: winnerPass.userId ?? '',
+                    winnerName: userFullName,
                     userName: userFullName,
                     userEmail: winnerPass.user?.email ?? null,
                 });
@@ -195,6 +196,7 @@ let DrawService = DrawService_1 = class DrawService {
                     luckyPassId: w.luckyPassId || '',
                     passNumber: w.luckyPass?.ticketNumber ?? 0,
                     userId: w.userId || '',
+                    winnerName: userFullName,
                     userName: userFullName,
                     userEmail: w.user?.email ?? null,
                 };

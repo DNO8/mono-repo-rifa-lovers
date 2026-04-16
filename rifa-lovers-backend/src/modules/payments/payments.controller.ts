@@ -58,6 +58,9 @@ export class PaymentsController {
 
     this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`)
 
+    // Guardar el token de Flow en la compra para poder identificarla en el webhook
+    await this.purchasesService.updateFlowToken(purchase.id, flowOrder.token)
+
     // Flow docs: la URL de redirección = url + "?token=" + token
     return {
       purchaseId: purchase.id,

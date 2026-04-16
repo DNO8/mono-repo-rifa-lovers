@@ -248,6 +248,18 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
         }
         return (0, purchase_mapper_1.mapPurchaseToDto)(purchaseWithRaffle);
     }
+    async updateFlowToken(purchaseId, flowToken) {
+        await this.prisma.purchase.update({
+            where: { id: purchaseId },
+            data: { flowToken },
+        });
+        this.logger.debug(`Flow token guardado para compra ${purchaseId}`);
+    }
+    async findByFlowToken(flowToken) {
+        return this.prisma.purchase.findUnique({
+            where: { flowToken },
+        });
+    }
 };
 exports.PurchasesService = PurchasesService;
 exports.PurchasesService = PurchasesService = PurchasesService_1 = __decorate([

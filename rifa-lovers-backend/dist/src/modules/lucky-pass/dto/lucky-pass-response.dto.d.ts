@@ -8,8 +8,9 @@ export declare class LuckyPassResponseDto {
     createdAt: string;
 }
 export declare class LuckyPassSummaryDto {
-    total: number;
-    active: number;
-    used: number;
-    winners: number;
+    totalPasses: number;
+    activePasses: number;
+    usedPasses: number;
+    winnerPasses: number;
+    byRaffle?: any[];
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger, BadRequestException } from '@nestjs/common'
+import { Controller, Post, Body, Logger, BadRequestException, HttpCode } from '@nestjs/common'
 import { SkipThrottle, Throttle } from '@nestjs/throttler'
 import { ConfigService } from '@nestjs/config'
 import { FlowService } from './flow.service'
@@ -20,6 +20,7 @@ export class WebhookController {
    * y un solo parámetro: token
    */
   @Post('flow')
+  @HttpCode(200)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async handleFlowWebhook(@Body('token') token: string) {
     this.logger.debug(`Recibido webhook de Flow con token: ${token}`)
@@ -37,38 +38,45 @@ export class WebhookController {
       `Flow payment status: order=${commerceOrder}, status=${status}, amount=${amount}`,
     )
 
+    // Buscar la compra por flowToken (que coincide con el token recibido)
+    const purchase = await this.purchasesService.findByFlowToken(token)
+    if (!purchase) {
+      this.logger.error(`No se encontró compra con flowToken: ${token}`)
+      throw new BadRequestException('Compra no encontrada')
+    }
+
     // Flow status: 1=pendiente, 2=pagada, 3=rechazada, 4=anulada
     switch (status) {
       case 2: {
         // Pago exitoso - confirmar compra y generar LuckyPasses
         try {
-          await this.purchasesService.confirmPayment(commerceOrder, {
+          await this.purchasesService.confirmPayment(purchase.id, {
             providerTransactionId: String(paymentStatus.flowOrder),
             provider: 'flow',
             status: 'paid',
           })
-          this.logger.log(`Pago confirmado para compra: ${commerceOrder}`)
+          this.logger.log(`Pago confirmado para compra: ${purchase.id}`)
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err)
           const stack = err instanceof Error ? err.stack : undefined
-          this.logger.error(`ERROR en confirmPayment para ${commerceOrder}: ${msg}`, stack)
+          this.logger.error(`ERROR en confirmPayment para ${purchase.id}: ${msg}`, stack)
         }
         break
       }
       case 3:
       case 4: {
         // Pago rechazado o anulado
-        await this.purchasesService.updateStatus(commerceOrder, 'failed')
-        this.logger.log(`Pago rechazado/anulado para compra: ${commerceOrder}`)
+        await this.purchasesService.updateStatus(purchase.id, 'failed')
+        this.logger.log(`Pago rechazado/anulado para compra: ${purchase.id}`)
         break
       }
       default: {
-        this.logger.warn(`Estado de pago no procesable: ${status} para orden ${commerceOrder}`)
+        this.logger.warn(`Estado de pago no procesable: ${status} para orden ${purchase.id}`)
       }
     }
 
     // Responder 200 a Flow para evitar reintentos
-    return { received: true }
+    return { message: 'Webhook procesado' }
   }
 
   /**

@@ -351,4 +351,24 @@ export class PurchasesService {
 
     return mapPurchaseToDto(purchaseWithRaffle as PurchaseWithRaffle)
   }
+
+  /**
+   * Actualiza el token de Flow en una compra
+   */
+  async updateFlowToken(purchaseId: string, flowToken: string): Promise<void> {
+    await this.prisma.purchase.update({
+      where: { id: purchaseId },
+      data: { flowToken },
+    })
+    this.logger.debug(`Flow token guardado para compra ${purchaseId}`)
+  }
+
+  /**
+   * Busca una compra por su flowToken
+   */
+  async findByFlowToken(flowToken: string) {
+    return this.prisma.purchase.findUnique({
+      where: { flowToken },
+    })
+  }
 }

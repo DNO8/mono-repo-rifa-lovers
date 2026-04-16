@@ -43,6 +43,7 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
         const flowOrder = await this.flowService.createPaymentOrder(purchase.id, `Rifa Lovers - ${purchase.raffleName}`, purchase.totalAmount, user.email, `${backendUrl}/payments/return`, `${backendUrl}/webhooks/flow`);
         this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`);
+        await this.purchasesService.updateFlowToken(purchase.id, flowOrder.token);
         return {
             purchaseId: purchase.id,
             flowOrderId: flowOrder.flowOrder.toString(),

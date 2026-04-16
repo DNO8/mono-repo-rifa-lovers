@@ -14,6 +14,7 @@ describe('DrawService', () => {
     },
     prizeWinner: {
       count: jest.fn(),
+      create: jest.fn(),
     },
     prize: {
       findMany: jest.fn(),

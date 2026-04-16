@@ -47,6 +47,7 @@ let DrawController = DrawController_1 = class DrawController {
 exports.DrawController = DrawController;
 __decorate([
     (0, common_1.Post)('admin/raffles/:id/draw'),
+    (0, common_1.HttpCode)(201),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), new roles_guard_1.RolesGuard([client_1.UserRole.admin, client_1.UserRole.operator])),
     (0, throttler_1.Throttle)({ admin: { limit: 5, ttl: 60000 } }),
     __param(0, (0, common_1.Param)('id')),

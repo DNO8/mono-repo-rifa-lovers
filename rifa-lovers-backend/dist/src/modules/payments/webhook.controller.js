@@ -35,34 +35,39 @@ let WebhookController = WebhookController_1 = class WebhookController {
         const paymentStatus = await this.flowService.getPaymentStatus(token);
         const { commerceOrder, status, amount } = paymentStatus;
         this.logger.log(`Flow payment status: order=${commerceOrder}, status=${status}, amount=${amount}`);
+        const purchase = await this.purchasesService.findByFlowToken(token);
+        if (!purchase) {
+            this.logger.error(`No se encontró compra con flowToken: ${token}`);
+            throw new common_1.BadRequestException('Compra no encontrada');
+        }
         switch (status) {
             case 2: {
                 try {
-                    await this.purchasesService.confirmPayment(commerceOrder, {
+                    await this.purchasesService.confirmPayment(purchase.id, {
                         providerTransactionId: String(paymentStatus.flowOrder),
                         provider: 'flow',
                         status: 'paid',
                     });
-                    this.logger.log(`Pago confirmado para compra: ${commerceOrder}`);
+                    this.logger.log(`Pago confirmado para compra: ${purchase.id}`);
                 }
                 catch (err) {
                     const msg = err instanceof Error ? err.message : String(err);
                     const stack = err instanceof Error ? err.stack : undefined;
-                    this.logger.error(`ERROR en confirmPayment para ${commerceOrder}: ${msg}`, stack);
+                    this.logger.error(`ERROR en confirmPayment para ${purchase.id}: ${msg}`, stack);
                 }
                 break;
             }
             case 3:
             case 4: {
-                await this.purchasesService.updateStatus(commerceOrder, 'failed');
-                this.logger.log(`Pago rechazado/anulado para compra: ${commerceOrder}`);
+                await this.purchasesService.updateStatus(purchase.id, 'failed');
+                this.logger.log(`Pago rechazado/anulado para compra: ${purchase.id}`);
                 break;
             }
             default: {
-                this.logger.warn(`Estado de pago no procesable: ${status} para orden ${commerceOrder}`);
+                this.logger.warn(`Estado de pago no procesable: ${status} para orden ${purchase.id}`);
             }
         }
-        return { received: true };
+        return { message: 'Webhook procesado' };
     }
     async triggerDev(token) {
         if (this.configService.get('NODE_ENV') === 'production') {
@@ -78,6 +83,7 @@ let WebhookController = WebhookController_1 = class WebhookController {
 exports.WebhookController = WebhookController;
 __decorate([
     (0, common_1.Post)('flow'),
+    (0, common_1.HttpCode)(200),
     (0, throttler_1.Throttle)({ default: { limit: 60, ttl: 60000 } }),
     __param(0, (0, common_1.Body)('token')),
     __metadata("design:type", Function),

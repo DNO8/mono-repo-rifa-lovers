@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, UseGuards, Logger } from '@nestjs/common'
+import { Controller, Post, Get, Param, UseGuards, Logger, HttpCode } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
@@ -17,6 +17,7 @@ export class DrawController {
    * POST /admin/raffles/:id/draw
    */
   @Post('admin/raffles/:id/draw')
+  @HttpCode(201)
   @UseGuards(AuthGuard('jwt'), new RolesGuard([UserRole.admin, UserRole.operator]))
   @Throttle({ admin: { limit: 5, ttl: 60000 } })
   async executeDraw(

@@ -47,10 +47,11 @@ export class LuckyPassService {
     this.logger.debug(`Resumen lucky passes usuario ${userId}: total=${total}, activos=${active}, ganadores=${winners}`)
 
     return {
-      total,
-      active,
-      used,
-      winners,
+      totalPasses: total,
+      activePasses: active,
+      usedPasses: used,
+      winnerPasses: winners,
+      byRaffle: [],
     }
   }
 

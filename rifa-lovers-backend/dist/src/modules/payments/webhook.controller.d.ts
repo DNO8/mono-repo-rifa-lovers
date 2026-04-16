@@ -8,9 +8,9 @@ export declare class WebhookController {
     private readonly logger;
     constructor(configService: ConfigService, flowService: FlowService, purchasesService: PurchasesService);
     handleFlowWebhook(token: string): Promise<{
-        received: boolean;
+        message: string;
     }>;
     triggerDev(token: string): Promise<{
-        received: boolean;
+        message: string;
     }>;
 }

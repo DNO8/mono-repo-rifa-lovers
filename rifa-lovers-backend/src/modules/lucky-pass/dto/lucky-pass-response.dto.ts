@@ -9,8 +9,9 @@ export class LuckyPassResponseDto {
 }
 
 export class LuckyPassSummaryDto {
-  total: number
-  active: number
-  used: number
-  winners: number
+  totalPasses: number
+  activePasses: number
+  usedPasses: number
+  winnerPasses: number
+  byRaffle?: any[]
 }

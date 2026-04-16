@@ -10,6 +10,7 @@ export interface DrawResult {
         luckyPassId: string;
         passNumber: number;
         userId: string;
+        winnerName: string | null;
         userName: string | null;
         userEmail: string | null;
     }[];

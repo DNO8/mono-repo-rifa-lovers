@@ -19,4 +19,15 @@ export declare class PurchasesService {
         provider: string;
         status: string;
     }): Promise<PurchaseResponseDto>;
+    updateFlowToken(purchaseId: string, flowToken: string): Promise<void>;
+    findByFlowToken(flowToken: string): Promise<{
+        id: string;
+        flowToken: string | null;
+        raffleId: string | null;
+        userId: string | null;
+        totalAmount: import("@prisma/client/runtime/client").Decimal | null;
+        status: import("@prisma/client").$Enums.PurchaseStatus;
+        createdAt: Date;
+        paidAt: Date | null;
+    } | null>;
 }

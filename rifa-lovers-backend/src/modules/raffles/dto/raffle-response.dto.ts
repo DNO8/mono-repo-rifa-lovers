@@ -22,6 +22,7 @@ export class RaffleResponseDto {
   maxTicketNumber: number
   status: string
   createdAt: string
+  endDate: string | null
   milestones?: MilestoneDto[]
 }
 

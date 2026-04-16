@@ -51,6 +51,7 @@ export class RafflesService {
       maxTicketNumber: raffleEntity.maxTicketNumber,
       status: raffleEntity.status,
       createdAt: raffleEntity.createdAt.toISOString(),
+      endDate: raffleEntity.endDate ? raffleEntity.endDate.toISOString() : null,
       milestones: raffle.milestones?.map(m => ({
         id: m.id,
         name: m.name,
@@ -125,6 +126,7 @@ export class RafflesService {
       maxTicketNumber: raffle.maxTicketNumber,
       status: raffle.status,
       createdAt: raffle.createdAt.toISOString(),
+      endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
     }
   }
 
@@ -141,6 +143,7 @@ export class RafflesService {
       maxTicketNumber: raffle.maxTicketNumber,
       status: raffle.status,
       createdAt: raffle.createdAt.toISOString(),
+      endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
     }))
   }
 }

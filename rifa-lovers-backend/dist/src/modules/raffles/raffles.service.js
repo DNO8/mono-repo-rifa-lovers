@@ -48,6 +48,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
             maxTicketNumber: raffleEntity.maxTicketNumber,
             status: raffleEntity.status,
             createdAt: raffleEntity.createdAt.toISOString(),
+            endDate: raffleEntity.endDate ? raffleEntity.endDate.toISOString() : null,
             milestones: raffle.milestones?.map(m => ({
                 id: m.id,
                 name: m.name,
@@ -107,6 +108,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
             maxTicketNumber: raffle.maxTicketNumber,
             status: raffle.status,
             createdAt: raffle.createdAt.toISOString(),
+            endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
         };
     }
     async findByStatus(status) {
@@ -120,6 +122,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
             maxTicketNumber: raffle.maxTicketNumber,
             status: raffle.status,
             createdAt: raffle.createdAt.toISOString(),
+            endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
         }));
     }
 };

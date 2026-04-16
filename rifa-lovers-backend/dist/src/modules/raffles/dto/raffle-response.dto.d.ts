@@ -20,6 +20,7 @@ export declare class RaffleResponseDto {
     maxTicketNumber: number;
     status: string;
     createdAt: string;
+    endDate: string | null;
     milestones?: MilestoneDto[];
 }
 export declare class RaffleProgressDto {

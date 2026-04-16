@@ -1,0 +1,11 @@
+import { AuthService } from './auth.service';
+import { RegisterDto, LoginDto, AuthResponseDto } from './dto';
+export declare class AuthController {
+    private readonly authService;
+    constructor(authService: AuthService);
+    register(registerDto: RegisterDto): Promise<AuthResponseDto>;
+    login(loginDto: LoginDto): Promise<AuthResponseDto>;
+    refreshToken(refreshToken: string): Promise<{
+        accessToken: string;
+    }>;
+}

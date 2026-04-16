@@ -3,8 +3,6 @@ import { Timer, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 
-const FALLBACK_TARGET_MS = Date.now() + 24 * 60 * 60 * 1000
-
 interface TimeLeft {
   days: number
   hours: number
@@ -48,14 +46,13 @@ function Dot() {
 }
 
 export function CountdownSection() {
-  const { raffle } = useActiveRaffle()
+  const { raffle, isLoading } = useActiveRaffle()
   const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 })
 
-  const targetMs = raffle?.endDate
-    ? new Date(raffle.endDate).getTime()
-    : FALLBACK_TARGET_MS
+  const targetMs = raffle?.endDate ? new Date(raffle.endDate).getTime() : null
 
   useEffect(() => {
+    if (targetMs === null) return
     const tick = () => setTime(calcTimeLeft(targetMs))
     tick()
     const id = setInterval(tick, 1000)
@@ -72,13 +69,13 @@ export function CountdownSection() {
 
         {/* Timer blocks */}
         <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-8 mb-5">
-          <TimeBlock value={pad(time.days)} label="Días" />
+          <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.days)} label="Días" />
           <Dot />
-          <TimeBlock value={pad(time.hours)} label="Horas" />
+          <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.hours)} label="Horas" />
           <Dot />
-          <TimeBlock value={pad(time.minutes)} label="Minutos" />
+          <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.minutes)} label="Minutos" />
           <Dot />
-          <TimeBlock value={pad(time.seconds)} label="Segundos" />
+          <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.seconds)} label="Segundos" />
         </div>
 
         {/* Bottom row */}

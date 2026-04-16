@@ -14,9 +14,11 @@ exports.DrawService = void 0;
 const common_1 = require("@nestjs/common");
 const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../database/prisma.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 let DrawService = DrawService_1 = class DrawService {
-    constructor(prisma) {
+    constructor(prisma, notifications) {
         this.prisma = prisma;
+        this.notifications = notifications;
         this.logger = new common_1.Logger(DrawService_1.name);
     }
     buildUserFullName(user) {
@@ -137,11 +139,24 @@ let DrawService = DrawService_1 = class DrawService {
             this.logger.log(`Sorteo completado para rifa ${raffleId}. ${drawWinners.length} ganadores.`);
             return drawWinners;
         });
-        return {
+        const result = {
             raffleId,
             drawnAt: new Date(),
             winners,
         };
+        const drawnRaffle = await this.prisma.raffle.findUnique({ where: { id: raffleId } });
+        for (const winner of winners) {
+            if (winner.userEmail) {
+                void this.notifications.sendWinnerEmail({
+                    toEmail: winner.userEmail,
+                    toName: winner.userName ?? 'Ganador',
+                    prizeName: winner.prizeName,
+                    passNumber: winner.passNumber,
+                    raffleName: drawnRaffle?.title ?? null,
+                });
+            }
+        }
+        return result;
     }
     async getDrawResults(raffleId) {
         const raffle = await this.prisma.raffle.findUnique({
@@ -256,6 +271,7 @@ let DrawService = DrawService_1 = class DrawService {
 exports.DrawService = DrawService;
 exports.DrawService = DrawService = DrawService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], DrawService);
 //# sourceMappingURL=draw.service.js.map

@@ -74,7 +74,7 @@ let AdminService = AdminService_1 = class AdminService {
             [client_1.RaffleStatus.draft]: [client_1.RaffleStatus.active],
             [client_1.RaffleStatus.active]: [client_1.RaffleStatus.sold_out, client_1.RaffleStatus.closed],
             [client_1.RaffleStatus.sold_out]: [client_1.RaffleStatus.closed],
-            [client_1.RaffleStatus.closed]: [client_1.RaffleStatus.drawn],
+            [client_1.RaffleStatus.closed]: [client_1.RaffleStatus.drawn, client_1.RaffleStatus.active],
             [client_1.RaffleStatus.drawn]: [],
         };
         if (!validTransitions[raffle.status].includes(dto.status)) {

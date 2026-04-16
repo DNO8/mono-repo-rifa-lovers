@@ -6,20 +6,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DrawModule = void 0;
+exports.TestimonialsModule = void 0;
 const common_1 = require("@nestjs/common");
-const draw_controller_1 = require("./draw.controller");
-const draw_service_1 = require("./draw.service");
-const notifications_module_1 = require("../notifications/notifications.module");
-let DrawModule = class DrawModule {
+const testimonials_controller_1 = require("./testimonials.controller");
+const testimonials_service_1 = require("./testimonials.service");
+let TestimonialsModule = class TestimonialsModule {
 };
-exports.DrawModule = DrawModule;
-exports.DrawModule = DrawModule = __decorate([
+exports.TestimonialsModule = TestimonialsModule;
+exports.TestimonialsModule = TestimonialsModule = __decorate([
     (0, common_1.Module)({
-        imports: [notifications_module_1.NotificationsModule],
-        controllers: [draw_controller_1.DrawController],
-        providers: [draw_service_1.DrawService],
-        exports: [draw_service_1.DrawService],
+        controllers: [testimonials_controller_1.TestimonialsController],
+        providers: [testimonials_service_1.TestimonialsService],
+        exports: [testimonials_service_1.TestimonialsService],
     })
-], DrawModule);
-//# sourceMappingURL=draw.module.js.map
+], TestimonialsModule);
+//# sourceMappingURL=testimonials.module.js.map

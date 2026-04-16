@@ -6,20 +6,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DrawModule = void 0;
+exports.NotificationsModule = void 0;
 const common_1 = require("@nestjs/common");
-const draw_controller_1 = require("./draw.controller");
-const draw_service_1 = require("./draw.service");
-const notifications_module_1 = require("../notifications/notifications.module");
-let DrawModule = class DrawModule {
+const notifications_service_1 = require("./notifications.service");
+let NotificationsModule = class NotificationsModule {
 };
-exports.DrawModule = DrawModule;
-exports.DrawModule = DrawModule = __decorate([
+exports.NotificationsModule = NotificationsModule;
+exports.NotificationsModule = NotificationsModule = __decorate([
     (0, common_1.Module)({
-        imports: [notifications_module_1.NotificationsModule],
-        controllers: [draw_controller_1.DrawController],
-        providers: [draw_service_1.DrawService],
-        exports: [draw_service_1.DrawService],
+        providers: [notifications_service_1.NotificationsService],
+        exports: [notifications_service_1.NotificationsService],
     })
-], DrawModule);
-//# sourceMappingURL=draw.module.js.map
+], NotificationsModule);
+//# sourceMappingURL=notifications.module.js.map

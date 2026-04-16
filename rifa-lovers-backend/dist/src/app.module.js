@@ -22,6 +22,7 @@ const raffles_module_1 = require("./modules/raffles/raffles.module");
 const packs_module_1 = require("./modules/packs/packs.module");
 const payments_module_1 = require("./modules/payments/payments.module");
 const draw_module_1 = require("./modules/draw/draw.module");
+const testimonials_module_1 = require("./modules/testimonials/testimonials.module");
 const admin_module_1 = require("./modules/admin/admin.module");
 const jobs_module_1 = require("./modules/jobs/jobs.module");
 const all_exceptions_filter_1 = require("./common/filters/all-exceptions.filter");
@@ -48,6 +49,7 @@ exports.AppModule = AppModule = __decorate([
             packs_module_1.PacksModule,
             payments_module_1.PaymentsModule,
             draw_module_1.DrawModule,
+            testimonials_module_1.TestimonialsModule,
             admin_module_1.AdminModule,
             jobs_module_1.JobsModule,
         ],

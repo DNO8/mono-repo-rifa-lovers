@@ -1,4 +1,5 @@
 import { PrismaService } from '../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 export interface DrawResult {
     raffleId: string;
     drawnAt: Date;
@@ -15,8 +16,9 @@ export interface DrawResult {
 }
 export declare class DrawService {
     private readonly prisma;
+    private readonly notifications;
     private readonly logger;
-    constructor(prisma: PrismaService);
+    constructor(prisma: PrismaService, notifications: NotificationsService);
     private buildUserFullName;
     executeDraw(raffleId: string, adminUserId: string): Promise<DrawResult>;
     getDrawResults(raffleId: string): Promise<DrawResult | null>;

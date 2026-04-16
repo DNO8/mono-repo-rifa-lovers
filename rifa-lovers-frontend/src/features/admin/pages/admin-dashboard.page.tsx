@@ -490,8 +490,8 @@ export function AdminDashboardPage() {
             </div>
 
             {/* Desktop: table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="hidden sm:block">
+              <table className="w-full min-w-[600px] text-sm">
                 <thead>
                   <tr className="border-b text-left text-gray-500">
                     <th className="py-3 px-4 font-medium">Título</th>
@@ -644,8 +644,8 @@ export function AdminDashboardPage() {
             </div>
 
             {/* Desktop: table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="hidden sm:block">
+              <table className="w-full min-w-[500px] text-sm">
                 <thead>
                   <tr className="border-b text-left text-gray-500">
                     <th className="py-3 px-4 font-medium">Usuario</th>

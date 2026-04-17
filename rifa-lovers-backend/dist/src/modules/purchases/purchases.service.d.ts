@@ -22,12 +22,12 @@ export declare class PurchasesService {
     updateFlowToken(purchaseId: string, flowToken: string): Promise<void>;
     findByFlowToken(flowToken: string): Promise<{
         id: string;
-        flowToken: string | null;
+        status: import("@prisma/client").$Enums.PurchaseStatus;
+        createdAt: Date;
         raffleId: string | null;
         userId: string | null;
         totalAmount: import("@prisma/client/runtime/client").Decimal | null;
-        status: import("@prisma/client").$Enums.PurchaseStatus;
-        createdAt: Date;
+        flowToken: string | null;
         paidAt: Date | null;
     } | null>;
 }

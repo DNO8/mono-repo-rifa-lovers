@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { DrawService } from './draw.service'
 import { PrismaService } from '../../database/prisma.service'
+import { NotificationsService } from '../notifications/notifications.service'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 
 describe('DrawService', () => {
@@ -26,11 +27,16 @@ describe('DrawService', () => {
     $transaction: jest.fn((fn) => fn(mockPrisma)),
   }
 
+  const mockNotifications = {
+    sendWinnerEmail: jest.fn(),
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DrawService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: NotificationsService, useValue: mockNotifications },
       ],
     }).compile()
 

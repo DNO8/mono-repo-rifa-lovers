@@ -57,10 +57,11 @@ export function BackingSection() {
             </div>
 
             <div className="flex items-center gap-3 pt-4 border-t border-border-light">
-              {/* Logo placeholder KRIM */}
-              <div className="h-10 w-24 rounded-lg bg-bg-muted border border-border-light flex items-center justify-center text-[10px] text-text-tertiary font-medium">
-                Logo KRIM
-              </div>
+              <img
+                src="/images/logos/logo-krim.png"
+                alt="KRIM Consultores"
+                className="h-10 w-auto object-contain"
+              />
               <div className="leading-tight">
                 <p className="font-semibold text-text-primary text-sm">KRIM Consultores</p>
                 <p className="text-xs text-text-tertiary">+ Notaría</p>
@@ -102,10 +103,11 @@ export function BackingSection() {
             </div>
 
             <div className="flex items-center gap-3 pt-4 border-t border-border-light">
-              {/* Logo placeholder Innovaxchain */}
-              <div className="h-10 w-28 rounded-lg bg-bg-muted border border-border-light flex items-center justify-center text-[10px] text-text-tertiary font-medium">
-                Logo Innovaxchain
-              </div>
+              <img
+                src="/images/logos/innovachain.png"
+                alt="Innovaxchain"
+                className="h-10 w-auto object-contain"
+              />
               <div className="leading-tight">
                 <p className="font-semibold text-text-primary text-sm">Innovaxchain</p>
                 <p className="text-xs text-text-tertiary">Infraestructura & Desarrollo</p>

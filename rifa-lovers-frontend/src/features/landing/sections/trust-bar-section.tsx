@@ -15,15 +15,14 @@ const TRUST_ITEMS = [
     label: 'Pagos seguros',
     sublabel: 'con Flow',
     hasLogo: true,
-    logoPlaceholder: 'Logo Flow',
+    logoSrc: '/images/logos/logo-flow.png',
+    logoAlt: 'Flow',
   },
   {
     id: 'spa',
     icon: Building2,
     label: 'Empresa SpA',
     sublabel: 'constituida legalmente',
-    hasLogo: true,
-    logoPlaceholder: 'Logo SpA',
   },
   {
     id: 'marca',
@@ -59,15 +58,14 @@ export function TrustBarSection() {
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:gap-x-10">
           {TRUST_ITEMS.map((item) => {
             const Icon = item.icon
-            const content = (
-              <div
-                key={item.id}
-                className="flex items-center gap-2 text-xs md:text-sm shrink-0"
-              >
-                {item.hasLogo ? (
-                  <div className="h-6 w-16 rounded bg-bg-muted border border-border-light flex items-center justify-center text-[9px] text-text-tertiary font-medium">
-                    {item.logoPlaceholder}
-                  </div>
+            const inner = (
+              <div className="flex items-center gap-2 text-xs md:text-sm shrink-0">
+                {'logoSrc' in item ? (
+                  <img
+                    src={item.logoSrc}
+                    alt={item.logoAlt}
+                    className="h-6 w-auto object-contain"
+                  />
                 ) : (
                   <Icon className="size-4 text-primary shrink-0" />
                 )}
@@ -80,19 +78,19 @@ export function TrustBarSection() {
               </div>
             )
 
-            if (item.href) {
+            if ('href' in item && item.href) {
               return (
                 <Link
                   key={item.id}
                   to={item.href}
                   className="hover:text-primary transition-colors"
                 >
-                  {content}
+                  {inner}
                 </Link>
               )
             }
 
-            return content
+            return <div key={item.id}>{inner}</div>
           })}
         </div>
       </div>

@@ -13,8 +13,8 @@ export const STEPS: Step[] = [
   {
     id: 'prize-2',
     number: '02',
-    title: 'Siempre hay al menos 1 premio',
-    description: 'El premio principal está garantizado desde el inicio. Si se desbloquean más hitos, se suman smartphones, tablets y premios adicionales al sorteo.',
+    title: 'Siempre hay mínimo 1 premio garantizado',
+    description: 'El primer hito es el más accesible y siempre se sortea. A medida que la comunidad avanza, se desbloquean premios cada vez más grandes.',
     icon: 'Gift',
     color: '#FF4DA6',
     bgColor: 'rgba(255, 77, 166, 0.1)',

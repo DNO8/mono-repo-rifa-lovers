@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common'
 import { PrismaService } from '../../database/prisma.service'
 import { RaffleStatus, PurchaseStatus } from '@prisma/client'
+import { RaffleSchedulerService } from '../raffles/raffle-scheduler.service'
 import * as cron from 'node-cron'
 
 @Injectable()
@@ -8,7 +9,10 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(JobsService.name)
   private tasks: cron.ScheduledTask[] = []
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly raffleSchedulerService: RaffleSchedulerService,
+  ) {}
 
   onModuleInit() {
     this.logger.log('Inicializando jobs automáticos...')
@@ -34,10 +38,18 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       })
     )
     
+    // Auto Close by EndDate - cada minuto
+    this.tasks.push(
+      cron.schedule('* * * * *', () => {
+        void this.closeExpiredRafflesByEndDate()
+      })
+    )
+    
     this.logger.log('✅ Jobs automáticos iniciados:')
     this.logger.log('   • Auto SOLD_OUT: cada 5 minutos')
     this.logger.log('   • Auto CLOSED: cada 5 minutos')
     this.logger.log('   • Expire Purchases: cada 15 minutos')
+    this.logger.log('   • Close by EndDate: cada minuto')
   }
 
   onModuleDestroy() {
@@ -183,6 +195,24 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} purchases marcadas como failed`)
     } catch (error) {
       this.logger.error('[JOB] Error en expiración de purchases:', error)
+    }
+  }
+
+  /**
+   * Close expired raffles by endDate - cada minuto
+   */
+  async closeExpiredRafflesByEndDate(): Promise<void> {
+    try {
+      const result = await this.raffleSchedulerService.closeExpiredRaffles()
+      if (result.closed > 0) {
+        this.logger.log(`✅ Auto-cierre por endDate: ${result.closed} rifas cerradas`)
+      }
+      if (result.errors.length > 0) {
+        this.logger.error(`❌ Errores en auto-cierre: ${result.errors.join(', ')}`)
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      this.logger.error(`Error ejecutando auto-cierre por endDate: ${message}`)
     }
   }
 

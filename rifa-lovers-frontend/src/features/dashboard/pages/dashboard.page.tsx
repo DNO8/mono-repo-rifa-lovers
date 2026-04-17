@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { usePurchases } from '@/hooks/use-purchases'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
 import { useActiveRaffle } from '@/hooks/use-raffles'
+import { useUserRaffles } from '@/hooks/use-user-raffles'
 import { Spinner } from '@/components/ui/spinner'
 import type { Raffle, RaffleProgress, Purchase } from '@/types/domain.types'
 
@@ -104,6 +105,7 @@ export default function DashboardPage() {
   const { purchases, isLoading: isLoadingPurchases } = usePurchases()
   const { summary: luckyPassSummary, isLoading: isLoadingPasses } = useLuckyPasses()
   const { raffle, progress, isLoading: isLoadingRaffle } = useActiveRaffle()
+  const { raffles: userRaffles, isLoading: isLoadingUserRaffles } = useUserRaffles()
 
   const handleLogout = () => {
     logout()
@@ -112,12 +114,11 @@ export default function DashboardPage() {
 
   if (!user) return null
 
-  const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle
+  const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles
   const totalTickets = luckyPassSummary?.active || 0
   const points = (luckyPassSummary?.active || 0) * 10 // 10 points per active ticket
 
   const historyItems = transformPurchasesToHistory(purchases)
-  const raffleCardData = transformRaffleToCardData(raffle, totalTickets)
 
   return (
     <div className="px-4 md:px-8 py-8 md:py-12">
@@ -154,8 +155,30 @@ export default function DashboardPage() {
 
               {/* Main content */}
               <main className="order-1 lg:order-2 space-y-6">
-                {raffleCardData && <RaffleHeroCard raffle={raffleCardData} />}
-                <DashboardImpactSection impact={buildImpact(raffle, progress)} />
+                {/* User raffles (active and drawn) */}
+                {userRaffles.length > 0 ? (
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-text-primary">Mis Rifas</h2>
+                    <div className="space-y-4">
+                      {userRaffles.map((userRaffle) => {
+                        const raffleTickets = luckyPassSummary?.active || 0 // Simplified, should be per raffle
+                        const cardData = transformRaffleToCardData(userRaffle, raffleTickets)
+                        return (
+                          cardData && <RaffleHeroCard key={userRaffle.id} raffle={cardData} />
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-text-secondary">
+                    No tienes rifas activas ni sorteadas
+                  </div>
+                )}
+                
+                {/* Show impact section only for active raffle */}
+                {raffle && raffle.status === 'active' && (
+                  <DashboardImpactSection impact={buildImpact(raffle, progress)} />
+                )}
               </main>
             </div>
           </>

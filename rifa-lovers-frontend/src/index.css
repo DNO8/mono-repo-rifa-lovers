@@ -1,5 +1,6 @@
 @import "tailwindcss";
-
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
 
 /* ═══════════════════════════════════════════════════════════════
    RifaLovers — Design Tokens (Tailwind v4)

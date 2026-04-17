@@ -127,6 +127,20 @@ let RafflesService = RafflesService_1 = class RafflesService {
             endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
         }));
     }
+    async getUserRaffles() {
+        this.logger.debug('Buscando rifas del usuario actual');
+        const raffles = await this.rafflesRepository.findUserRaffles();
+        return raffles.map((raffle) => ({
+            id: raffle.id,
+            title: raffle.title,
+            description: raffle.description,
+            goalPacks: raffle.goalPacks,
+            maxTicketNumber: raffle.maxTicketNumber,
+            status: raffle.status,
+            createdAt: raffle.createdAt.toISOString(),
+            endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+        }));
+    }
 };
 exports.RafflesService = RafflesService;
 exports.RafflesService = RafflesService = RafflesService_1 = __decorate([

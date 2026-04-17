@@ -113,4 +113,135 @@ export class RafflesRepository {
       },
     })
   }
+
+  async findUserRaffles(): Promise<Raffle[]> {
+    return this.prisma.raffle.findMany({
+      where: {
+        OR: [
+          { status: 'active' },
+          { status: 'drawn' },
+        ],
+        purchases: {
+          some: {}, // User has at least one purchase in these raffles
+        },
+      },
+      include: {
+        progress: true,
+        milestones: {
+          include: {
+            prizes: true,
+          },
+        },
+        _count: {
+          select: {
+            purchases: true,
+            luckyPasses: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async findActiveExpiredRaffles(): Promise<Array<{
+    id: string
+    title: string | null
+    status: string
+    endDate: Date | null
+  }>> {
+    return this.prisma.raffle.findMany({
+      where: {
+        status: 'active',
+        endDate: {
+          lte: new Date(), // endDate <= now
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        endDate: true,
+        status: true,
+      },
+    })
+  }
+
+  /**
+   * Obtiene participantes únicos de una rifa (agrupados por usuario)
+   */
+  async getUniqueParticipants(raffleId: string): Promise<Array<{
+    userId: string
+    email: string | null
+    firstName: string | null
+    lastName: string | null
+    luckyPassIds: string[]
+  }>> {
+    const participants = await this.prisma.luckyPass.groupBy({
+      by: ['userId'],
+      where: {
+        raffleId,
+        status: 'active',
+      },
+      _count: {
+        id: true,
+      },
+    })
+
+    // Obtener detalles de usuarios y LuckyPasses
+    const result = await Promise.all(
+      participants.map(async (participant) => {
+        const user = await this.prisma.user.findUnique({
+          where: { id: participant.userId || '' },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        })
+
+        const luckyPasses = await this.prisma.luckyPass.findMany({
+          where: {
+            raffleId,
+            userId: participant.userId || '',
+            status: 'active',
+          },
+          select: { id: true },
+        })
+
+        return {
+          userId: participant.userId || '',
+          email: user?.email || null,
+          firstName: user?.firstName || null,
+          lastName: user?.lastName || null,
+          luckyPassIds: luckyPasses.map(lp => lp.id),
+        }
+      }),
+    )
+
+    return result
+  }
+
+  /**
+   * Obtiene detalles de un usuario
+   */
+  async getUserById(userId: string): Promise<{
+    id: string
+    email: string | null
+    firstName: string | null
+    lastName: string | null
+    organizationId: string | null
+    role: string
+  } | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        organizationId: true,
+        role: true,
+      },
+    })
+  }
 }

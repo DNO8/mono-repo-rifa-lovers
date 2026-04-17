@@ -47,10 +47,12 @@ exports.JobsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../database/prisma.service");
 const client_1 = require("@prisma/client");
+const raffle_scheduler_service_1 = require("../raffles/raffle-scheduler.service");
 const cron = __importStar(require("node-cron"));
 let JobsService = JobsService_1 = class JobsService {
-    constructor(prisma) {
+    constructor(prisma, raffleSchedulerService) {
         this.prisma = prisma;
+        this.raffleSchedulerService = raffleSchedulerService;
         this.logger = new common_1.Logger(JobsService_1.name);
         this.tasks = [];
     }
@@ -65,10 +67,14 @@ let JobsService = JobsService_1 = class JobsService {
         this.tasks.push(cron.schedule('*/15 * * * *', () => {
             void this.expirePendingPurchases();
         }));
+        this.tasks.push(cron.schedule('* * * * *', () => {
+            void this.closeExpiredRafflesByEndDate();
+        }));
         this.logger.log('✅ Jobs automáticos iniciados:');
         this.logger.log('   • Auto SOLD_OUT: cada 5 minutos');
         this.logger.log('   • Auto CLOSED: cada 5 minutos');
         this.logger.log('   • Expire Purchases: cada 15 minutos');
+        this.logger.log('   • Close by EndDate: cada minuto');
     }
     onModuleDestroy() {
         this.logger.log('Deteniendo jobs automáticos...');
@@ -175,6 +181,21 @@ let JobsService = JobsService_1 = class JobsService {
             this.logger.error('[JOB] Error en expiración de purchases:', error);
         }
     }
+    async closeExpiredRafflesByEndDate() {
+        try {
+            const result = await this.raffleSchedulerService.closeExpiredRaffles();
+            if (result.closed > 0) {
+                this.logger.log(`✅ Auto-cierre por endDate: ${result.closed} rifas cerradas`);
+            }
+            if (result.errors.length > 0) {
+                this.logger.error(`❌ Errores en auto-cierre: ${result.errors.join(', ')}`);
+            }
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Error ejecutando auto-cierre por endDate: ${message}`);
+        }
+    }
     async runJobManually(jobName) {
         this.logger.log(`[JOB MANUAL] Ejecutando ${jobName} manualmente...`);
         try {
@@ -218,6 +239,7 @@ let JobsService = JobsService_1 = class JobsService {
 exports.JobsService = JobsService;
 exports.JobsService = JobsService = JobsService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        raffle_scheduler_service_1.RaffleSchedulerService])
 ], JobsService);
 //# sourceMappingURL=jobs.service.js.map

@@ -14,6 +14,13 @@ export interface DrawResult {
         userName: string | null;
         userEmail: string | null;
     }[];
+    discarded: {
+        luckyPassId: string;
+        passNumber: number;
+        userId: string;
+        userName: string | null;
+        userEmail: string | null;
+    }[];
 }
 export declare class DrawService {
     private readonly prisma;
@@ -29,4 +36,6 @@ export declare class DrawService {
         prizesCount: number;
         activePassesCount: number;
     }>;
+    getWinnersCount(raffleId: string): Promise<number>;
+    getUnlockedPrizesCount(raffleId: string): Promise<number>;
 }

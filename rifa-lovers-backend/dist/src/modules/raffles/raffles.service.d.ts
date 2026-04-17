@@ -9,4 +9,5 @@ export declare class RafflesService {
     getActiveProgress(): Promise<RaffleProgressDto>;
     findById(id: string): Promise<RaffleResponseDto>;
     findByStatus(status: RaffleStatus): Promise<RaffleResponseDto[]>;
+    getUserRaffles(): Promise<RaffleResponseDto[]>;
 }

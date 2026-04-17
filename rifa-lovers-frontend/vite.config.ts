@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+// @ts-expect-error — reactCompilerPreset exists at runtime but missing from .d.ts
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'

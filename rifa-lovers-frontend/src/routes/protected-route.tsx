@@ -5,7 +5,7 @@ import type { UserRole } from '@/types/domain.types'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  requiredRole?: Extract<UserRole, 'admin' | 'operator'>
+  requiredRole?: UserRole
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {

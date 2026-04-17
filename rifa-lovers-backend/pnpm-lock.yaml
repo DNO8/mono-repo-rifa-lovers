@@ -38,9 +38,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.101.1
         version: 2.101.1
-      '@types/nodemailer':
-        specifier: ^8.0.0
-        version: 8.0.0
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -117,6 +114,9 @@ importers:
       '@types/node-cron':
         specifier: ^3.0.11
         version: 3.0.11
+      '@types/nodemailer':
+        specifier: ^8.0.0
+        version: 8.0.0
       '@types/passport-jwt':
         specifier: ^4.0.1
         version: 4.0.1

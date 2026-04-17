@@ -11,7 +11,20 @@ interface LiveActivity {
   timeAgo: string
   city: string
 }
-const LIVE_ACTIVITIES: LiveActivity[] = []
+
+const MOCK_ACTIVITIES: LiveActivity[] = [
+  { id: '1', name: 'María C.', action: 'compró', ticketCount: 5, timeAgo: 'hace 2 min', city: 'Santiago' },
+  { id: '2', name: 'Felipe R.', action: 'compró', ticketCount: 10, timeAgo: 'hace 4 min', city: 'Viña del Mar' },
+  { id: '3', name: 'Carla M.', action: 'compró', ticketCount: 3, timeAgo: 'hace 7 min', city: 'Concepción' },
+  { id: '4', name: 'Diego S.', action: 'compró', ticketCount: 15, timeAgo: 'hace 10 min', city: 'Temuco' },
+  { id: '5', name: 'Andrea P.', action: 'compró', ticketCount: 5, timeAgo: 'hace 12 min', city: 'Antofagasta' },
+  { id: '6', name: 'Tomás L.', action: 'compró', ticketCount: 10, timeAgo: 'hace 15 min', city: 'Valparaíso' },
+  { id: '7', name: 'Valentina G.', action: 'compró', ticketCount: 3, timeAgo: 'hace 18 min', city: 'Rancagua' },
+  { id: '8', name: 'Matías F.', action: 'compró', ticketCount: 25, timeAgo: 'hace 22 min', city: 'La Serena' },
+  { id: '9', name: 'Javiera H.', action: 'compró', ticketCount: 5, timeAgo: 'hace 25 min', city: 'Iquique' },
+  { id: '10', name: 'Sebastián V.', action: 'compró', ticketCount: 10, timeAgo: 'hace 30 min', city: 'Puerto Montt' },
+]
+const LIVE_ACTIVITIES: LiveActivity[] = MOCK_ACTIVITIES
 
 function TickerItem({ name, action, ticketCount, timeAgo, city }: {
   name: string

@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { NAV_ITEMS } from '@/lib/constants'
 
 const LEGAL_LINKS = [
+  { label: 'Bases Legales', href: '/bases-legales' },
   { label: 'Términos y Condiciones', href: '/terminos' },
   { label: 'Política de Privacidad', href: '/privacidad' },
 ]
@@ -66,9 +67,12 @@ export function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="mt-12 pt-6 border-t border-border-light text-center">
+        <div className="mt-12 pt-6 border-t border-border-light text-center space-y-2">
           <p className="text-xs text-text-tertiary">
-            © {new Date().getFullYear()} Rifa Lovers. Todos los derechos reservados.
+            © {new Date().getFullYear()} Rifa Lovers SpA · Marca registrada ®. Todos los derechos reservados.
+          </p>
+          <p className="text-[10px] text-text-tertiary/70">
+            Respaldo legal: KRIM Consultores · Tecnología: Innovaxchain
           </p>
         </div>
       </div>

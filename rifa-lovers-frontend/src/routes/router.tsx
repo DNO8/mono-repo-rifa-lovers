@@ -28,6 +28,7 @@ const LazyAdminDashboardPage = lazy(() => import('@/features/admin/pages/admin-d
 const LazyNotFoundPage = lazy(() => import('@/features/errors/pages/not-found.page'))
 const LazyWinnersPage = lazy(() => import('@/features/raffles/pages/winners.page'))
 const LazyStreamingPage = lazy(() => import('@/features/streaming/pages/streaming.page'))
+const LazyBasesLegalesPage = lazy(() => import('@/features/legal/pages/bases-legales.page'))
 
 export const router = createBrowserRouter([
   {
@@ -95,6 +96,14 @@ export const router = createBrowserRouter([
         <ProtectedRoute>
           <LazyCheckoutPage />
         </ProtectedRoute>
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/bases-legales',
+    element: (
+      <PageWithSuspense fallback={null}>
+        <LazyBasesLegalesPage />
       </PageWithSuspense>
     ),
   },

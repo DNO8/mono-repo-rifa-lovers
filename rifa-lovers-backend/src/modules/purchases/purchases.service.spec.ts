@@ -67,6 +67,11 @@ describe('PurchasesService', () => {
     },
     raffleProgress: {
       upsert: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    milestone: {
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
   }
 

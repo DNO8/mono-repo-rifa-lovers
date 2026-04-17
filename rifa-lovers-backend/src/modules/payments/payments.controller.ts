@@ -7,6 +7,7 @@ import { FlowService } from './flow.service'
 import { PurchasesService } from '../purchases/purchases.service'
 import { UsersService } from '../users/users.service'
 import { CurrentUser } from '../../common/decorators'
+import { PrismaService } from '../../database/prisma.service'
 
 interface InitiatePaymentDto {
   purchaseId: string
@@ -21,6 +22,7 @@ export class PaymentsController {
     private readonly flowService: FlowService,
     private readonly purchasesService: PurchasesService,
     private readonly usersService: UsersService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post('initiate')
@@ -58,8 +60,17 @@ export class PaymentsController {
 
     this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`)
 
-    // Guardar el token de Flow en la compra para poder identificarla en el webhook
-    await this.purchasesService.updateFlowToken(purchase.id, flowOrder.token)
+    // Crear PaymentTransaction con el token de Flow para identificar en webhook
+    await this.prisma.paymentTransaction.create({
+      data: {
+        purchaseId: purchase.id,
+        provider: 'flow',
+        providerTransactionId: flowOrder.token,
+        amount: purchase.totalAmount,
+        status: 'created',
+      },
+    })
+    this.logger.debug(`PaymentTransaction creada con token: ${flowOrder.token}`)
 
     // Flow docs: la URL de redirección = url + "?token=" + token
     return {

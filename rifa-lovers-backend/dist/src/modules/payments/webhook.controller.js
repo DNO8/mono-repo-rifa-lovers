@@ -35,9 +35,9 @@ let WebhookController = WebhookController_1 = class WebhookController {
         const paymentStatus = await this.flowService.getPaymentStatus(token);
         const { commerceOrder, status, amount } = paymentStatus;
         this.logger.log(`Flow payment status: order=${commerceOrder}, status=${status}, amount=${amount}`);
-        const purchase = await this.purchasesService.findByFlowToken(token);
+        const purchase = await this.purchasesService.findByProviderTransactionId(token);
         if (!purchase) {
-            this.logger.error(`No se encontró compra con flowToken: ${token}`);
+            this.logger.error(`No se encontró compra con providerTransactionId: ${token}`);
             throw new common_1.BadRequestException('Compra no encontrada');
         }
         switch (status) {

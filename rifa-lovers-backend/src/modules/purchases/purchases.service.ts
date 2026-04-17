@@ -353,22 +353,14 @@ export class PurchasesService {
   }
 
   /**
-   * Actualiza el token de Flow en una compra
+   * Busca una compra por el providerTransactionId de su PaymentTransaction
+   * Usado por webhooks para encontrar la compra asociada a un token de Flow
    */
-  async updateFlowToken(purchaseId: string, flowToken: string): Promise<void> {
-    await this.prisma.purchase.update({
-      where: { id: purchaseId },
-      data: { flowToken },
+  async findByProviderTransactionId(providerTransactionId: string) {
+    const paymentTx = await this.prisma.paymentTransaction.findFirst({
+      where: { providerTransactionId },
+      include: { purchase: true },
     })
-    this.logger.debug(`Flow token guardado para compra ${purchaseId}`)
-  }
-
-  /**
-   * Busca una compra por su flowToken
-   */
-  async findByFlowToken(flowToken: string) {
-    return this.prisma.purchase.findUnique({
-      where: { flowToken },
-    })
+    return paymentTx?.purchase ?? null
   }
 }

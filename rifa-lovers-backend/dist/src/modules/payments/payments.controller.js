@@ -22,12 +22,14 @@ const flow_service_1 = require("./flow.service");
 const purchases_service_1 = require("../purchases/purchases.service");
 const users_service_1 = require("../users/users.service");
 const decorators_1 = require("../../common/decorators");
+const prisma_service_1 = require("../../database/prisma.service");
 let PaymentsController = PaymentsController_1 = class PaymentsController {
-    constructor(configService, flowService, purchasesService, usersService) {
+    constructor(configService, flowService, purchasesService, usersService, prisma) {
         this.configService = configService;
         this.flowService = flowService;
         this.purchasesService = purchasesService;
         this.usersService = usersService;
+        this.prisma = prisma;
         this.logger = new common_1.Logger(PaymentsController_1.name);
     }
     async initiatePayment(userId, dto) {
@@ -43,7 +45,16 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
         const flowOrder = await this.flowService.createPaymentOrder(purchase.id, `Rifa Lovers - ${purchase.raffleName}`, purchase.totalAmount, user.email, `${backendUrl}/payments/return`, `${backendUrl}/webhooks/flow`);
         this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`);
-        await this.purchasesService.updateFlowToken(purchase.id, flowOrder.token);
+        await this.prisma.paymentTransaction.create({
+            data: {
+                purchaseId: purchase.id,
+                provider: 'flow',
+                providerTransactionId: flowOrder.token,
+                amount: purchase.totalAmount,
+                status: 'created',
+            },
+        });
+        this.logger.debug(`PaymentTransaction creada con token: ${flowOrder.token}`);
         return {
             purchaseId: purchase.id,
             flowOrderId: flowOrder.flowOrder.toString(),
@@ -85,6 +96,7 @@ exports.PaymentsController = PaymentsController = PaymentsController_1 = __decor
     __metadata("design:paramtypes", [config_1.ConfigService,
         flow_service_1.FlowService,
         purchases_service_1.PurchasesService,
-        users_service_1.UsersService])
+        users_service_1.UsersService,
+        prisma_service_1.PrismaService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

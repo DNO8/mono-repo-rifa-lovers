@@ -156,7 +156,6 @@ model Purchase {
   userId      String?        @map("user_id") @db.Uuid
   totalAmount Decimal?       @map("total_amount") @db.Decimal(12, 2)
   status      PurchaseStatus @default(pending)
-  flowToken   String?        @unique @map("flow_token")
   createdAt   DateTime       @default(now()) @map("created_at")
   paidAt      DateTime?      @map("paid_at")
 
@@ -310,4 +309,5 @@ model PaymentTransaction {
 
   @@map("payment_transactions")
   @@schema("public")
+  @@index([providerTransactionId])
 }

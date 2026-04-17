@@ -114,8 +114,23 @@ CREATE TABLE public.raffles (
   end_date timestamp without time zone,
   created_at timestamp without time zone DEFAULT now(),
   updated_at timestamp without time zone DEFAULT now(),
+  max_ticket_number integer NOT NULL DEFAULT 30000,
   CONSTRAINT raffles_pkey PRIMARY KEY (id),
   CONSTRAINT raffles_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)
+);
+CREATE TABLE public.testimonials (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  raffle_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  lucky_pass_id uuid NOT NULL UNIQUE,
+  text text NOT NULL,
+  rating integer NOT NULL DEFAULT 5,
+  is_published boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT testimonials_pkey PRIMARY KEY (id),
+  CONSTRAINT testimonials_raffle_id_fkey FOREIGN KEY (raffle_id) REFERENCES public.raffles(id),
+  CONSTRAINT testimonials_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT testimonials_lucky_pass_id_fkey FOREIGN KEY (lucky_pass_id) REFERENCES public.lucky_passes(id)
 );
 CREATE TABLE public.user_packs (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -126,6 +141,7 @@ CREATE TABLE public.user_packs (
   quantity integer DEFAULT 1,
   total_paid numeric,
   created_at timestamp without time zone DEFAULT now(),
+  selected_numbers ARRAY NOT NULL DEFAULT '{}'::integer[],
   CONSTRAINT user_packs_pkey PRIMARY KEY (id),
   CONSTRAINT user_packs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT user_packs_raffle_id_fkey FOREIGN KEY (raffle_id) REFERENCES public.raffles(id),

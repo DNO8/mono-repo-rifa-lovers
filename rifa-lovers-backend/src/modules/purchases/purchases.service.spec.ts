@@ -60,6 +60,7 @@ describe('PurchasesService', () => {
       create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      findFirst: jest.fn(),
     },
     luckyPass: {
       createMany: jest.fn(),
@@ -395,39 +396,29 @@ describe('PurchasesService', () => {
     })
   })
 
-  describe('updateFlowToken', () => {
-    it('should update flow token on purchase', async () => {
-      mockPrisma.purchase.update.mockResolvedValue({
-        id: 'purchase-1',
-        flowToken: 'flow-token-123',
+  describe('findByProviderTransactionId', () => {
+    it('should find purchase by provider transaction id', async () => {
+      mockPrisma.paymentTransaction.findFirst.mockResolvedValue({
+        id: 'tx-1',
+        providerTransactionId: 'flow-token-123',
+        purchase: {
+          id: 'purchase-1',
+        },
       })
 
-      await service.updateFlowToken('purchase-1', 'flow-token-123')
+      const result = await service.findByProviderTransactionId('flow-token-123')
 
-      expect(mockPrisma.purchase.update).toHaveBeenCalledWith({
-        where: { id: 'purchase-1' },
-        data: { flowToken: 'flow-token-123' },
+      expect(mockPrisma.paymentTransaction.findFirst).toHaveBeenCalledWith({
+        where: { providerTransactionId: 'flow-token-123' },
+        include: { purchase: true },
       })
-    })
-  })
-
-  describe('findByFlowToken', () => {
-    it('should find purchase by flow token', async () => {
-      mockPrisma.purchase.findUnique.mockResolvedValue({
-        id: 'purchase-1',
-        flowToken: 'flow-token-123',
-      })
-
-      const result = await service.findByFlowToken('flow-token-123')
-
-      expect(result).toHaveProperty('id')
-      expect(result).toHaveProperty('flowToken', 'flow-token-123')
+      expect(result).toHaveProperty('id', 'purchase-1')
     })
 
-    it('should return null if token not found', async () => {
-      mockPrisma.purchase.findUnique.mockResolvedValue(null)
+    it('should return null if transaction not found', async () => {
+      mockPrisma.paymentTransaction.findFirst.mockResolvedValue(null)
 
-      const result = await service.findByFlowToken('invalid-token')
+      const result = await service.findByProviderTransactionId('invalid-token')
 
       expect(result).toBeNull()
     })

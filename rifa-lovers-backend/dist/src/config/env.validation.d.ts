@@ -7,8 +7,8 @@ declare const envSchema: z.ZodObject<{
     PORT: z.ZodDefault<z.ZodString>;
     NODE_ENV: z.ZodDefault<z.ZodEnum<{
         production: "production";
-        development: "development";
         test: "test";
+        development: "development";
     }>>;
     FRONTEND_URL: z.ZodDefault<z.ZodString>;
     BACKEND_URL: z.ZodDefault<z.ZodString>;

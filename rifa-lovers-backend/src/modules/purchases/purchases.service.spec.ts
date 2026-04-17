@@ -9,7 +9,6 @@ import { RafflesRepository } from '../raffles/raffles.repository'
 
 describe('PurchasesService', () => {
   let service: PurchasesService
-  let prisma: PrismaService
 
   const mockPurchasesRepository = {
     create: jest.fn(),
@@ -83,7 +82,6 @@ describe('PurchasesService', () => {
     }).compile()
 
     service = module.get<PurchasesService>(PurchasesService)
-    prisma = module.get<PrismaService>(PrismaService)
   })
 
   afterEach(() => {
@@ -176,6 +174,62 @@ describe('PurchasesService', () => {
         }),
       ).rejects.toThrow(NotFoundException)
     })
+
+    it('should throw if quantity is less than 1', async () => {
+      await expect(
+        service.create('user-1', {
+          raffleId: 'raffle-1',
+          packId: 'pack-1',
+          quantity: 0,
+        }),
+      ).rejects.toThrow(BadRequestException)
+    })
+
+    it('should throw if pack has no price', async () => {
+      mockRafflesRepository.findUnique.mockResolvedValue({
+        id: 'raffle-1',
+        status: 'active',
+      })
+
+      mockPacksRepository.findUnique.mockResolvedValue({
+        id: 'pack-1',
+        ticketCount: 1,
+        price: null,
+      })
+
+      await expect(
+        service.create('user-1', {
+          raffleId: 'raffle-1',
+          packId: 'pack-1',
+          quantity: 1,
+        }),
+      ).rejects.toThrow(BadRequestException)
+    })
+
+    it('should throw if raffleId is empty', async () => {
+      await expect(
+        service.create('user-1', {
+          raffleId: '',
+          packId: 'pack-1',
+          quantity: 1,
+        }),
+      ).rejects.toThrow(BadRequestException)
+    })
+
+    it('should throw if packId is empty', async () => {
+      mockRafflesRepository.findUnique.mockResolvedValue({
+        id: 'raffle-1',
+        status: 'active',
+      })
+
+      await expect(
+        service.create('user-1', {
+          raffleId: 'raffle-1',
+          packId: '',
+          quantity: 1,
+        }),
+      ).rejects.toThrow(BadRequestException)
+    })
   })
 
   describe('confirmPayment', () => {
@@ -186,37 +240,30 @@ describe('PurchasesService', () => {
         .mockResolvedValueOnce({
           id: purchaseId,
           status: 'pending',
+          userId: 'user-1',
           raffleId: 'raffle-1',
           createdAt: new Date(),
           totalAmount: { toNumber: () => 2990 },
           raffle: { title: 'Test Raffle' },
-          userPacks: [{ pack: { ticketCount: 1 } }],
+          userPacks: [{ id: 'up-1', quantity: 1, pack: { ticketCount: 1, luckyPassQuantity: 1 } }],
         })
         .mockResolvedValueOnce({
           id: purchaseId,
           status: 'paid',
+          userId: 'user-1',
           raffleId: 'raffle-1',
           createdAt: new Date(),
           totalAmount: { toNumber: () => 2990 },
           raffle: { title: 'Test Raffle' },
-          userPacks: [{ pack: { ticketCount: 1 } }],
+          userPacks: [{ id: 'up-1', quantity: 1, pack: { ticketCount: 1, luckyPassQuantity: 1 } }],
         })
 
-      mockPurchasesRepository.updateStatus.mockResolvedValue({
-        id: purchaseId,
-        status: 'paid',
-        paidAt: new Date(),
-        createdAt: new Date(),
-        totalAmount: { toNumber: () => 2990 },
-        raffleId: 'raffle-1',
-        raffle: { title: 'Test Raffle' },
-      })
+      mockPrisma.purchase.update.mockResolvedValue({ id: purchaseId, status: 'paid' })
+      mockPrisma.paymentTransaction.updateMany.mockResolvedValue({ count: 1 })
 
       mockPrisma.userPack.findMany.mockResolvedValue([
-        { id: 'up-1', pack: { ticketCount: 1 } },
+        { id: 'up-1', quantity: 1, selectedNumbers: null, pack: { luckyPassQuantity: 1 } },
       ])
-
-      mockPrisma.paymentTransaction.updateMany.mockResolvedValue({ count: 1 })
 
       mockPrisma.$queryRaw
         .mockResolvedValueOnce([{ id: 'raffle-1' }]) // FOR UPDATE lock
@@ -224,10 +271,45 @@ describe('PurchasesService', () => {
 
       mockPrisma.luckyPass.createMany.mockResolvedValue({ count: 1 })
 
+      mockPrisma.raffle.findUnique.mockResolvedValue({
+        id: 'raffle-1',
+        goalPacks: 100,
+      })
+
       mockPrisma.raffleProgress.upsert.mockResolvedValue({
         raffleId: 'raffle-1',
         packsSold: 1,
-        ticketsIssued: 1,
+      })
+      mockPrisma.raffleProgress.findUnique.mockResolvedValue({
+        raffleId: 'raffle-1',
+        packsSold: 1,
+      })
+      mockPrisma.raffleProgress.update.mockResolvedValue({})
+
+      // milestone.updateMany for auto-unlock
+      const mockMilestoneUpdateMany = jest.fn().mockResolvedValue({ count: 0 })
+      mockPrisma['milestone'] = { updateMany: mockMilestoneUpdateMany }
+
+      const result = await service.confirmPayment(purchaseId, {
+        providerTransactionId: 'flow-123',
+        provider: 'flow',
+        status: 'approved',
+      })
+
+      expect(result.status).toBe('paid')
+    })
+
+    it('should return existing purchase if already paid (idempotent)', async () => {
+      const purchaseId = 'purchase-1'
+
+      mockPurchasesRepository.findUnique.mockResolvedValue({
+        id: purchaseId,
+        status: 'paid',
+        userId: 'user-1',
+        raffleId: 'raffle-1',
+        createdAt: new Date(),
+        totalAmount: { toNumber: () => 2990 },
+        raffle: { title: 'Test Raffle' },
       })
 
       const result = await service.confirmPayment(purchaseId, {
@@ -237,6 +319,20 @@ describe('PurchasesService', () => {
       })
 
       expect(result.status).toBe('paid')
+      // $transaction should NOT have been called since purchase already paid
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled()
+    })
+
+    it('should throw if purchase not found', async () => {
+      mockPurchasesRepository.findUnique.mockResolvedValue(null)
+
+      await expect(
+        service.confirmPayment('invalid-id', {
+          providerTransactionId: 'flow-123',
+          provider: 'flow',
+          status: 'approved',
+        }),
+      ).rejects.toThrow(NotFoundException)
     })
   })
 
@@ -262,6 +358,78 @@ describe('PurchasesService', () => {
       expect(Array.isArray(result)).toBe(true)
       expect(result.length).toBe(1)
       expect(result[0].status).toBe('paid')
+    })
+
+    it('should return empty array if user has no purchases', async () => {
+      mockPurchasesRepository.findByUser.mockResolvedValue([])
+
+      const result = await service.findByUser('user-no-purchases')
+
+      expect(Array.isArray(result)).toBe(true)
+      expect(result.length).toBe(0)
+    })
+  })
+
+  describe('findById', () => {
+    it('should return purchase by ID', async () => {
+      mockPurchasesRepository.findUnique.mockResolvedValue({
+        id: 'purchase-1',
+        userId: 'user-1',
+        raffleId: 'raffle-1',
+        status: 'paid',
+        totalAmount: { toNumber: () => 2990 },
+        raffle: { title: 'Test Raffle' },
+        createdAt: new Date(),
+      })
+
+      const result = await service.findById('purchase-1')
+
+      expect(result).toHaveProperty('id')
+      expect(result.status).toBe('paid')
+    })
+
+    it('should throw if purchase not found', async () => {
+      mockPurchasesRepository.findUnique.mockResolvedValue(null)
+
+      await expect(service.findById('invalid')).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  describe('updateFlowToken', () => {
+    it('should update flow token on purchase', async () => {
+      mockPrisma.purchase.update.mockResolvedValue({
+        id: 'purchase-1',
+        flowToken: 'flow-token-123',
+      })
+
+      await service.updateFlowToken('purchase-1', 'flow-token-123')
+
+      expect(mockPrisma.purchase.update).toHaveBeenCalledWith({
+        where: { id: 'purchase-1' },
+        data: { flowToken: 'flow-token-123' },
+      })
+    })
+  })
+
+  describe('findByFlowToken', () => {
+    it('should find purchase by flow token', async () => {
+      mockPrisma.purchase.findUnique.mockResolvedValue({
+        id: 'purchase-1',
+        flowToken: 'flow-token-123',
+      })
+
+      const result = await service.findByFlowToken('flow-token-123')
+
+      expect(result).toHaveProperty('id')
+      expect(result).toHaveProperty('flowToken', 'flow-token-123')
+    })
+
+    it('should return null if token not found', async () => {
+      mockPrisma.purchase.findUnique.mockResolvedValue(null)
+
+      const result = await service.findByFlowToken('invalid-token')
+
+      expect(result).toBeNull()
     })
   })
 })

@@ -16,7 +16,10 @@ import { useLuckyPasses } from '@/hooks/use-lucky-passes'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { useUserRaffles } from '@/hooks/use-user-raffles'
 import { Spinner } from '@/components/ui/spinner'
+import { OperatorPanel } from '../components/operator-panel'
+import { getAllRaffles } from '@/api/admin.api'
 import type { Raffle, RaffleProgress, Purchase } from '@/types/domain.types'
+import { useAsyncData } from '@/hooks/use-async-data'
 
 function buildImpact(raffle: Raffle | null, progress: RaffleProgress | null): CollectiveImpact {
   const milestones = raffle?.milestones ?? []
@@ -107,6 +110,25 @@ export default function DashboardPage() {
   const { raffle, progress, isLoading: isLoadingRaffle } = useActiveRaffle()
   const { raffles: userRaffles, isLoading: isLoadingUserRaffles } = useUserRaffles()
 
+  // Operator/admin: load all raffles for the operator panel
+  const isOperatorOrAdmin = user?.role === 'operator' || user?.role === 'admin'
+  const { data: allRaffles, isLoading: isLoadingAllRaffles } = useAsyncData<Raffle[]>(
+    isOperatorOrAdmin ? (async () => {
+      const result = await getAllRaffles()
+      return result.map(r => ({
+        id: r.id,
+        title: r.title ?? '',
+        description: r.description,
+        goalPacks: r.goalPacks,
+        maxTicketNumber: 0,
+        status: r.status as Raffle['status'],
+        createdAt: r.createdAt,
+        endDate: r.endDate,
+      }))
+    }) : async () => [],
+    [],
+  )
+
   const handleLogout = () => {
     logout()
     navigate('/')
@@ -114,7 +136,7 @@ export default function DashboardPage() {
 
   if (!user) return null
 
-  const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles
+  const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles || (isOperatorOrAdmin && isLoadingAllRaffles)
   const totalTickets = luckyPassSummary?.active || 0
   const points = (luckyPassSummary?.active || 0) * 10 // 10 points per active ticket
 
@@ -144,6 +166,13 @@ export default function DashboardPage() {
               totalTickets={totalTickets}
               points={points}
             />
+
+            {/* Operator/Admin Panel */}
+            {isOperatorOrAdmin && (
+              <div className="mb-8">
+                <OperatorPanel raffles={allRaffles} />
+              </div>
+            )}
 
             {/* Main layout: sidebar left + main right */}
             <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-8">

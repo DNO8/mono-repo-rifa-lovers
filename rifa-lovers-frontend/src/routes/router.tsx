@@ -146,7 +146,7 @@ export const router = createBrowserRouter([
     path: '/stream/:raffleId',
     element: (
       <PageWithSuspense fallback={<StreamingPageSkeleton />}>
-        <ProtectedRoute requiredRole="customer">
+        <ProtectedRoute allowedRoles={['operator', 'admin']}>
           <LazyStreamingPage />
         </ProtectedRoute>
       </PageWithSuspense>

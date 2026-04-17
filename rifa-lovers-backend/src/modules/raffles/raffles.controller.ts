@@ -1,6 +1,8 @@
-import { Controller, Get, NotFoundException } from '@nestjs/common'
+import { Controller, Get, Param, NotFoundException, UseGuards } from '@nestjs/common'
 import { RafflesService } from './raffles.service'
 import { RaffleResponseDto, RaffleProgressDto } from './dto'
+import { CustomerOwnershipGuard } from '../users/guards/customer-ownership.guard'
+import { AuthGuard } from '@nestjs/passport'
 
 @Controller('raffles')
 export class RafflesController {
@@ -18,5 +20,17 @@ export class RafflesController {
   @Get('active/progress')
   async getActiveProgress(): Promise<RaffleProgressDto | null> {
     return this.rafflesService.getActiveProgress()
+  }
+
+  @Get('user')
+  @UseGuards(AuthGuard('jwt'), CustomerOwnershipGuard)
+  async getUserRaffles(): Promise<RaffleResponseDto[]> {
+    return await this.rafflesService.getUserRaffles()
+  }
+
+  @Get(':id')
+  @UseGuards(AuthGuard('jwt'), CustomerOwnershipGuard)
+  async getCustomerRaffle(@Param('id') id: string): Promise<RaffleResponseDto> {
+    return await this.rafflesService.findById(id)
   }
 }

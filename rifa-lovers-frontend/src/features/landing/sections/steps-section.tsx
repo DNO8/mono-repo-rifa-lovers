@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { ClipboardList, Gift, Radio, Award } from 'lucide-react'
+import { Target, Gift, Radio, Award } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Badge } from '@/components/ui/badge'
 import { STEPS } from '@/lib/constants'
@@ -7,7 +7,7 @@ import { SplitText } from '@/components/shared/split-text'
 import type { IconMap } from '@/types/ui.types'
 import type { Step } from '@/types/domain.types'
 
-const STEP_ICONS: IconMap = { ClipboardList, Gift, Radio, Award }
+const STEP_ICONS: IconMap = { ClipboardList: Target, Gift, Radio, Award }
 
 /* ═══════════════════════════════════════════════════════════
    Aurora Gradient Mesh — Canvas 2D (vite.dev style)
@@ -125,12 +125,12 @@ function StepCard({
           className="text-[10px]"
           style={{ color: step.color }}
         >
-          PASO {step.number}
+          {step.number}
         </Badge>
         {step.isHighlighted && (
           <Badge variant="gradient" className="text-[10px] px-2 py-0.5 gap-1">
             <div className="size-1.5 rounded-full bg-white animate-pulse" />
-            EN VIVO
+            CLAVE
           </Badge>
         )}
       </div>
@@ -240,7 +240,7 @@ export function StepsSection() {
   return (
     <section
       ref={sectionRef}
-      id="como-funciona"
+      id="sistema-premios"
       className="relative px-4 md:px-8 py-16 md:py-24 overflow-hidden"
     >
       {/* Canvas aurora background */}
@@ -253,7 +253,7 @@ export function StepsSection() {
       <div className="relative z-10 mx-auto max-w-[1200px]">
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
-          <Badge variant="subtle" className="mb-4">Cómo funciona</Badge>
+          <Badge variant="gradient" className="mb-4">🎁 Sistema de premios</Badge>
           <SplitText
             as="h2"
             className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3"
@@ -261,10 +261,11 @@ export function StepsSection() {
             stagger={0.05}
             duration={0.6}
           >
-            Así funciona Rifa Lovers en simple
+            La comunidad decide cuántos premios se sortean
           </SplitText>
           <p className="text-text-secondary max-w-lg mx-auto">
-            Tú activas todo este proceso
+            Mientras más personas participan, más hitos se desbloquean y más premios entran al sorteo.
+            El mínimo garantizado es siempre <strong className="text-text-primary">1 premio</strong>.
           </p>
         </div>
 

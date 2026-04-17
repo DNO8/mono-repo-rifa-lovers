@@ -144,6 +144,7 @@ let DrawService = DrawService_1 = class DrawService {
             raffleId,
             drawnAt: new Date(),
             winners,
+            discarded: [],
         };
         const drawnRaffle = await this.prisma.raffle.findUnique({ where: { id: raffleId } });
         for (const winner of winners) {
@@ -201,6 +202,7 @@ let DrawService = DrawService_1 = class DrawService {
                     userEmail: w.user?.email ?? null,
                 };
             }),
+            discarded: [],
         };
     }
     async canExecuteDraw(raffleId) {
@@ -268,6 +270,25 @@ let DrawService = DrawService_1 = class DrawService {
             prizesCount: prizes,
             activePassesCount: activePasses,
         };
+    }
+    async getWinnersCount(raffleId) {
+        return this.prisma.prizeWinner.count({
+            where: {
+                prize: {
+                    raffleId: raffleId,
+                },
+            },
+        });
+    }
+    async getUnlockedPrizesCount(raffleId) {
+        return this.prisma.prize.count({
+            where: {
+                raffleId: raffleId,
+                milestone: {
+                    isUnlocked: true,
+                },
+            },
+        });
     }
 };
 exports.DrawService = DrawService;

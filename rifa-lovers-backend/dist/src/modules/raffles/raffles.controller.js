@@ -8,10 +8,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RafflesController = void 0;
 const common_1 = require("@nestjs/common");
 const raffles_service_1 = require("./raffles.service");
+const customer_ownership_guard_1 = require("../users/guards/customer-ownership.guard");
+const passport_1 = require("@nestjs/passport");
 let RafflesController = class RafflesController {
     constructor(rafflesService) {
         this.rafflesService = rafflesService;
@@ -25,6 +30,12 @@ let RafflesController = class RafflesController {
     }
     async getActiveProgress() {
         return this.rafflesService.getActiveProgress();
+    }
+    async getUserRaffles() {
+        return await this.rafflesService.getUserRaffles();
+    }
+    async getCustomerRaffle(id) {
+        return await this.rafflesService.findById(id);
     }
 };
 exports.RafflesController = RafflesController;
@@ -40,6 +51,21 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], RafflesController.prototype, "getActiveProgress", null);
+__decorate([
+    (0, common_1.Get)('user'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), customer_ownership_guard_1.CustomerOwnershipGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], RafflesController.prototype, "getUserRaffles", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), customer_ownership_guard_1.CustomerOwnershipGuard),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], RafflesController.prototype, "getCustomerRaffle", null);
 exports.RafflesController = RafflesController = __decorate([
     (0, common_1.Controller)('raffles'),
     __metadata("design:paramtypes", [raffles_service_1.RafflesService])

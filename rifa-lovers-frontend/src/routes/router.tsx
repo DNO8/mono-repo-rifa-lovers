@@ -11,6 +11,7 @@ import { AuthPageSkeleton } from '@/components/skeletons/auth-skeleton'
 import { DashboardPageSkeleton } from '@/components/skeletons/dashboard-skeleton'
 import { CheckoutPageSkeleton } from '@/components/skeletons/checkout-skeleton'
 import { RaffleDetailPageSkeleton } from '@/components/skeletons/raffle-detail-skeleton'
+import { StreamingPageSkeleton } from '@/components/skeletons/streaming-skeleton'
 
 const LazyLandingPage = lazy(() => import('@/features/landing/pages/landing.page'))
 const LazyImpactPage = lazy(() => import('@/features/impact/pages/impact.page'))
@@ -26,6 +27,8 @@ const LazyEmprendedorPage = lazy(() => import('@/features/emprendedor/pages/empr
 const LazyAdminDashboardPage = lazy(() => import('@/features/admin/pages/admin-dashboard.page').then(m => ({ default: m.AdminDashboardPage })))
 const LazyNotFoundPage = lazy(() => import('@/features/errors/pages/not-found.page'))
 const LazyWinnersPage = lazy(() => import('@/features/raffles/pages/winners.page'))
+const LazyStreamingPage = lazy(() => import('@/features/streaming/pages/streaming.page'))
+const LazyBasesLegalesPage = lazy(() => import('@/features/legal/pages/bases-legales.page'))
 
 export const router = createBrowserRouter([
   {
@@ -97,6 +100,14 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: '/bases-legales',
+    element: (
+      <PageWithSuspense fallback={null}>
+        <LazyBasesLegalesPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
     path: '/emprendedor',
     element: (
       <PageWithSuspense fallback={<LandingPageSkeleton />}>
@@ -137,6 +148,16 @@ export const router = createBrowserRouter([
     element: (
       <PageWithSuspense fallback={null}>
         <LazyWinnersPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/stream/:raffleId',
+    element: (
+      <PageWithSuspense fallback={<StreamingPageSkeleton />}>
+        <ProtectedRoute allowedRoles={['operator', 'admin']}>
+          <LazyStreamingPage />
+        </ProtectedRoute>
       </PageWithSuspense>
     ),
   },

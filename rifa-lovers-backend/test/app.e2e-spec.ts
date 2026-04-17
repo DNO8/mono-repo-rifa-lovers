@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication, ValidationPipe } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import { JwtModule } from '@nestjs/jwt'
+import { JwtService, JwtModule } from '@nestjs/jwt'
 import request from 'supertest'
 import { AppModule } from '../src/app.module'
 import { PrismaService } from '../src/database/prisma.service'
@@ -28,6 +27,22 @@ describe('AppController (e2e)', () => {
   let packId: string
   let purchaseId: string
   let paymentToken: string
+  let adminTestEmail: string
+  let testEmail: string
+
+  // Polling helper to replace hardcoded setTimeout
+  async function waitForCondition(
+    fn: () => Promise<boolean>,
+    timeoutMs = 5000,
+    intervalMs = 250,
+  ): Promise<void> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+      if (await fn()) return
+      await new Promise((r) => setTimeout(r, intervalMs))
+    }
+    throw new Error('waitForCondition timed out')
+  }
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -67,8 +82,11 @@ describe('AppController (e2e)', () => {
   })
 
   describe('=== FASE 1: AUTENTICACIÓN ===', () => {
-    const testEmail = `test-${Date.now()}@rifalovers.cl`
     const testPassword = 'TestPassword123!'
+
+    beforeAll(() => {
+      testEmail = `test-${Date.now()}@rifalovers.cl`
+    })
 
     it('1.1 - POST /auth/register - debe registrar un nuevo usuario', async () => {
       const registerData = {
@@ -86,7 +104,7 @@ describe('AppController (e2e)', () => {
 
       expect(response.body).toHaveProperty('accessToken')
       expect(response.body).toHaveProperty('user')
-      expect(response.body.user.email).toBe(registerData.email)
+      expect(response.body.user.email).toBe(testEmail)
       expect(response.body.user.role).toBe('customer')
       
       authToken = response.body.accessToken
@@ -106,7 +124,7 @@ describe('AppController (e2e)', () => {
 
       expect(response.body).toHaveProperty('accessToken')
       expect(response.body).toHaveProperty('user')
-      expect(response.body.user.email).toBe(loginData.email)
+      expect(response.body.user.email).toBe(testEmail)
       
       // Actualizar token
       authToken = response.body.accessToken
@@ -267,8 +285,14 @@ describe('AppController (e2e)', () => {
     })
 
     it('3.4 - GET /purchases/my - debe mostrar la compra como pagada', async () => {
-      // Esperar un momento para que se procese el webhook
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Poll until the webhook has been processed and purchase is paid
+      await waitForCondition(async () => {
+        const res = await request(app.getHttpServer())
+          .get('/purchases/my')
+          .set('Authorization', `Bearer ${authToken}`)
+        const purchase = res.body.find((p: any) => p.id === purchaseId)
+        return purchase?.status === 'paid'
+      })
 
       const response = await request(app.getHttpServer())
         .get('/purchases/my')
@@ -359,9 +383,9 @@ describe('AppController (e2e)', () => {
 
     it('5.2 - POST /admin/raffles/:id/draw - debe ejecutar el sorteo', async () => {
       // Crear usuario admin via API para que exista en Supabase
-      const adminEmail = `admin-${Date.now()}@rifalovers.cl`
+      adminTestEmail = `admin-${Date.now()}@rifalovers.cl`
       const adminRegisterData = {
-        email: adminEmail,
+        email: adminTestEmail,
         password: 'AdminPass123!',
         firstName: 'Admin',
         lastName: 'Test',
@@ -512,8 +536,8 @@ async function cleanupTestData(prisma: PrismaService) {
     await prisma.user.deleteMany({
       where: {
         OR: [
-          { email: 'test-e2e@rifalovers.cl' },
-          { email: 'admin-test@rifalovers.cl' },
+          { email: { contains: 'test-' } },
+          { email: { contains: 'admin-' } },
         ],
       },
     })

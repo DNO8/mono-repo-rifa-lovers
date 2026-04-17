@@ -149,4 +149,21 @@ export class RafflesService {
       endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
     }))
   }
+
+  async getUserRaffles(): Promise<RaffleResponseDto[]> {
+    this.logger.debug('Buscando rifas del usuario actual')
+
+    const raffles = await this.rafflesRepository.findUserRaffles()
+
+    return raffles.map((raffle: Raffle) => ({
+      id: raffle.id,
+      title: raffle.title,
+      description: raffle.description,
+      goalPacks: raffle.goalPacks,
+      maxTicketNumber: raffle.maxTicketNumber,
+      status: raffle.status,
+      createdAt: raffle.createdAt.toISOString(),
+      endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+    }))
+  }
 }

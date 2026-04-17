@@ -1,5 +1,7 @@
 import { SectionDivider } from '@/components/shared/section-divider'
 import { HeroSection } from '../sections/hero-section'
+import { TrustBarSection } from '../sections/trust-bar-section'
+import { ProgressFomoSection } from '../sections/progress-fomo-section'
 import { LiveTickerSection } from '../sections/live-ticker-section'
 import { CountdownSection } from '../sections/countdown-section'
 import { StepsSection } from '../sections/steps-section'
@@ -7,6 +9,7 @@ import { HowItWorksSection } from '../sections/how-it-works-section'
 import { WinnersSection } from '../sections/winners-section'
 import { TestimonialsSection } from '../sections/testimonials-section'
 import { PricingSection } from '../sections/pricing-section'
+import { BackingSection } from '../sections/backing-section'
 import { MilestoneTimeline } from '../components/ticket-selector'
 
 
@@ -14,6 +17,8 @@ export default function LandingPage() {
   return (
     <>
       <HeroSection />
+      <TrustBarSection />
+      <ProgressFomoSection />
       <section className="px-4 md:px-8 py-4 md:py-14">
         <div className="mx-auto max-w-4xl">
           <MilestoneTimeline />
@@ -27,6 +32,8 @@ export default function LandingPage() {
       <HowItWorksSection />
       <SectionDivider />
       <PricingSection />
+      <SectionDivider />
+      <BackingSection />
       <SectionDivider />
       <WinnersSection />
       <SectionDivider />

@@ -17,6 +17,13 @@ export interface DrawResult {
     userName: string | null
     userEmail: string | null
   }[]
+  discarded: {
+    luckyPassId: string
+    passNumber: number
+    userId: string
+    userName: string | null
+    userEmail: string | null
+  }[]
 }
 
 @Injectable()
@@ -193,6 +200,7 @@ export class DrawService {
       raffleId,
       drawnAt: new Date(),
       winners,
+      discarded: [], // Por ahora vacío, se puede implementar lógica de descarte después
     }
 
     // Send winner notification emails (non-blocking)
@@ -262,6 +270,7 @@ export class DrawService {
           userEmail: w.user?.email ?? null,
         }
       }),
+      discarded: [], // Por ahora vacío, se puede implementar lógica de descarte después
     }
   }
 
@@ -350,5 +359,32 @@ export class DrawService {
       prizesCount: prizes,
       activePassesCount: activePasses,
     }
+  }
+
+  /**
+   * Obtiene el conteo de ganadores existentes para una rifa
+   */
+  async getWinnersCount(raffleId: string): Promise<number> {
+    return this.prisma.prizeWinner.count({
+      where: {
+        prize: {
+          raffleId: raffleId,
+        },
+      },
+    })
+  }
+
+  /**
+   * Obtiene el conteo de premios desbloqueados para una rifa
+   */
+  async getUnlockedPrizesCount(raffleId: string): Promise<number> {
+    return this.prisma.prize.count({
+      where: {
+        raffleId: raffleId,
+        milestone: {
+          isUnlocked: true,
+        },
+      },
+    })
   }
 }

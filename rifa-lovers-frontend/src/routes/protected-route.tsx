@@ -5,10 +5,11 @@ import type { UserRole } from '@/types/domain.types'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  requiredRole?: Extract<UserRole, 'admin' | 'operator'>
+  requiredRole?: UserRole
+  allowedRoles?: UserRole[]
 }
 
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRole, allowedRoles }: ProtectedRouteProps) {
   const { isAuthenticated, user } = useAuthStore(
     useShallow((s) => ({ isAuthenticated: s.isAuthenticated, user: s.user }))
   )
@@ -17,6 +18,10 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   if (!isAuthenticated) {
     const redirect = encodeURIComponent(location.pathname + location.search)
     return <Navigate to={`/login?redirect=${redirect}`} replace />
+  }
+
+  if (allowedRoles && user?.role && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />
   }
 
   if (requiredRole && user?.role !== requiredRole) {

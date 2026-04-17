@@ -94,6 +94,102 @@ let RafflesRepository = class RafflesRepository {
             },
         });
     }
+    async findUserRaffles() {
+        return this.prisma.raffle.findMany({
+            where: {
+                OR: [
+                    { status: 'active' },
+                    { status: 'drawn' },
+                ],
+                purchases: {
+                    some: {},
+                },
+            },
+            include: {
+                progress: true,
+                milestones: {
+                    include: {
+                        prizes: true,
+                    },
+                },
+                _count: {
+                    select: {
+                        purchases: true,
+                        luckyPasses: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+    async findActiveExpiredRaffles() {
+        return this.prisma.raffle.findMany({
+            where: {
+                status: 'active',
+                endDate: {
+                    lte: new Date(),
+                },
+            },
+            select: {
+                id: true,
+                title: true,
+                endDate: true,
+                status: true,
+            },
+        });
+    }
+    async getUniqueParticipants(raffleId) {
+        const participants = await this.prisma.luckyPass.groupBy({
+            by: ['userId'],
+            where: {
+                raffleId,
+                status: 'active',
+            },
+            _count: {
+                id: true,
+            },
+        });
+        const result = await Promise.all(participants.map(async (participant) => {
+            const user = await this.prisma.user.findUnique({
+                where: { id: participant.userId || '' },
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                },
+            });
+            const luckyPasses = await this.prisma.luckyPass.findMany({
+                where: {
+                    raffleId,
+                    userId: participant.userId || '',
+                    status: 'active',
+                },
+                select: { id: true },
+            });
+            return {
+                userId: participant.userId || '',
+                email: user?.email || null,
+                firstName: user?.firstName || null,
+                lastName: user?.lastName || null,
+                luckyPassIds: luckyPasses.map(lp => lp.id),
+            };
+        }));
+        return result;
+    }
+    async getUserById(userId) {
+        return this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                organizationId: true,
+                role: true,
+            },
+        });
+    }
 };
 exports.RafflesRepository = RafflesRepository;
 exports.RafflesRepository = RafflesRepository = __decorate([

@@ -14,4 +14,26 @@ export declare class RafflesRepository {
     findByStatus(status: RaffleStatus): Promise<Raffle[]>;
     updateStatus(id: string, status: RaffleStatus): Promise<Raffle>;
     findWithPrizes(id: string): Promise<Raffle | null>;
+    findUserRaffles(): Promise<Raffle[]>;
+    findActiveExpiredRaffles(): Promise<Array<{
+        id: string;
+        title: string | null;
+        status: string;
+        endDate: Date | null;
+    }>>;
+    getUniqueParticipants(raffleId: string): Promise<Array<{
+        userId: string;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        luckyPassIds: string[];
+    }>>;
+    getUserById(userId: string): Promise<{
+        id: string;
+        email: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        organizationId: string | null;
+        role: string;
+    } | null>;
 }

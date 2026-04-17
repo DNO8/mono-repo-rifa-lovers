@@ -1,15 +1,28 @@
 import { useRef, useEffect } from 'react'
-import { ArrowRight, Bell, Hand } from 'lucide-react'
+import { ArrowRight, Radio, Hand, CalendarClock } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SplitText } from '@/components/shared/split-text'
 import { HeroModelViewer } from '../components/hero-model-viewer'
 import { HeroLiveFrame } from '../components/hero-live-frame'
+import { useActiveRaffle } from '@/hooks/use-raffles'
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const spotlightRef = useRef<HTMLDivElement>(null)
+  const { raffle } = useActiveRaffle()
+
+  const drawDate = raffle?.endDate
+    ? new Date(raffle.endDate).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })
+    : null
+  const drawTime = raffle?.endDate
+    ? new Date(raffle.endDate).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+    : null
+
+  const scrollToPricing = () => {
+    document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const el = sectionRef.current
@@ -76,12 +89,12 @@ export function HeroSection() {
           <div data-gsap>
             <Badge variant="gradient" className="mb-5">
               <div className="size-2 rounded-full bg-white animate-pulse" />
-              EN VIVO AHORA
+              SORTEO EN VIVO
             </Badge>
           </div>
 
           <h1
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-[2.75rem] xl:text-7xl leading-[1.15] tracking-tight mb-5"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-[2.5rem] xl:text-6xl leading-[1.15] tracking-tight mb-4"
             style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}
           >
             <SplitText
@@ -93,18 +106,7 @@ export function HeroSection() {
               y={30}
               delay={0.3}
             >
-              Participa hoy
-            </SplitText>
-            <SplitText
-              as="span"
-              className="block text-text-primary"
-              type="words"
-              stagger={0.06}
-              duration={0.7}
-              y={30}
-              delay={0.7}
-            >
-              Gana premios
+              Gana un MacBook M5
             </SplitText>
             <SplitText
               as="span"
@@ -114,27 +116,45 @@ export function HeroSection() {
               stagger={0.06}
               duration={0.7}
               y={30}
-              delay={1.1}
+              delay={0.7}
             >
-              Impacta vidas
+              desde $4.990
             </SplitText>
           </h1>
 
           <p
             data-gsap
-            className="text-base md:text-lg text-text-secondary max-w-xl mb-6"
+            className="text-sm md:text-base text-text-secondary max-w-xl mb-2 leading-relaxed"
           >
-            Así funciona Rifa Lovers en simple
+            y cumple el sueño de los niños de la{' '}
+            <span className="font-semibold text-text-primary">Fundación Niño y Cáncer</span>
           </p>
 
+          <p
+            data-gsap
+            className="text-sm md:text-base text-text-secondary max-w-xl mb-4 leading-relaxed"
+          >
+            <span className="font-semibold text-primary">5 smartphones y 5 tablets</span>, además
+            participas en la escala de desbloqueo de fabulosos premios.
+          </p>
+
+          {drawDate && (
+            <div data-gsap className="flex items-center gap-2 mb-5 text-sm">
+              <CalendarClock className="size-4 text-primary" />
+              <span className="text-text-primary font-semibold">
+                Sorteo en vivo — {drawDate}{drawTime ? ` a las ${drawTime}` : ''}
+              </span>
+            </div>
+          )}
+
           <div data-gsap className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3">
-            <Button variant="primary" size="lg">
-              Ver en vivo ahora
+            <Button variant="primary" size="lg" onClick={scrollToPricing}>
+              Participar Ahora
               <ArrowRight className="size-4" />
             </Button>
             <Button variant="secondary" size="lg">
-              <Bell className="size-4" />
-              Recordarme el sorteo
+              <Radio className="size-4" />
+              Ver sorteo en vivo
             </Button>
           </div>
         </div>

@@ -5,4 +5,6 @@ export declare class RafflesController {
     constructor(rafflesService: RafflesService);
     getActive(): Promise<RaffleResponseDto>;
     getActiveProgress(): Promise<RaffleProgressDto | null>;
+    getUserRaffles(): Promise<RaffleResponseDto[]>;
+    getCustomerRaffle(id: string): Promise<RaffleResponseDto>;
 }

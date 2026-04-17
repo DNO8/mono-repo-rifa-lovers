@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
-// @ts-expect-error — reactCompilerPreset exists at runtime but missing from .d.ts
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — reactCompilerPreset export missing from .d.ts in some plugin versions
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'

@@ -159,7 +159,7 @@ function AnnotationDot({
     >
       <div className="relative" onClick={onClick}>
         {/* Numbered dot */}
-        <div className="relative size-6 cursor-pointer">
+        <div className="relative size-4 lg:size-6 cursor-pointer">
           {!active && (
             <div
               className="absolute inset-0 rounded-full animate-ping opacity-30"
@@ -167,14 +167,14 @@ function AnnotationDot({
             />
           )}
           <div
-            className="relative size-6 rounded-full ring-2 ring-white/80 shadow-lg flex items-center justify-center"
+            className="relative size-3 lg:size-6 rounded-full ring-2 ring-white/80 shadow-lg flex items-center justify-center"
             style={{
               backgroundColor: hotspot.color,
               transform: active ? 'scale(1.25)' : 'scale(1)',
               transition: 'transform 0.2s ease',
             }}
           >
-            <span className="text-white font-bold leading-none select-none" style={{ fontSize: '10px' }}>{index}</span>
+            <span className="text-white text-xs sm:text-sm sm:font-bold leading-none select-none">{index}</span>
           </div>
         </div>
 

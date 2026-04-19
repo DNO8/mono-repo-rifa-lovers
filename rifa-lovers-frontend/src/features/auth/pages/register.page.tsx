@@ -27,8 +27,8 @@ export default function RegisterPage() {
       return
     }
 
-    if (password.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres')
+    if (password.length < 9) {
+      toast.error('La contraseña debe tener al menos 9 caracteres')
       return
     }
 
@@ -138,7 +138,7 @@ export default function RegisterPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 9 caracteres"
                 className="w-full h-10 px-4 pr-10 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
               />
               <button
@@ -149,7 +149,7 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
-            <p className="text-xs text-text-tertiary mt-1">Mínimo 6 caracteres. Usa letras, números o símbolos para mayor seguridad.</p>
+            <p className="text-xs text-text-tertiary mt-1">Mínimo 9 caracteres. Usa letras, números o símbolos para mayor seguridad.</p>
           </div>
 
           <div>

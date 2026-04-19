@@ -10,10 +10,10 @@ import { useAuthStore } from '@/stores/auth.store'
 import { Spinner } from '@/components/ui/spinner'
 
 const BENEFITS = [
-  { icon: Star, text: '10 LuckyPasses incluidos' },
-  { icon: TrendingUp, text: 'Mayor probabilidad de ganar' },
-  { icon: Users, text: 'Apoyo directo al ecosistema emprendedor' },
-  { icon: Rocket, text: 'Acceso prioritario a futuros sorteos' },
+  { icon: TrendingUp, text: 'Catálogo digital con hasta 20 productos o servicios principales' },
+  { icon: Star, text: '1 flyer promocional profesional' },
+  { icon: Users, text: 'Perfil optimizado (Instagram o Google Maps)' },
+  { icon: Rocket, text: 'Link único de ventas' },
 ]
 
 export default function EmprendedorPage() {
@@ -25,12 +25,13 @@ export default function EmprendedorPage() {
   const isLoading = raffleLoading || packsLoading
 
   const emprendedorPack = packs.find((p) =>
-    p.name?.toUpperCase().includes('EMPRENDEDOR'),
+    p.name?.toUpperCase().includes('EMPRENDEDOR') ||
+    p.name?.toUpperCase().includes('BUSINESS'),
   )
 
-  const price = emprendedorPack?.price ?? 19990
-  const preSalePrice = emprendedorPack?.isPreSale ? Math.round(price * 0.9) : null
-  const tickets = emprendedorPack?.luckyPassQuantity ?? 10
+  const price = emprendedorPack?.price ?? 79990
+  const originalPrice = 99000
+  const tickets = emprendedorPack?.luckyPassQuantity ?? 1
 
   const handleBuy = () => {
     if (!emprendedorPack || !raffle) return
@@ -65,14 +66,14 @@ export default function EmprendedorPage() {
         <div className="text-center mb-12">
           <Badge variant="gradient" className="mb-4">
             <Rocket className="size-3" />
-            Pack Exclusivo
+            Para Negocios
           </Badge>
           <h1 className="text-3xl md:text-5xl font-extrabold text-text-primary tracking-tight mb-4">
-            Emprendedor{' '}
-            <span className="gradient-text">Legend</span>
+            Business{' '}
+            <span className="gradient-text">Pro 🚀</span>
           </h1>
           <p className="text-lg text-text-secondary max-w-md mx-auto">
-            El pack definitivo para quienes quieren maximizar sus oportunidades y apoyar el ecosistema emprendedor.
+            Digitaliza tu negocio y vende más con una solución profesional y rápida.
           </p>
         </div>
 
@@ -80,31 +81,17 @@ export default function EmprendedorPage() {
         <Card variant="glass" className="p-8 md:p-10 shadow-glow ring-1 ring-primary/20 mb-8">
           {/* Price */}
           <div className="text-center mb-8">
-            {preSalePrice && (
-              <div className="mb-2">
-                <Badge variant="subtle" className="text-xs">
-                  Preventa activa
-                </Badge>
-              </div>
-            )}
             <div className="flex items-baseline justify-center gap-3">
-              {preSalePrice ? (
-                <>
-                  <span className="text-2xl text-text-tertiary line-through">
-                    ${price.toLocaleString('es-CL')}
-                  </span>
-                  <span className="text-5xl md:text-6xl font-extrabold text-text-primary">
-                    ${preSalePrice.toLocaleString('es-CL')}
-                  </span>
-                </>
-              ) : (
-                <span className="text-5xl md:text-6xl font-extrabold text-text-primary">
-                  ${price.toLocaleString('es-CL')}
-                </span>
-              )}
+              <span className="text-2xl text-text-tertiary line-through">
+                ${originalPrice.toLocaleString('es-CL')}
+              </span>
+              <span className="text-5xl md:text-6xl font-extrabold text-text-primary">
+                ${price.toLocaleString('es-CL')}
+              </span>
             </div>
+            <p className="text-text-secondary mt-1 text-sm">IVA incluido</p>
             <p className="text-text-secondary mt-2">
-              {tickets} LuckyPasses incluidos
+              🎁 Bonus RifaLovers: {tickets} LuckyPass incluido
             </p>
           </div>
 
@@ -133,7 +120,7 @@ export default function EmprendedorPage() {
             onClick={handleBuy}
             disabled={!emprendedorPack || !raffle}
           >
-            Comprar Pack Emprendedor Legend
+            Activar Business Pro
             <ArrowRight className="size-4" />
           </Button>
 

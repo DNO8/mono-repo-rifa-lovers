@@ -32,6 +32,11 @@ export default function RegisterPage() {
       return
     }
 
+    if (phone.length < 8) {
+      toast.error('El teléfono debe tener al menos 8 dígitos. Ej: 56912345678')
+      return
+    }
+
     try {
       await register(name, lastName, phone, email, password)
       const { isAuthenticated } = useAuthStore.getState()
@@ -71,6 +76,7 @@ export default function RegisterPage() {
               placeholder="Tu nombre"
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />
+            <p className="text-xs text-text-tertiary mt-1">Solo letras, sin números ni símbolos</p>
           </div>
 
           <div>
@@ -86,6 +92,7 @@ export default function RegisterPage() {
               placeholder="Tu apellido"
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />
+            <p className="text-xs text-text-tertiary mt-1">Solo letras, sin números ni símbolos</p>
           </div>
 
           <div>
@@ -101,6 +108,7 @@ export default function RegisterPage() {
               placeholder="tu@email.com"
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />
+            <p className="text-xs text-text-tertiary mt-1">Formato válido: ejemplo@correo.com</p>
           </div>
           <div>
             <label htmlFor="register-phone" className="block text-sm font-medium text-text-primary mb-1.5">
@@ -116,7 +124,7 @@ export default function RegisterPage() {
               placeholder="56912345678 (sin el +)"
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />
-            <p className="text-xs text-text-tertiary mt-1">Solo números, sin el signo +</p>
+            <p className="text-xs text-text-tertiary mt-1">Solo números, sin el signo +. Ej: 56912345678 (mínimo 8 dígitos)</p>
           </div>
 
           <div>
@@ -141,6 +149,7 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
+            <p className="text-xs text-text-tertiary mt-1">Mínimo 6 caracteres. Usa letras, números o símbolos para mayor seguridad.</p>
           </div>
 
           <div>

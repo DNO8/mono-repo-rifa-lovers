@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthState>()(
         set({ user: data.user, token: data.accessToken, refreshToken: data.refreshToken ?? null, isAuthenticated: true, isLoading: false })
         toast.success('¡Registro exitoso! Bienvenido a RifaLovers')
       } catch (err: unknown) {
-        const message = toastError(err, 'auth', 'No se pudo completar el registro. Intenta de nuevo.')
+        const message = toastError(err, 'register', 'No se pudo completar el registro. Intenta de nuevo.')
         set({ error: message, isLoading: false })
         throw err
       }

@@ -1,7 +1,7 @@
 import { toast } from 'react-toastify'
 import { ApiError } from '@/api/client'
 
-type ErrorContext = 'auth' | 'payment' | 'general'
+type ErrorContext = 'auth' | 'login' | 'register' | 'payment' | 'general'
 
 /**
  * Extrae un mensaje de error amigable para el usuario.

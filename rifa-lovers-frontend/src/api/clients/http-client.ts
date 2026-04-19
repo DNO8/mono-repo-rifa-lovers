@@ -39,7 +39,7 @@ export class ApiError extends Error {
     return undefined
   }
 
-  getUserMessage(context?: 'auth' | 'payment' | 'general'): string {
+  getUserMessage(context?: 'auth' | 'login' | 'register' | 'payment' | 'general'): string {
     if (this.status === 429) {
       return 'Has realizado demasiadas solicitudes. Por favor espera un momento e intenta de nuevo.'
     }
@@ -47,9 +47,14 @@ export class ApiError extends Error {
       return 'Hubo un problema con el servidor. Por favor intenta más tarde.'
     }
 
-    if (context === 'auth') {
+    if (context === 'auth' || context === 'login') {
       if (this.status === 400 || this.status === 401) return 'El correo o la contraseña son incorrectos. Verifica tus datos e intenta de nuevo.'
       if (this.status === 403) return 'Tu cuenta no tiene permiso para realizar esta acción.'
+      if (this.status === 409) return 'Ya existe una cuenta con este correo electrónico. Intenta iniciar sesión.'
+    }
+
+    if (context === 'register') {
+      if (this.status === 400 || this.status === 422) return this.serverMessage() ?? 'Revisa los datos ingresados: nombre, correo, teléfono y contraseña deben ser válidos.'
       if (this.status === 409) return 'Ya existe una cuenta con este correo electrónico. Intenta iniciar sesión.'
     }
 

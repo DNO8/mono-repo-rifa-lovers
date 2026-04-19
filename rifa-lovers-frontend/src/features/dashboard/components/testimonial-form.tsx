@@ -4,6 +4,7 @@ import { Star, CheckCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Button } from '@/components/ui/button'
 import { createTestimonial } from '@/api/testimonials.api'
+import { toastError } from '@/lib/errors'
 import { cn } from '@/lib/utils'
 
 interface TestimonialFormProps {
@@ -30,7 +31,7 @@ export function TestimonialForm({ raffleId, luckyPassId }: TestimonialFormProps)
       setSubmitted(true)
       toast.success('Testimonio enviado. Lo revisaremos pronto.')
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Error al enviar')
+      toastError(err, undefined, 'No se pudo enviar el testimonio. Intenta de nuevo.')
     } finally {
       setSubmitting(false)
     }

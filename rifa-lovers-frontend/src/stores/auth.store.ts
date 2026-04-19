@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import type { User, AuthResponse } from '@/types/domain.types'
 import { apiClient } from '@/api/client'
 import { ENDPOINTS } from '@/api/endpoints'
+import { toastError } from '@/lib/errors'
 
 interface AuthState {
   user: User | null
@@ -37,9 +38,8 @@ export const useAuthStore = create<AuthState>()(
         set({ user: data.user, token: data.accessToken, refreshToken: data.refreshToken ?? null, isAuthenticated: true, isLoading: false })
         toast.success('¡Bienvenido de vuelta!')
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Error al iniciar sesión'
+        const message = toastError(err, 'auth', 'No se pudo iniciar sesión. Intenta de nuevo.')
         set({ error: message, isLoading: false })
-        toast.error(message)
         throw err
       }
     },
@@ -51,9 +51,8 @@ export const useAuthStore = create<AuthState>()(
         set({ user: data.user, token: data.accessToken, refreshToken: data.refreshToken ?? null, isAuthenticated: true, isLoading: false })
         toast.success('¡Registro exitoso! Bienvenido a RifaLovers')
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Error al registrarse'
+        const message = toastError(err, 'auth', 'No se pudo completar el registro. Intenta de nuevo.')
         set({ error: message, isLoading: false })
-        toast.error(message)
         throw err
       }
     },

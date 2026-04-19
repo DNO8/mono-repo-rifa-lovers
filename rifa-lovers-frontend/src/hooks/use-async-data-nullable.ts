@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { getErrorMessage } from '@/lib/errors'
 
 export interface AsyncState<T> {
   data: T
@@ -30,7 +31,7 @@ export function useAsyncDataNullable<T>(
       const result = await fetcher()
       setData(result)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

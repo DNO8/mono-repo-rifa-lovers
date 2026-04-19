@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { useAdminKPIs, useAdminRaffles, useAdminUsers } from '@/features/admin/hooks/use-admin'
 import { checkDrawAvailability, executeDraw } from '@/api/draw.api'
+import { toastError } from '@/lib/errors'
 import type { DrawCheckResponse, DrawResults } from '@/api/draw.api'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
@@ -129,7 +130,7 @@ function RaffleFormModal({
       })
       onClose()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Error al guardar')
+      toastError(err, undefined, 'Error al guardar los cambios. Intenta de nuevo.')
     } finally {
       setSaving(false)
     }
@@ -227,7 +228,7 @@ function DrawModal({ raffleId, onClose }: { raffleId: string; onClose: () => voi
       setResult(res)
       toast.success(`¡Sorteo completado! ${res.winners.length} ganadores asignados`)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Error al ejecutar sorteo')
+      toastError(err, undefined, 'No se pudo ejecutar el sorteo. Intenta de nuevo.')
     } finally {
       setExecuting(false)
     }
@@ -352,7 +353,7 @@ export function AdminDashboardPage() {
       toast.success(`Estado actualizado a ${RAFFLE_STATUS_CONFIG[newStatus]?.label}`)
       refreshRaffles()
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Error al cambiar estado')
+      toastError(err, undefined, 'No se pudo cambiar el estado. Intenta de nuevo.')
     }
   }
 

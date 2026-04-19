@@ -4,6 +4,7 @@ import { Send } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/api/client'
+import { toastError } from '@/lib/errors'
 import { ENDPOINTS } from '@/api/endpoints'
 
 export function ContactForm() {
@@ -22,7 +23,7 @@ export function ContactForm() {
       })
       toast.success('¡Mensaje enviado! Te responderemos pronto.')
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Error al enviar el mensaje. Intenta más tarde.')
+      toastError(err, undefined, 'Error al enviar el mensaje. Intenta más tarde.')
     } finally {
       setIsLoading(false)
       setSubmitted(true)

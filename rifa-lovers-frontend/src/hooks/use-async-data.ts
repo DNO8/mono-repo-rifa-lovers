@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { getErrorMessage } from '@/lib/errors'
 
 export interface AsyncState<T> {
   data: T
@@ -31,7 +32,7 @@ export function useAsyncData<T>(
       const result = await fetcher()
       setData(result)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

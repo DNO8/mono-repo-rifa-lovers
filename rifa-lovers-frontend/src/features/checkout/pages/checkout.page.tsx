@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { createPurchase } from '@/api/purchases.api'
 import { initiatePayment } from '@/api/payments.api'
+import { toastError } from '@/lib/errors'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { usePacks } from '@/hooks/use-packs'
 import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
@@ -70,8 +71,7 @@ export default function CheckoutPage() {
       toast.success('Redirigiendo a plataforma de pago...')
       window.location.href = payment.paymentUrl
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al procesar la compra'
-      toast.error(message)
+      toastError(err, 'payment', 'No se pudo procesar la compra. Por favor intenta de nuevo.')
       setIsProcessing(false)
     }
   }

@@ -22,39 +22,15 @@ export interface HttpClient {
 
 export class ApiError extends Error {
   constructor(
-    public status: number,
-    public statusText: string,
-    public body?: unknown,
+    public readonly status: number,
+    statusText: string,
+    public readonly body?: unknown,
   ) {
     super(`API ${status}: ${statusText}`)
     this.name = 'ApiError'
   }
-  
-  /**
-   * Verifica si es error de rate limiting (429)
-   */
-  isRateLimit(): boolean {
-    return this.status === 429
-  }
-  
-  /**
-   * Verifica si es error de autenticación (401)
-   */
-  isAuthError(): boolean {
-    return this.status === 401
-  }
-  
-  /**
-   * Verifica si es error de credenciales inválidas (400/401 en login)
-   */
-  isInvalidCredentials(): boolean {
-    return this.status === 400 || this.status === 401
-  }
 
-  /**
-   * Obtiene el mensaje del body del servidor si existe
-   */
-  getServerMessage(): string | undefined {
+  private serverMessage(): string | undefined {
     const body = this.body as Record<string, unknown> | null
     if (!body) return undefined
     const msg = body.message
@@ -63,59 +39,33 @@ export class ApiError extends Error {
     return undefined
   }
 
-  /**
-   * Obtiene mensaje amigable según el tipo de error — nunca expone códigos HTTP
-   */
   getUserMessage(context?: 'auth' | 'payment' | 'general'): string {
-    if (this.isRateLimit()) {
+    if (this.status === 429) {
       return 'Has realizado demasiadas solicitudes. Por favor espera un momento e intenta de nuevo.'
     }
-
     if (this.status >= 500) {
       return 'Hubo un problema con el servidor. Por favor intenta más tarde.'
     }
 
     if (context === 'auth') {
-      if (this.status === 401 || this.status === 400) {
-        return 'El correo o la contraseña son incorrectos. Verifica tus datos e intenta de nuevo.'
-      }
-      if (this.status === 403) {
-        return 'Tu cuenta no tiene permiso para realizar esta acción.'
-      }
-      if (this.status === 409) {
-        return 'Ya existe una cuenta con este correo electrónico. Intenta iniciar sesión.'
-      }
+      if (this.status === 400 || this.status === 401) return 'El correo o la contraseña son incorrectos. Verifica tus datos e intenta de nuevo.'
+      if (this.status === 403) return 'Tu cuenta no tiene permiso para realizar esta acción.'
+      if (this.status === 409) return 'Ya existe una cuenta con este correo electrónico. Intenta iniciar sesión.'
     }
 
     if (context === 'payment') {
-      if (this.status === 402 || this.status === 400) {
-        return 'No se pudo procesar el pago. Verifica los datos de tu tarjeta e intenta de nuevo.'
-      }
-      if (this.status === 409) {
-        return 'Esta compra ya fue procesada anteriormente.'
-      }
-      if (this.status === 404) {
-        return 'No se encontró la compra asociada. Por favor contacta soporte.'
-      }
+      if (this.status === 400 || this.status === 402) return 'No se pudo procesar el pago. Verifica los datos de tu tarjeta e intenta de nuevo.'
+      if (this.status === 404) return 'No se encontró la compra asociada. Por favor contacta soporte.'
+      if (this.status === 409) return 'Esta compra ya fue procesada anteriormente.'
     }
 
-    if (this.status === 401) {
-      return 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.'
-    }
-    if (this.status === 403) {
-      return 'No tienes permiso para realizar esta acción.'
-    }
-    if (this.status === 404) {
-      return 'El recurso solicitado no fue encontrado.'
-    }
-    if (this.status === 409) {
-      return 'Ya existe un registro con estos datos.'
-    }
-    if (this.status === 422) {
-      return this.getServerMessage() ?? 'Los datos ingresados no son válidos. Revísalos e intenta de nuevo.'
-    }
+    if (this.status === 401) return 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.'
+    if (this.status === 403) return 'No tienes permiso para realizar esta acción.'
+    if (this.status === 404) return 'El recurso solicitado no fue encontrado.'
+    if (this.status === 409) return 'Ya existe un registro con estos datos.'
+    if (this.status === 422) return this.serverMessage() ?? 'Los datos ingresados no son válidos. Revísalos e intenta de nuevo.'
 
-    return this.getServerMessage() ?? 'Ocurrió un error inesperado. Por favor intenta más tarde.'
+    return this.serverMessage() ?? 'Ocurrió un error inesperado. Por favor intenta más tarde.'
   }
 }
 

@@ -17,7 +17,7 @@ export const PACK_UI_META: Record<string, PackUIMeta> = {
   },
   'Flow': {
     tagline: 'Más oportunidades, mejor valor y energía ganadora.',
-    cta: 'Activar Flow 🔥',
+    cta: 'Activar Flow',
     benefits: ['3 LuckyPass', 'Producto digital de campaña', 'Mejor valor para participar'],
   },
   'Max': {

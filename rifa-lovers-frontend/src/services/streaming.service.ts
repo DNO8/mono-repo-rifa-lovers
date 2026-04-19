@@ -1,4 +1,4 @@
-import { apiClient } from './api-client'
+import { apiClient } from '@/api/client'
 import type { CustomerDrawAvailability, CustomerDrawResult, RaffleDetails } from '@/types/streaming.types'
 import { parseApiResponse, isCustomerDrawAvailability, isCustomerDrawResult, isRaffleDetails } from '@/utils/type-guards'
 

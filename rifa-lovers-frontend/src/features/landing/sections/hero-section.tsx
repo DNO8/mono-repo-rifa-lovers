@@ -170,7 +170,7 @@ export function HeroSection() {
             </HeroLiveFrame>
             <p className="flex items-center justify-center gap-1.5 text-xs text-text-tertiary mt-3 opacity-60">
               <Hand className="size-3.5" />
-              Arrastra o scrollea para interactuar
+              Arrastra para rotar · toca los <span className="font-semibold">números</span> para explorar specs
             </p>
           </div>
         </div>

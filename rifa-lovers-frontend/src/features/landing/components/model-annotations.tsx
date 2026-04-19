@@ -106,10 +106,12 @@ const HOTSPOTS: Hotspot[] = [
 /* ── Dot component ── */
 function AnnotationDot({
   hotspot,
+  index,
   active,
   onClick,
 }: {
   hotspot: Hotspot
+  index: number
   active: boolean
   onClick: () => void
 }) {
@@ -156,22 +158,24 @@ function AnnotationDot({
       style={{ pointerEvents: 'auto' }}
     >
       <div className="relative" onClick={onClick}>
-        {/* Pulsing dot */}
-        <div className="relative size-3.5 cursor-pointer">
+        {/* Numbered dot */}
+        <div className="relative size-6 cursor-pointer">
           {!active && (
             <div
-              className="absolute inset-0 rounded-full animate-ping opacity-40"
+              className="absolute inset-0 rounded-full animate-ping opacity-30"
               style={{ backgroundColor: hotspot.color }}
             />
           )}
           <div
-            className="relative size-3.5 rounded-full ring-2 ring-white/80 shadow-lg"
+            className="relative size-6 rounded-full ring-2 ring-white/80 shadow-lg flex items-center justify-center"
             style={{
               backgroundColor: hotspot.color,
-              transform: active ? 'scale(1.6)' : 'scale(1)',
+              transform: active ? 'scale(1.25)' : 'scale(1)',
               transition: 'transform 0.2s ease',
             }}
-          />
+          >
+            <span className="text-white font-bold leading-none select-none" style={{ fontSize: '10px' }}>{index}</span>
+          </div>
         </div>
 
         {/* Floating info panel */}
@@ -278,10 +282,11 @@ export function ModelAnnotations({
 
   return (
     <group>
-      {HOTSPOTS.map((hotspot) => (
+      {HOTSPOTS.map((hotspot, i) => (
         <AnnotationDot
           key={hotspot.id}
           hotspot={hotspot}
+          index={i + 1}
           active={activeId === hotspot.id}
           onClick={() => handleClick(hotspot)}
         />

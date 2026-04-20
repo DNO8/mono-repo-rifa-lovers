@@ -1,6 +1,6 @@
 import { Suspense, useRef, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, ContactShadows, OrbitControls, Center } from '@react-three/drei'
+import { useGLTF, ContactShadows, OrbitControls, Center, Environment } from '@react-three/drei'
 import * as THREE from 'three'
 import { Spinner } from '@/components/ui/spinner'
 import { useModelDrag } from '@/hooks/use-model-drag'
@@ -142,7 +142,12 @@ function easeInOutCubic(t: number): number {
 
 function LoadingFallback3D() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
+    <div
+      className="absolute inset-0 flex items-center justify-center"
+      style={{
+        background: 'radial-gradient(ellipse at 30% 40%, rgba(123,63,228,0.25) 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, rgba(255,77,166,0.15) 0%, transparent 55%), linear-gradient(135deg, #0d0b1a 0%, #140e26 40%, #1a1028 70%, #0d0b1a 100%)',
+      }}
+    >
       <div className="text-center">
         <Spinner size="lg" />
         <p className="text-sm text-text-secondary mt-3">Cargando modelo 3D...</p>
@@ -160,22 +165,31 @@ export function HeroModelViewer() {
 
   return (
     <div
-      className="relative mx-auto w-full h-[260px] sm:h-[320px] md:h-[460px] lg:h-[540px] xl:h-[600px]"
+      className="relative mx-auto w-full h-[260px] sm:h-[320px] md:h-[460px] lg:h-[540px] xl:h-[600px] rounded-2xl overflow-hidden"
       style={{ cursor: locked.current ? 'default' : undefined }}
       {...pointerHandlers}
     >
+      {/* Branded gradient background */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: 'radial-gradient(ellipse at 30% 40%, rgba(123,63,228,0.25) 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, rgba(255,77,166,0.15) 0%, transparent 55%), linear-gradient(135deg, #0d0b1a 0%, #140e26 40%, #1a1028 70%, #0d0b1a 100%)',
+        }}
+      />
       <Suspense fallback={<LoadingFallback3D />}>
         <Canvas
           camera={{ position: [2.5, 1.2, 5], fov: 35, near: 0.1, far: 100 }}
           dpr={[1, 1.5]}
-          gl={{ antialias: true, alpha: false }}
-          style={{ background: '#0a0a0a' }}
+          gl={{ antialias: true, alpha: true }}
+          style={{ background: 'transparent' }}
         >
-          {/* Dramatic dark lighting */}
-          <ambientLight intensity={0.12} />
-          <directionalLight position={[4, 6, 4]} intensity={1.6} color="#ffffff" castShadow />
-          <directionalLight position={[-3, 2, -3]} intensity={0.5} color="#7B3FE4" />
-          <pointLight position={[1, 3, 1]} intensity={0.2} color="#FF4DA6" />
+          {/* Bright clear lighting */}
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[4, 6, 4]} intensity={2.2} color="#ffffff" castShadow />
+          <directionalLight position={[-3, 2, -3]} intensity={0.8} color="#7B3FE4" />
+          <directionalLight position={[-4, 3, 5]} intensity={0.6} color="#ffffff" />
+          <pointLight position={[1, 3, 1]} intensity={0.5} color="#FF4DA6" />
+          <Environment preset="city" />
 
           <InnerScene
             userRotation={userRotation}

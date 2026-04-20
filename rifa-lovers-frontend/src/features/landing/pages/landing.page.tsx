@@ -25,13 +25,13 @@ export default function LandingPage() {
         </div>
       </section>
       <LiveTickerSection />
+      <PricingSection />
       <CountdownSection />
       <SectionDivider />
       <StepsSection />
       <SectionDivider />
       <HowItWorksSection />
       <SectionDivider />
-      <PricingSection />
       <SectionDivider />
       <BackingSection />
       <SectionDivider />

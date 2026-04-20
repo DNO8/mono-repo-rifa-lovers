@@ -12,13 +12,14 @@ const lucky_pass_controller_1 = require("./lucky-pass.controller");
 const lucky_pass_service_1 = require("./lucky-pass.service");
 const lucky_pass_repository_1 = require("./lucky-pass.repository");
 const raffles_repository_1 = require("../raffles/raffles.repository");
+const prisma_service_1 = require("../../database/prisma.service");
 let LuckyPassModule = class LuckyPassModule {
 };
 exports.LuckyPassModule = LuckyPassModule;
 exports.LuckyPassModule = LuckyPassModule = __decorate([
     (0, common_1.Module)({
         controllers: [lucky_pass_controller_1.LuckyPassController],
-        providers: [lucky_pass_service_1.LuckyPassService, lucky_pass_repository_1.LuckyPassRepository, raffles_repository_1.RafflesRepository],
+        providers: [lucky_pass_service_1.LuckyPassService, lucky_pass_repository_1.LuckyPassRepository, raffles_repository_1.RafflesRepository, prisma_service_1.PrismaService],
         exports: [lucky_pass_service_1.LuckyPassService, lucky_pass_repository_1.LuckyPassRepository],
     })
 ], LuckyPassModule);

@@ -16,13 +16,15 @@ const purchases_repository_1 = require("./purchases.repository");
 const packs_repository_1 = require("../packs/packs.repository");
 const raffles_repository_1 = require("../raffles/raffles.repository");
 const prisma_service_1 = require("../../database/prisma.service");
+const ticket_reservations_service_1 = require("../ticket-reservations/ticket-reservations.service");
 const purchase_mapper_1 = require("./mappers/purchase.mapper");
 let PurchasesService = PurchasesService_1 = class PurchasesService {
-    constructor(purchasesRepository, packsRepository, rafflesRepository, prisma) {
+    constructor(purchasesRepository, packsRepository, rafflesRepository, prisma, ticketReservationsService) {
         this.purchasesRepository = purchasesRepository;
         this.packsRepository = packsRepository;
         this.rafflesRepository = rafflesRepository;
         this.prisma = prisma;
+        this.ticketReservationsService = ticketReservationsService;
         this.logger = new common_1.Logger(PurchasesService_1.name);
     }
     async findByUser(userId) {
@@ -72,6 +74,17 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 pack,
             });
             this.logger.log(`Compra creada exitosamente: ${result.purchase.id}`);
+            if (createDto.selectedNumbers && createDto.selectedNumbers.length > 0) {
+                try {
+                    await this.ticketReservationsService.reserve(userId, createDto.raffleId, createDto.selectedNumbers, result.purchase.id);
+                    this.logger.log(`Tickets reservados para purchase=${result.purchase.id}: ${createDto.selectedNumbers.join(', ')}`);
+                }
+                catch (reservationError) {
+                    await this.purchasesRepository.updateStatus(result.purchase.id, 'failed');
+                    this.logger.warn(`Reserva fallida para purchase=${result.purchase.id}: ${reservationError instanceof Error ? reservationError.message : String(reservationError)}`);
+                    throw reservationError;
+                }
+            }
             return {
                 id: result.purchase.id,
                 raffleId: raffle.id,
@@ -135,9 +148,6 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                     status: 'approved',
                 },
             });
-        });
-        this.logger.log(`Compra ${purchaseId} marcada como PAID`);
-        await this.prisma.$transaction(async (tx) => {
             const userPacks = await tx.userPack.findMany({
                 where: { purchaseId },
                 include: { pack: true },
@@ -146,42 +156,39 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
             if (!raffleId) {
                 throw new common_1.BadRequestException('La compra no tiene rifa asociada');
             }
+            const reservedTickets = await tx.$queryRaw `
+        SELECT ticket_number FROM public.ticket_reservations
+        WHERE purchase_id = ${purchaseId}::uuid
+      `;
+            const reservedNumbers = reservedTickets.map((r) => r.ticket_number);
+            this.logger.debug(`Tickets reservados para purchase=${purchaseId}: ${reservedNumbers.join(', ')}`);
+            await tx.$queryRaw `
+        SELECT id FROM public.raffles WHERE id = ${raffleId}::uuid FOR UPDATE
+      `;
+            const maxResult = await tx.$queryRaw `
+        SELECT MAX(ticket_number)::text AS max_ticket
+        FROM public.lucky_passes
+        WHERE raffle_id = ${raffleId}::uuid
+      `;
+            const rawMax = maxResult[0]?.max_ticket;
+            let nextTicket = (rawMax ? parseInt(rawMax, 10) : 0) + 1;
             let totalLuckyPasses = 0;
+            let reservedNumbersIdx = 0;
             for (const userPack of userPacks) {
                 const pack = userPack.pack;
                 if (!pack)
                     continue;
                 const count = userPack.quantity * pack.luckyPassQuantity;
                 totalLuckyPasses += count;
-                const preferred = userPack.selectedNumbers ?? [];
-                await tx.$queryRaw `
-          SELECT id FROM public.raffles WHERE id = ${raffleId}::uuid FOR UPDATE
-        `;
-                const maxResult = await tx.$queryRaw `
-          SELECT MAX(ticket_number)::text AS max_ticket
-          FROM public.lucky_passes
-          WHERE raffle_id = ${raffleId}::uuid
-        `;
-                const rawMax = maxResult[0]?.max_ticket;
-                this.logger.debug(`MAX ticket raw result: ${JSON.stringify(maxResult)}, rawMax=${rawMax}`);
-                let nextTicket = (rawMax ? parseInt(rawMax, 10) : 0) + 1;
-                this.logger.debug(`nextTicket calculado: ${nextTicket}, preferred: ${JSON.stringify(preferred)}`);
-                if (preferred.length > 0) {
-                    const taken = await tx.luckyPass.findMany({
-                        where: {
-                            raffleId,
-                            ticketNumber: { in: preferred },
-                        },
-                        select: { ticketNumber: true },
-                    });
-                    if (taken.length > 0) {
-                        const takenNums = taken.map((lp) => lp.ticketNumber).join(', ');
-                        throw new common_1.ConflictException(`Los números ${takenNums} ya fueron tomados por otro usuario. Por favor elige otros.`);
-                    }
-                }
                 const luckyPassData = [];
                 for (let i = 0; i < count; i++) {
-                    const ticketNumber = preferred[i] !== undefined ? preferred[i] : nextTicket++;
+                    let ticketNumber;
+                    if (reservedNumbersIdx < reservedNumbers.length) {
+                        ticketNumber = reservedNumbers[reservedNumbersIdx++];
+                    }
+                    else {
+                        ticketNumber = nextTicket++;
+                    }
                     if (!ticketNumber || isNaN(ticketNumber) || ticketNumber < 1) {
                         throw new common_1.BadRequestException(`Número de ticket inválido generado: ${ticketNumber}`);
                     }
@@ -195,7 +202,13 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                     });
                 }
                 await tx.luckyPass.createMany({ data: luckyPassData });
-                this.logger.debug(`Generados ${count} LuckyPasses para userPack ${userPack.id} (tickets ${nextTicket - count}-${nextTicket - 1})`);
+                this.logger.debug(`Generados ${count} LuckyPasses para userPack ${userPack.id}`);
+            }
+            if (reservedNumbers.length > 0) {
+                await tx.$executeRaw `
+          DELETE FROM public.ticket_reservations WHERE purchase_id = ${purchaseId}::uuid
+        `;
+                this.logger.debug(`Reservas liberadas para purchase=${purchaseId}`);
             }
             const raffle = await tx.raffle.findUnique({ where: { id: raffleId } });
             const totalQuantity = userPacks.reduce((sum, up) => sum + up.quantity, 0);
@@ -262,6 +275,7 @@ exports.PurchasesService = PurchasesService = PurchasesService_1 = __decorate([
     __metadata("design:paramtypes", [purchases_repository_1.PurchasesRepository,
         packs_repository_1.PacksRepository,
         raffles_repository_1.RafflesRepository,
-        prisma_service_1.PrismaService])
+        prisma_service_1.PrismaService,
+        ticket_reservations_service_1.TicketReservationsService])
 ], PurchasesService);
 //# sourceMappingURL=purchases.service.js.map

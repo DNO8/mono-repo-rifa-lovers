@@ -16,22 +16,40 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
     const allowedOrigins = [
-        process.env.FRONTEND_URL || 'http://localhost:5173',
+        frontendUrl,
         'http://localhost:5173',
         'http://localhost:3000',
+        'https://rifalovers.cl',
+        'https://www.rifalovers.cl',
+        'http://rifalovers.cl',
+        'http://www.rifalovers.cl',
     ];
+    const logger = new common_1.Logger('CORS');
+    const isRifaLoversDomain = (origin) => {
+        try {
+            const { hostname } = new URL(origin);
+            return hostname === 'rifalovers.cl' || hostname.endsWith('.rifalovers.cl');
+        }
+        catch {
+            return false;
+        }
+    };
     app.enableCors({
         origin: (origin, callback) => {
             if (!origin ||
                 allowedOrigins.includes(origin) ||
+                isRifaLoversDomain(origin) ||
                 origin.endsWith('.vercel.app') ||
                 origin.endsWith('.onrender.com') ||
                 origin.endsWith('.flow.cl') ||
-                origin.endsWith('.getflow.cl')) {
+                origin.endsWith('.getflow.cl') ||
+                origin.endsWith('.ngrok-free.app')) {
                 callback(null, true);
             }
             else {
+                logger.warn(`Origen bloqueado por CORS: ${origin}`);
                 callback(new Error('Not allowed by CORS'));
             }
         },

@@ -48,11 +48,13 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../database/prisma.service");
 const client_1 = require("@prisma/client");
 const raffle_scheduler_service_1 = require("../raffles/raffle-scheduler.service");
+const ticket_reservations_repository_1 = require("../ticket-reservations/ticket-reservations.repository");
 const cron = __importStar(require("node-cron"));
 let JobsService = JobsService_1 = class JobsService {
-    constructor(prisma, raffleSchedulerService) {
+    constructor(prisma, raffleSchedulerService, ticketReservationsRepository) {
         this.prisma = prisma;
         this.raffleSchedulerService = raffleSchedulerService;
+        this.ticketReservationsRepository = ticketReservationsRepository;
         this.logger = new common_1.Logger(JobsService_1.name);
         this.tasks = [];
     }
@@ -70,11 +72,15 @@ let JobsService = JobsService_1 = class JobsService {
         this.tasks.push(cron.schedule('* * * * *', () => {
             void this.closeExpiredRafflesByEndDate();
         }));
+        this.tasks.push(cron.schedule('* * * * *', () => {
+            void this.expireTicketReservations();
+        }));
         this.logger.log('✅ Jobs automáticos iniciados:');
         this.logger.log('   • Auto SOLD_OUT: cada 5 minutos');
         this.logger.log('   • Auto CLOSED: cada 5 minutos');
         this.logger.log('   • Expire Purchases: cada 15 minutos');
         this.logger.log('   • Close by EndDate: cada minuto');
+        this.logger.log('   • Expire Ticket Reservations: cada minuto');
     }
     onModuleDestroy() {
         this.logger.log('Deteniendo jobs automáticos...');
@@ -196,6 +202,17 @@ let JobsService = JobsService_1 = class JobsService {
             this.logger.error(`Error ejecutando auto-cierre por endDate: ${message}`);
         }
     }
+    async expireTicketReservations() {
+        try {
+            const deleted = await this.ticketReservationsRepository.deleteExpired();
+            if (deleted > 0) {
+                this.logger.log(`[JOB] Expiradas ${deleted} reservas de tickets vencidas`);
+            }
+        }
+        catch (error) {
+            this.logger.error('[JOB] Error expirando reservas de tickets:', error);
+        }
+    }
     async runJobManually(jobName) {
         this.logger.log(`[JOB MANUAL] Ejecutando ${jobName} manualmente...`);
         try {
@@ -240,6 +257,7 @@ exports.JobsService = JobsService;
 exports.JobsService = JobsService = JobsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        raffle_scheduler_service_1.RaffleSchedulerService])
+        raffle_scheduler_service_1.RaffleSchedulerService,
+        ticket_reservations_repository_1.TicketReservationsRepository])
 ], JobsService);
 //# sourceMappingURL=jobs.service.js.map

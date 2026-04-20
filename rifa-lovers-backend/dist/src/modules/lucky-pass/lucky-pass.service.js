@@ -14,11 +14,13 @@ exports.LuckyPassService = void 0;
 const common_1 = require("@nestjs/common");
 const lucky_pass_repository_1 = require("./lucky-pass.repository");
 const raffles_repository_1 = require("../raffles/raffles.repository");
+const prisma_service_1 = require("../../database/prisma.service");
 const lucky_pass_mapper_1 = require("./mappers/lucky-pass.mapper");
 let LuckyPassService = LuckyPassService_1 = class LuckyPassService {
-    constructor(luckyPassRepository, rafflesRepository) {
+    constructor(luckyPassRepository, rafflesRepository, prisma) {
         this.luckyPassRepository = luckyPassRepository;
         this.rafflesRepository = rafflesRepository;
+        this.prisma = prisma;
         this.logger = new common_1.Logger(LuckyPassService_1.name);
     }
     async findByUser(userId) {
@@ -69,14 +71,35 @@ let LuckyPassService = LuckyPassService_1 = class LuckyPassService {
         });
         return passes.map((pass) => (0, lucky_pass_mapper_1.mapLuckyPassToDto)(pass));
     }
-    async checkAvailability(raffleId, ticketNumber) {
+    async checkAvailability(raffleId, ticketNumber, excludePurchaseId) {
         const raffle = await this.rafflesRepository.findUnique({ id: raffleId });
         if (!raffle)
             return { available: false };
         if (ticketNumber < 1 || ticketNumber > raffle.maxTicketNumber)
             return { available: false };
-        const existing = await this.luckyPassRepository.findByTicketNumber(raffleId, ticketNumber);
-        return { available: existing === null };
+        const existingPass = await this.luckyPassRepository.findByTicketNumber(raffleId, ticketNumber);
+        if (existingPass)
+            return { available: false };
+        let reservationRows;
+        if (excludePurchaseId) {
+            reservationRows = await this.prisma.$queryRaw `
+        SELECT COUNT(*)::text as count FROM public.ticket_reservations
+        WHERE raffle_id = ${raffleId}::uuid
+          AND ticket_number = ${ticketNumber}
+          AND expires_at > NOW()
+          AND purchase_id != ${excludePurchaseId}::uuid
+      `;
+        }
+        else {
+            reservationRows = await this.prisma.$queryRaw `
+        SELECT COUNT(*)::text as count FROM public.ticket_reservations
+        WHERE raffle_id = ${raffleId}::uuid
+          AND ticket_number = ${ticketNumber}
+          AND expires_at > NOW()
+      `;
+        }
+        const isReserved = parseInt(reservationRows[0]?.count ?? '0', 10) > 0;
+        return { available: !isReserved };
     }
     async markAsWinner(id) {
         this.logger.debug(`Marcando lucky pass ${id} como ganador`);
@@ -93,6 +116,7 @@ exports.LuckyPassService = LuckyPassService;
 exports.LuckyPassService = LuckyPassService = LuckyPassService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [lucky_pass_repository_1.LuckyPassRepository,
-        raffles_repository_1.RafflesRepository])
+        raffles_repository_1.RafflesRepository,
+        prisma_service_1.PrismaService])
 ], LuckyPassService);
 //# sourceMappingURL=lucky-pass.service.js.map

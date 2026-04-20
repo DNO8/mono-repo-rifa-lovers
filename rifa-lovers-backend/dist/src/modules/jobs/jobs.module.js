@@ -10,12 +10,13 @@ exports.JobsModule = void 0;
 const common_1 = require("@nestjs/common");
 const jobs_service_1 = require("./jobs.service");
 const raffles_module_1 = require("../raffles/raffles.module");
+const ticket_reservations_module_1 = require("../ticket-reservations/ticket-reservations.module");
 let JobsModule = class JobsModule {
 };
 exports.JobsModule = JobsModule;
 exports.JobsModule = JobsModule = __decorate([
     (0, common_1.Module)({
-        imports: [raffles_module_1.RafflesModule],
+        imports: [raffles_module_1.RafflesModule, ticket_reservations_module_1.TicketReservationsModule],
         providers: [jobs_service_1.JobsService],
         exports: [jobs_service_1.JobsService],
     })

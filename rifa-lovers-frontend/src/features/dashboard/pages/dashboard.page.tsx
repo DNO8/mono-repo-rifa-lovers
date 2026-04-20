@@ -18,7 +18,7 @@ import { useUserRaffles } from '@/hooks/use-user-raffles'
 import { Spinner } from '@/components/ui/spinner'
 import { OperatorPanel } from '../components/operator-panel'
 import { getAllRaffles } from '@/api/admin.api'
-import type { Raffle, RaffleProgress, Purchase } from '@/types/domain.types'
+import type { Raffle, RaffleProgress, Purchase, LuckyPass } from '@/types/domain.types'
 import { useAsyncData } from '@/hooks/use-async-data'
 
 function buildImpact(raffle: Raffle | null, progress: RaffleProgress | null): CollectiveImpact {
@@ -63,16 +63,28 @@ const mapStatus = (status: string): 'confirmado' | 'pendiente' | 'fallido' => {
 }
 
 // Helper to transform purchases to history items — group by raffleId
-const transformPurchasesToHistory = (purchases: Purchase[]): HistoryItem[] => {
+// Uses REAL lucky pass count from passes array (not purchase.luckyPassCount which may be stale)
+const transformPurchasesToHistory = (purchases: Purchase[], passes: LuckyPass[]): HistoryItem[] => {
   const grouped = new Map<string, HistoryItem>()
+  
+  // Pre-calcular conteo REAL de LP por rifa
+  const realCountByRaffle = new Map<string, number>()
+  for (const pass of passes) {
+    if (pass.status !== 'active') continue
+    const current = realCountByRaffle.get(pass.raffleId) || 0
+    realCountByRaffle.set(pass.raffleId, current + 1)
+  }
+  
   for (const p of purchases) {
     if (p.status !== 'paid') continue
-    const lpCount = p.luckyPassCount ?? 1
     const existing = grouped.get(p.raffleId)
+    // Usar conteo REAL si está disponible, sino fallback a luckyPassCount
+    const realCount = realCountByRaffle.get(p.raffleId) || 0
+    const lpCount = realCount > 0 ? realCount : (p.luckyPassCount || 0)
+    
     if (existing) {
-      existing.tickets += lpCount
-      // Escalate status: confirmado > pendiente
-      if (p.status === 'paid') existing.status = 'confirmado'
+      // Ya procesamos esta rifa, no sumar de nuevo
+      continue
     } else {
       grouped.set(p.raffleId, {
         id: p.raffleId,
@@ -140,7 +152,7 @@ export default function DashboardPage() {
   const totalTickets = luckyPassSummary?.activePasses || 0
   const points = totalTickets // Puntos = misma cantidad de LuckyPasses activos
 
-  const historyItems = transformPurchasesToHistory(purchases)
+  const historyItems = transformPurchasesToHistory(purchases, passes)
 
   return (
     <div className="px-4 md:px-8 py-8 md:py-12">

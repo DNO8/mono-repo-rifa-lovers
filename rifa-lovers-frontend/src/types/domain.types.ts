@@ -17,10 +17,10 @@ export interface LuckyPass {
 }
 
 export interface LuckyPassSummary {
-  total: number
-  active: number
-  used: number
-  winners: number
+  totalPasses: number
+  activePasses: number
+  usedPasses: number
+  winnerPasses: number
 }
 
 export const PURCHASE_STATUS = {

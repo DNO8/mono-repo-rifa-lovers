@@ -137,7 +137,7 @@ export default function DashboardPage() {
   if (!user) return null
 
   const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles || (isOperatorOrAdmin && isLoadingAllRaffles)
-  const totalTickets = luckyPassSummary?.active || 0
+  const totalTickets = luckyPassSummary?.activePasses || 0
   const points = totalTickets // Puntos = misma cantidad de LuckyPasses activos
 
   const historyItems = transformPurchasesToHistory(purchases)

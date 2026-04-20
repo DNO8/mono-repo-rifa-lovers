@@ -106,7 +106,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
 
   const { purchases, isLoading: isLoadingPurchases } = usePurchases()
-  const { summary: luckyPassSummary, isLoading: isLoadingPasses } = useLuckyPasses()
+  const { passes, summary: luckyPassSummary, isLoading: isLoadingPasses } = useLuckyPasses()
   const { raffle, progress, isLoading: isLoadingRaffle } = useActiveRaffle()
   const { raffles: userRaffles, isLoading: isLoadingUserRaffles } = useUserRaffles()
 
@@ -138,7 +138,7 @@ export default function DashboardPage() {
 
   const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles || (isOperatorOrAdmin && isLoadingAllRaffles)
   const totalTickets = luckyPassSummary?.active || 0
-  const points = (luckyPassSummary?.active || 0) * 10 // 10 points per active ticket
+  const points = totalTickets // Puntos = misma cantidad de LuckyPasses activos
 
   const historyItems = transformPurchasesToHistory(purchases)
 
@@ -190,7 +190,9 @@ export default function DashboardPage() {
                     <h2 className="text-lg font-semibold text-text-primary">Mis Rifas</h2>
                     <div className="space-y-4">
                       {userRaffles.map((userRaffle) => {
-                        const raffleTickets = luckyPassSummary?.active || 0 // Simplified, should be per raffle
+                        const raffleTickets = passes.filter(
+                          (p) => p.raffleId === userRaffle.id && p.status === 'active'
+                        ).length
                         const cardData = transformRaffleToCardData(userRaffle, raffleTickets)
                         return (
                           cardData && <RaffleHeroCard key={userRaffle.id} raffle={cardData} />

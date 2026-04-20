@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["public"]
+  schemas  = ["public", "auth"]
 }
 
 enum UserRole {
@@ -98,12 +98,13 @@ model User {
   createdAt      DateTime   @default(now()) @map("created_at")
   updatedAt      DateTime   @default(now()) @updatedAt @map("updated_at")
 
-  organization Organization? @relation(fields: [organizationId], references: [id])
-  purchases    Purchase[]
-  userPacks    UserPack[]
-  luckyPasses  LuckyPass[]
-  prizeWinners PrizeWinner[]
-  testimonials Testimonial[]
+  organization       Organization?      @relation(fields: [organizationId], references: [id])
+  purchases          Purchase[]
+  userPacks          UserPack[]
+  luckyPasses        LuckyPass[]
+  prizeWinners       PrizeWinner[]
+  testimonials       Testimonial[]
+  ticketReservations TicketReservation[]
 
   @@map("users")
   @@schema("public")
@@ -122,14 +123,15 @@ model Raffle {
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at")
 
-  organization Organization? @relation(fields: [organizationId], references: [id])
-  purchases    Purchase[]
-  userPacks    UserPack[]
-  luckyPasses  LuckyPass[]
-  milestones   Milestone[]
-  prizes       Prize[]
-  progress     RaffleProgress?
-  testimonials Testimonial[]
+  organization      Organization?      @relation(fields: [organizationId], references: [id])
+  purchases         Purchase[]
+  userPacks         UserPack[]
+  luckyPasses       LuckyPass[]
+  milestones        Milestone[]
+  prizes            Prize[]
+  progress          RaffleProgress?
+  testimonials      Testimonial[]
+  ticketReservations TicketReservation[]
 
   @@map("raffles")
   @@schema("public")
@@ -159,10 +161,11 @@ model Purchase {
   createdAt   DateTime       @default(now()) @map("created_at")
   paidAt      DateTime?      @map("paid_at")
 
-  raffle         Raffle?          @relation(fields: [raffleId], references: [id])
-  user           User?            @relation(fields: [userId], references: [id])
-  userPacks      UserPack[]
+  raffle              Raffle?             @relation(fields: [raffleId], references: [id])
+  user                User?               @relation(fields: [userId], references: [id])
+  userPacks           UserPack[]
   paymentTransactions PaymentTransaction[]
+  ticketReservations  TicketReservation[]
 
   @@map("purchases")
   @@schema("public")
@@ -205,9 +208,30 @@ model LuckyPass {
   prizeWinners PrizeWinner[]
   testimonial  Testimonial?
 
+  @@unique([raffleId, ticketNumber], map: "unique_raffle_ticket_number")
   @@index([raffleId], map: "idx_lucky_raffle")
   @@index([userId], map: "idx_lucky_user")
   @@map("lucky_passes")
+  @@schema("public")
+}
+
+model TicketReservation {
+  id           String   @id @default(uuid()) @db.Uuid
+  raffleId     String   @map("raffle_id") @db.Uuid
+  ticketNumber Int      @map("ticket_number")
+  userId       String   @map("user_id") @db.Uuid
+  purchaseId   String?  @map("purchase_id") @db.Uuid
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  raffle   Raffle    @relation(fields: [raffleId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
+  purchase Purchase? @relation(fields: [purchaseId], references: [id])
+
+  @@unique([raffleId, ticketNumber], map: "unique_reservation_raffle_ticket")
+  @@index([expiresAt], map: "idx_reservation_expires_at")
+  @@index([purchaseId], map: "idx_reservation_purchase_id")
+  @@map("ticket_reservations")
   @@schema("public")
 }
 

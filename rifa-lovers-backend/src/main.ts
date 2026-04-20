@@ -23,6 +23,8 @@ async function bootstrap() {
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'http://localhost:5173',
     'http://localhost:3000',
+    'https://rifalovers.cl',
+    'https://www.rifalovers.cl',
   ]
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {

@@ -16,15 +16,13 @@ const purchases_repository_1 = require("./purchases.repository");
 const packs_repository_1 = require("../packs/packs.repository");
 const raffles_repository_1 = require("../raffles/raffles.repository");
 const prisma_service_1 = require("../../database/prisma.service");
-const ticket_reservations_service_1 = require("../ticket-reservations/ticket-reservations.service");
 const purchase_mapper_1 = require("./mappers/purchase.mapper");
 let PurchasesService = PurchasesService_1 = class PurchasesService {
-    constructor(purchasesRepository, packsRepository, rafflesRepository, prisma, ticketReservationsService) {
+    constructor(purchasesRepository, packsRepository, rafflesRepository, prisma) {
         this.purchasesRepository = purchasesRepository;
         this.packsRepository = packsRepository;
         this.rafflesRepository = rafflesRepository;
         this.prisma = prisma;
-        this.ticketReservationsService = ticketReservationsService;
         this.logger = new common_1.Logger(PurchasesService_1.name);
     }
     async findByUser(userId) {
@@ -74,17 +72,6 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 pack,
             });
             this.logger.log(`Compra creada exitosamente: ${result.purchase.id}`);
-            if (createDto.selectedNumbers && createDto.selectedNumbers.length > 0) {
-                try {
-                    await this.ticketReservationsService.reserve(userId, createDto.raffleId, createDto.selectedNumbers, result.purchase.id);
-                    this.logger.log(`Tickets reservados para purchase=${result.purchase.id}: ${createDto.selectedNumbers.join(', ')}`);
-                }
-                catch (reservationError) {
-                    await this.purchasesRepository.updateStatus(result.purchase.id, 'failed');
-                    this.logger.warn(`Reserva fallida para purchase=${result.purchase.id}: ${reservationError instanceof Error ? reservationError.message : String(reservationError)}`);
-                    throw reservationError;
-                }
-            }
             return {
                 id: result.purchase.id,
                 raffleId: raffle.id,
@@ -275,7 +262,6 @@ exports.PurchasesService = PurchasesService = PurchasesService_1 = __decorate([
     __metadata("design:paramtypes", [purchases_repository_1.PurchasesRepository,
         packs_repository_1.PacksRepository,
         raffles_repository_1.RafflesRepository,
-        prisma_service_1.PrismaService,
-        ticket_reservations_service_1.TicketReservationsService])
+        prisma_service_1.PrismaService])
 ], PurchasesService);
 //# sourceMappingURL=purchases.service.js.map

@@ -2,16 +2,14 @@ import { PurchasesRepository } from './purchases.repository';
 import { PacksRepository } from '../packs/packs.repository';
 import { RafflesRepository } from '../raffles/raffles.repository';
 import { PrismaService } from '../../database/prisma.service';
-import { TicketReservationsService } from '../ticket-reservations/ticket-reservations.service';
 import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto } from './dto';
 export declare class PurchasesService {
     private readonly purchasesRepository;
     private readonly packsRepository;
     private readonly rafflesRepository;
     private readonly prisma;
-    private readonly ticketReservationsService;
     private readonly logger;
-    constructor(purchasesRepository: PurchasesRepository, packsRepository: PacksRepository, rafflesRepository: RafflesRepository, prisma: PrismaService, ticketReservationsService: TicketReservationsService);
+    constructor(purchasesRepository: PurchasesRepository, packsRepository: PacksRepository, rafflesRepository: RafflesRepository, prisma: PrismaService);
     findByUser(userId: string): Promise<PurchaseResponseDto[]>;
     create(userId: string, createDto: CreatePurchaseDto): Promise<CreatePurchaseResponseDto>;
     findById(id: string): Promise<PurchaseResponseDto>;

@@ -8,7 +8,6 @@ import { PurchasesRepository } from './purchases.repository'
 import { PacksRepository } from '../packs/packs.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
 import { PrismaService } from '../../database/prisma.service'
-import { TicketReservationsService } from '../ticket-reservations/ticket-reservations.service'
 import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto } from './dto'
 import { Purchase, Raffle, UserPack, Pack } from '@prisma/client'
 import { mapPurchaseToDto } from './mappers/purchase.mapper'
@@ -26,7 +25,6 @@ export class PurchasesService {
     private readonly packsRepository: PacksRepository,
     private readonly rafflesRepository: RafflesRepository,
     private readonly prisma: PrismaService,
-    private readonly ticketReservationsService: TicketReservationsService,
   ) {}
 
   async findByUser(userId: string): Promise<PurchaseResponseDto[]> {
@@ -91,24 +89,6 @@ export class PurchasesService {
       })
 
       this.logger.log(`Compra creada exitosamente: ${result.purchase.id}`)
-
-      // 6. Si hay números seleccionados, reservarlos atómicamente
-      if (createDto.selectedNumbers && createDto.selectedNumbers.length > 0) {
-        try {
-          await this.ticketReservationsService.reserve(
-            userId,
-            createDto.raffleId,
-            createDto.selectedNumbers,
-            result.purchase.id,
-          )
-          this.logger.log(`Tickets reservados para purchase=${result.purchase.id}: ${createDto.selectedNumbers.join(', ')}`)
-        } catch (reservationError: unknown) {
-          // Si la reserva falla (números ya tomados), marcar purchase como failed y relanzar
-          await this.purchasesRepository.updateStatus(result.purchase.id, 'failed')
-          this.logger.warn(`Reserva fallida para purchase=${result.purchase.id}: ${reservationError instanceof Error ? reservationError.message : String(reservationError)}`)
-          throw reservationError
-        }
-      }
 
       return {
         id: result.purchase.id,

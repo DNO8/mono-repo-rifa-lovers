@@ -61,7 +61,7 @@ export class ApiError extends Error {
     if (context === 'payment') {
       if (this.status === 400 || this.status === 402) return 'No se pudo procesar el pago. Verifica los datos de tu tarjeta e intenta de nuevo.'
       if (this.status === 404) return 'No se encontró la compra asociada. Por favor contacta soporte.'
-      if (this.status === 409) return 'Esta compra ya fue procesada anteriormente.'
+      if (this.status === 409) return this.serverMessage() ?? 'Algunos números elegidos ya fueron reservados. Por favor elige otros números.'
     }
 
     if (this.status === 401) return 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.'

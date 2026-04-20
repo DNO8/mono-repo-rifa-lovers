@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { createPurchase } from '@/api/purchases.api'
-import { reserveTickets } from '@/api/ticket-reservations.api'
 import { initiatePayment } from '@/api/payments.api'
 import { toastError } from '@/lib/errors'
 import { useActiveRaffle } from '@/hooks/use-raffles'
@@ -63,16 +62,9 @@ export default function CheckoutPage() {
         selectedNumbers: filledNumbers.length > 0 ? filledNumbers : undefined,
       })
 
-      // 2. Reservar tickets seleccionados (si los hay)
+      // 2. La reserva ya se hizo atómicamente en el backend dentro de createPurchase
       if (filledNumbers.length > 0) {
-        const reservations = await reserveTickets({
-          raffleId: raffle.id,
-          purchaseId: purchase.id,
-          ticketNumbers: filledNumbers,
-        })
-        if (reservations.length > 0) {
-          setReservationExpiresAt(reservations[0].expiresAt)
-        }
+        setReservationExpiresAt(new Date(Date.now() + 15 * 60 * 1000).toISOString())
       }
 
       // 3. Iniciar el pago con Flow

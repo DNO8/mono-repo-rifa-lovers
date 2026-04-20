@@ -3,12 +3,12 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
-  ConflictException,
 } from '@nestjs/common'
 import { PurchasesRepository } from './purchases.repository'
 import { PacksRepository } from '../packs/packs.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
 import { PrismaService } from '../../database/prisma.service'
+import { TicketReservationsService } from '../ticket-reservations/ticket-reservations.service'
 import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto } from './dto'
 import { Purchase, Raffle, UserPack, Pack } from '@prisma/client'
 import { mapPurchaseToDto } from './mappers/purchase.mapper'
@@ -26,6 +26,7 @@ export class PurchasesService {
     private readonly packsRepository: PacksRepository,
     private readonly rafflesRepository: RafflesRepository,
     private readonly prisma: PrismaService,
+    private readonly ticketReservationsService: TicketReservationsService,
   ) {}
 
   async findByUser(userId: string): Promise<PurchaseResponseDto[]> {
@@ -90,6 +91,24 @@ export class PurchasesService {
       })
 
       this.logger.log(`Compra creada exitosamente: ${result.purchase.id}`)
+
+      // 6. Si hay números seleccionados, reservarlos atómicamente
+      if (createDto.selectedNumbers && createDto.selectedNumbers.length > 0) {
+        try {
+          await this.ticketReservationsService.reserve(
+            userId,
+            createDto.raffleId,
+            createDto.selectedNumbers,
+            result.purchase.id,
+          )
+          this.logger.log(`Tickets reservados para purchase=${result.purchase.id}: ${createDto.selectedNumbers.join(', ')}`)
+        } catch (reservationError: unknown) {
+          // Si la reserva falla (números ya tomados), marcar purchase como failed y relanzar
+          await this.purchasesRepository.updateStatus(result.purchase.id, 'failed')
+          this.logger.warn(`Reserva fallida para purchase=${result.purchase.id}: ${reservationError instanceof Error ? reservationError.message : String(reservationError)}`)
+          throw reservationError
+        }
+      }
 
       return {
         id: result.purchase.id,
@@ -180,8 +199,9 @@ export class PurchasesService {
       return mapPurchaseToDto(existing as PurchaseWithRaffle)
     }
 
-    // Tx 1: Marcar compra y transacción como pagadas (siempre debe commitear)
+    // Transacción única: marcar como paid + generar LuckyPasses (atomicidad total)
     await this.prisma.$transaction(async (tx) => {
+      // 1. Marcar compra y transacción como pagadas
       await tx.purchase.update({
         where: { id: purchaseId },
         data: { status: 'paid', paidAt: new Date() },
@@ -193,13 +213,8 @@ export class PurchasesService {
           status: 'approved',
         },
       })
-    })
-    this.logger.log(`Compra ${purchaseId} marcada como PAID`)
 
-    // Tx 2: Generar LuckyPasses (transacción separada)
-    await this.prisma.$transaction(async (tx) => {
-
-      // 3. Generar LuckyPasses para cada UserPack
+      // 2. Generar LuckyPasses para cada UserPack
       const userPacks = await tx.userPack.findMany({
         where: { purchaseId },
         include: { pack: true },
@@ -210,7 +225,30 @@ export class PurchasesService {
         throw new BadRequestException('La compra no tiene rifa asociada')
       }
 
+      // 3. Obtener tickets reservados para esta compra (dentro de la transacción)
+      const reservedTickets = await tx.$queryRaw<{ ticket_number: number }[]>`
+        SELECT ticket_number FROM public.ticket_reservations
+        WHERE purchase_id = ${purchaseId}::uuid
+      `
+      const reservedNumbers = reservedTickets.map((r) => r.ticket_number)
+      this.logger.debug(`Tickets reservados para purchase=${purchaseId}: ${reservedNumbers.join(', ')}`)
+
+      // 4. Lock raffle row para asignación secuencial de tickets sin reserva
+      await tx.$queryRaw`
+        SELECT id FROM public.raffles WHERE id = ${raffleId}::uuid FOR UPDATE
+      `
+
+      // 5. Obtener siguiente ticket disponible para asignación secuencial
+      const maxResult = await tx.$queryRaw<[{ max_ticket: string | null }]>`
+        SELECT MAX(ticket_number)::text AS max_ticket
+        FROM public.lucky_passes
+        WHERE raffle_id = ${raffleId}::uuid
+      `
+      const rawMax = maxResult[0]?.max_ticket
+      let nextTicket = (rawMax ? parseInt(rawMax, 10) : 0) + 1
+
       let totalLuckyPasses = 0
+      let reservedNumbersIdx = 0
 
       for (const userPack of userPacks) {
         const pack = userPack.pack
@@ -219,41 +257,6 @@ export class PurchasesService {
         const count = userPack.quantity * pack.luckyPassQuantity
         totalLuckyPasses += count
 
-        const preferred: number[] = (userPack.selectedNumbers as number[] | null) ?? []
-
-        // Lock the raffle row to serialize concurrent ticket assignments
-        await tx.$queryRaw`
-          SELECT id FROM public.raffles WHERE id = ${raffleId}::uuid FOR UPDATE
-        `
-        // Now safely compute the current max ticket number
-        const maxResult = await tx.$queryRaw<[{ max_ticket: string | null }]>`
-          SELECT MAX(ticket_number)::text AS max_ticket
-          FROM public.lucky_passes
-          WHERE raffle_id = ${raffleId}::uuid
-        `
-        const rawMax = maxResult[0]?.max_ticket
-        this.logger.debug(`MAX ticket raw result: ${JSON.stringify(maxResult)}, rawMax=${rawMax}`)
-        let nextTicket = (rawMax ? parseInt(rawMax, 10) : 0) + 1
-        this.logger.debug(`nextTicket calculado: ${nextTicket}, preferred: ${JSON.stringify(preferred)}`)
-
-        // Verificar que los números preferidos siguen disponibles
-        if (preferred.length > 0) {
-          const taken = await tx.luckyPass.findMany({
-            where: {
-              raffleId,
-              ticketNumber: { in: preferred },
-            },
-            select: { ticketNumber: true },
-          })
-          if (taken.length > 0) {
-            const takenNums = taken.map((lp) => lp.ticketNumber).join(', ')
-            throw new ConflictException(
-              `Los números ${takenNums} ya fueron tomados por otro usuario. Por favor elige otros.`,
-            )
-          }
-        }
-
-        // Crear LuckyPasses: usar preferred si existen, si no secuencial
         const luckyPassData: {
           raffleId: string
           userId: string | null
@@ -262,8 +265,16 @@ export class PurchasesService {
           status: 'active'
           isWinner: boolean
         }[] = []
+
         for (let i = 0; i < count; i++) {
-          const ticketNumber = preferred[i] !== undefined ? preferred[i] : nextTicket++
+          let ticketNumber: number
+          if (reservedNumbersIdx < reservedNumbers.length) {
+            // Usar número reservado
+            ticketNumber = reservedNumbers[reservedNumbersIdx++]
+          } else {
+            // Asignación secuencial para tickets sin número preferido
+            ticketNumber = nextTicket++
+          }
           if (!ticketNumber || isNaN(ticketNumber) || ticketNumber < 1) {
             throw new BadRequestException(`Número de ticket inválido generado: ${ticketNumber}`)
           }
@@ -278,13 +289,18 @@ export class PurchasesService {
         }
 
         await tx.luckyPass.createMany({ data: luckyPassData })
-
-        this.logger.debug(
-          `Generados ${count} LuckyPasses para userPack ${userPack.id} (tickets ${nextTicket - count}-${nextTicket - 1})`,
-        )
+        this.logger.debug(`Generados ${count} LuckyPasses para userPack ${userPack.id}`)
       }
 
-      // 4. Actualizar raffle_progress
+      // 6. Liberar reservas usadas (ya convertidas a LuckyPasses)
+      if (reservedNumbers.length > 0) {
+        await tx.$executeRaw`
+          DELETE FROM public.ticket_reservations WHERE purchase_id = ${purchaseId}::uuid
+        `
+        this.logger.debug(`Reservas liberadas para purchase=${purchaseId}`)
+      }
+
+      // 7. Actualizar raffle_progress
       const raffle = await tx.raffle.findUnique({ where: { id: raffleId } })
       const totalQuantity = userPacks.reduce((sum, up) => sum + up.quantity, 0)
       const totalAmount = existing.totalAmount?.toNumber() ?? 0
@@ -319,7 +335,7 @@ export class PurchasesService {
         }
       }
 
-      // 5. Desbloquear milestones automáticamente según packsSold actualizado
+      // 8. Desbloquear milestones automáticamente según packsSold actualizado
       if (raffle) {
         const updatedProgress = await tx.raffleProgress.findUnique({ where: { raffleId } })
         if (updatedProgress) {

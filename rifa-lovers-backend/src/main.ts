@@ -19,25 +19,40 @@ async function bootstrap() {
   });
 
   // Enable CORS
+  const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '')
   const allowedOrigins = [
-    process.env.FRONTEND_URL || 'http://localhost:5173',
+    frontendUrl,
     'http://localhost:5173',
     'http://localhost:3000',
     'https://rifalovers.cl',
     'https://www.rifalovers.cl',
+    'http://rifalovers.cl',
+    'http://www.rifalovers.cl',
   ]
+  const logger = new Logger('CORS')
+  const isRifaLoversDomain = (origin: string) => {
+    try {
+      const { hostname } = new URL(origin)
+      return hostname === 'rifalovers.cl' || hostname.endsWith('.rifalovers.cl')
+    } catch {
+      return false
+    }
+  }
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
+        isRifaLoversDomain(origin) ||
         origin.endsWith('.vercel.app') ||
         origin.endsWith('.onrender.com') ||
         origin.endsWith('.flow.cl') ||
-        origin.endsWith('.getflow.cl')
+        origin.endsWith('.getflow.cl') ||
+        origin.endsWith('.ngrok-free.app')
       ) {
         callback(null, true)
       } else {
+        logger.warn(`Origen bloqueado por CORS: ${origin}`)
         callback(new Error('Not allowed by CORS'))
       }
     },

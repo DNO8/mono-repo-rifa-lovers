@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { createPurchase } from '@/api/purchases.api'
+import { reserveTickets } from '@/api/ticket-reservations.api'
 import { initiatePayment } from '@/api/payments.api'
 import { toastError } from '@/lib/errors'
 import { useActiveRaffle } from '@/hooks/use-raffles'
@@ -14,6 +15,7 @@ import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
 import { Spinner } from '@/components/ui/spinner'
 import { OrderSummary } from '../components/order-summary'
 import { NumberSelectorGrid } from '../components/number-selector-grid'
+import { ReservationTimer } from '../components/reservation-timer'
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
@@ -26,6 +28,7 @@ export default function CheckoutPage() {
   const [selectedNumbers, setSelectedNumbers] = useState<(number | '')[]>([])
   const [numbersValid, setNumbersValid] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [reservationExpiresAt, setReservationExpiresAt] = useState<string | null>(null)
 
   const isLoading = raffleLoading || packsLoading
 
@@ -60,13 +63,25 @@ export default function CheckoutPage() {
         selectedNumbers: filledNumbers.length > 0 ? filledNumbers : undefined,
       })
 
-      // 2. Iniciar el pago con Flow
+      // 2. Reservar tickets seleccionados (si los hay)
+      if (filledNumbers.length > 0) {
+        const reservations = await reserveTickets({
+          raffleId: raffle.id,
+          purchaseId: purchase.id,
+          ticketNumbers: filledNumbers,
+        })
+        if (reservations.length > 0) {
+          setReservationExpiresAt(reservations[0].expiresAt)
+        }
+      }
+
+      // 3. Iniciar el pago con Flow
       toast.info('Iniciando pago seguro con Flow...')
       const payment = await initiatePayment({
         purchaseId: purchase.id,
       })
 
-      // 3. Guardar purchaseId para la página de retorno y redirigir a Flow
+      // 4. Guardar purchaseId para la página de retorno y redirigir a Flow
       sessionStorage.setItem('pending_purchase_id', purchase.id)
       toast.success('Redirigiendo a plataforma de pago...')
       window.location.href = payment.paymentUrl
@@ -74,6 +89,11 @@ export default function CheckoutPage() {
       toastError(err, 'payment', 'No se pudo procesar la compra. Por favor intenta de nuevo.')
       setIsProcessing(false)
     }
+  }
+
+  const handleReservationExpired = () => {
+    setReservationExpiresAt(null)
+    toast.warn('Tu reserva de números expiró. Por favor elige nuevos números.')
   }
 
   if (isLoading) {
@@ -135,6 +155,13 @@ export default function CheckoutPage() {
               Serás redirigido a la pasarela de pago segura para completar tu compra.
             </p>
           </Card>
+
+          {reservationExpiresAt && (
+            <ReservationTimer
+              expiresAt={reservationExpiresAt}
+              onExpired={handleReservationExpired}
+            />
+          )}
 
           <Button
             variant="primary"

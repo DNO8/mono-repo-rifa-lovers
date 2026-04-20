@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { LuckyPassRepository } from './lucky-pass.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
+import { PrismaService } from '../../database/prisma.service'
 import { LuckyPassResponseDto, LuckyPassSummaryDto } from './dto'
 import { LuckyPass, Raffle } from '@prisma/client'
 import { mapLuckyPassToDto } from './mappers/lucky-pass.mapper'
@@ -15,6 +16,7 @@ export class LuckyPassService {
   constructor(
     private readonly luckyPassRepository: LuckyPassRepository,
     private readonly rafflesRepository: RafflesRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   async findByUser(userId: string): Promise<LuckyPassResponseDto[]> {
@@ -91,12 +93,35 @@ export class LuckyPassService {
   async checkAvailability(
     raffleId: string,
     ticketNumber: number,
+    excludePurchaseId?: string,
   ): Promise<{ available: boolean }> {
     const raffle = await this.rafflesRepository.findUnique({ id: raffleId })
     if (!raffle) return { available: false }
     if (ticketNumber < 1 || ticketNumber > raffle.maxTicketNumber) return { available: false }
-    const existing = await this.luckyPassRepository.findByTicketNumber(raffleId, ticketNumber)
-    return { available: existing === null }
+
+    const existingPass = await this.luckyPassRepository.findByTicketNumber(raffleId, ticketNumber)
+    if (existingPass) return { available: false }
+
+    let reservationRows: { count: string }[]
+    if (excludePurchaseId) {
+      reservationRows = await this.prisma.$queryRaw<{ count: string }[]>`
+        SELECT COUNT(*)::text as count FROM public.ticket_reservations
+        WHERE raffle_id = ${raffleId}::uuid
+          AND ticket_number = ${ticketNumber}
+          AND expires_at > NOW()
+          AND purchase_id != ${excludePurchaseId}::uuid
+      `
+    } else {
+      reservationRows = await this.prisma.$queryRaw<{ count: string }[]>`
+        SELECT COUNT(*)::text as count FROM public.ticket_reservations
+        WHERE raffle_id = ${raffleId}::uuid
+          AND ticket_number = ${ticketNumber}
+          AND expires_at > NOW()
+      `
+    }
+
+    const isReserved = parseInt(reservationRows[0]?.count ?? '0', 10) > 0
+    return { available: !isReserved }
   }
 
   async markAsWinner(id: string): Promise<LuckyPassResponseDto> {

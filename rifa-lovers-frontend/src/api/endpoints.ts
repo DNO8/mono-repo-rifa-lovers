@@ -62,5 +62,12 @@ export const ENDPOINTS = {
 
   contact: '/contact',
 
+  ticketReservations: {
+    reserve: '/ticket-reservations',
+    mine: '/ticket-reservations/mine',
+    byPurchase: (purchaseId: string) => `/ticket-reservations/purchase/${purchaseId}`,
+    release: (purchaseId: string) => `/ticket-reservations/${purchaseId}`,
+  },
+
 } as const
 

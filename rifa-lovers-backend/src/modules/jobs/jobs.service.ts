@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 import { PrismaService } from '../../database/prisma.service'
 import { RaffleStatus, PurchaseStatus } from '@prisma/client'
 import { RaffleSchedulerService } from '../raffles/raffle-scheduler.service'
+import { TicketReservationsRepository } from '../ticket-reservations/ticket-reservations.repository'
 import * as cron from 'node-cron'
 
 @Injectable()
@@ -12,6 +13,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly raffleSchedulerService: RaffleSchedulerService,
+    private readonly ticketReservationsRepository: TicketReservationsRepository,
   ) {}
 
   onModuleInit() {
@@ -44,12 +46,20 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
         void this.closeExpiredRafflesByEndDate()
       })
     )
+
+    // Expire Ticket Reservations - cada minuto
+    this.tasks.push(
+      cron.schedule('* * * * *', () => {
+        void this.expireTicketReservations()
+      })
+    )
     
     this.logger.log('✅ Jobs automáticos iniciados:')
     this.logger.log('   • Auto SOLD_OUT: cada 5 minutos')
     this.logger.log('   • Auto CLOSED: cada 5 minutos')
     this.logger.log('   • Expire Purchases: cada 15 minutos')
     this.logger.log('   • Close by EndDate: cada minuto')
+    this.logger.log('   • Expire Ticket Reservations: cada minuto')
   }
 
   onModuleDestroy() {
@@ -213,6 +223,20 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       this.logger.error(`Error ejecutando auto-cierre por endDate: ${message}`)
+    }
+  }
+
+  /**
+   * Expirar reservas de tickets vencidas - cada minuto
+   */
+  async expireTicketReservations(): Promise<void> {
+    try {
+      const deleted = await this.ticketReservationsRepository.deleteExpired()
+      if (deleted > 0) {
+        this.logger.log(`[JOB] Expiradas ${deleted} reservas de tickets vencidas`)
+      }
+    } catch (error) {
+      this.logger.error('[JOB] Error expirando reservas de tickets:', error)
     }
   }
 

@@ -62,6 +62,22 @@ export interface CreatePurchaseResponse {
   unitPrice: number
 }
 
+export interface TicketReservation {
+  id: string
+  raffleId: string
+  ticketNumber: number
+  userId: string
+  purchaseId: string | null
+  expiresAt: string
+  createdAt: string
+}
+
+export interface ReserveTicketsRequest {
+  raffleId: string
+  purchaseId: string
+  ticketNumbers: number[]
+}
+
 export interface RaffleProgress {
   raffleId: string
   packsSold: number

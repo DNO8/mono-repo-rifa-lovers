@@ -383,34 +383,36 @@ export class PurchasesService {
       },
     })
 
-    return purchases.map((purchase) => {
-      const firstName = purchase.user?.firstName ?? 'Usuario'
-      const lastName = purchase.user?.lastName ?? ''
-      const lastNameInitial = lastName.charAt(0)
-      const name = lastNameInitial ? `${firstName} ${lastNameInitial}.` : firstName
+    return purchases
+      .map((purchase) => {
+        const firstName = purchase.user?.firstName ?? 'Usuario'
+        const lastName = purchase.user?.lastName ?? ''
+        const lastNameInitial = lastName.charAt(0)
+        const name = lastNameInitial ? `${firstName} ${lastNameInitial}.` : firstName
 
-      // Count actual LuckyPasses generated across all userPacks in this purchase
-      const ticketCount = purchase.userPacks.reduce(
-        (sum, userPack) => sum + userPack.luckyPasses.length,
-        0
-      )
+        // Count actual LuckyPasses generated across all userPacks in this purchase
+        const ticketCount = purchase.userPacks.reduce(
+          (sum, userPack) => sum + userPack.luckyPasses.length,
+          0
+        )
 
-      // Format time ago in Spanish
-      const timeAgo = purchase.paidAt
-        ? formatDistanceToNow(new Date(purchase.paidAt), {
-            addSuffix: true,
-            locale: es,
-          })
-        : 'hace un momento'
+        // Format time ago in Spanish
+        const timeAgo = purchase.paidAt
+          ? formatDistanceToNow(new Date(purchase.paidAt), {
+              addSuffix: true,
+              locale: es,
+            })
+          : 'hace un momento'
 
-      return {
-        id: purchase.id,
-        name,
-        action: 'compró',
-        ticketCount,
-        timeAgo,
-        city: 'Santiago', // Mock for now
-      }
-    })
+        return {
+          id: purchase.id,
+          name,
+          action: 'compró',
+          ticketCount,
+          timeAgo,
+          city: 'Santiago', // Mock for now
+        }
+      })
+      .filter((purchase) => purchase.ticketCount > 0)
   }
 }

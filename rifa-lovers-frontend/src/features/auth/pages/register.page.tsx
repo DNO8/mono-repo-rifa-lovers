@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -37,8 +38,13 @@ export default function RegisterPage() {
       return
     }
 
+    if (address && address.length < 10) {
+      toast.error('La dirección debe tener al menos 10 caracteres')
+      return
+    }
+
     try {
-      await register(name, lastName, phone, email, password)
+      await register(name, lastName, phone, email, password, address || undefined)
       const { isAuthenticated } = useAuthStore.getState()
       if (isAuthenticated) navigate('/dashboard')
     } catch {
@@ -125,6 +131,21 @@ export default function RegisterPage() {
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />
             <p className="text-xs text-text-tertiary mt-1">Solo números, sin el signo +. Ej: 56912345678 (mínimo 8 dígitos)</p>
+          </div>
+
+          <div>
+            <label htmlFor="register-address" className="block text-sm font-medium text-text-primary mb-1.5">
+              Dirección de entrega
+            </label>
+            <input
+              id="register-address"
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Ej: Av. Las Condes 1234, Depto 501, Las Condes"
+              className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            />
+            <p className="text-xs text-amber-600 mt-1">🏆 Esta dirección será usada para entregarte el premio si resultas ganador. Mínimo 10 caracteres.</p>
           </div>
 
           <div>

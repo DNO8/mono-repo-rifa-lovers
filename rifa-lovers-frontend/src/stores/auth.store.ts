@@ -14,7 +14,7 @@ interface AuthState {
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, lastName: string, phone: string, email: string, password: string) => Promise<void>
+  register: (name: string, lastName: string, phone: string, email: string, password: string, address?: string) => Promise<void>
   logout: () => void
   setToken: (token: string) => void
   clearError: () => void
@@ -44,10 +44,10 @@ export const useAuthStore = create<AuthState>()(
       }
     },
 
-    register: async (name: string, lastName: string, phone: string, email: string, password: string) => {
+    register: async (name: string, lastName: string, phone: string, email: string, password: string, address?: string) => {
       set({ isLoading: true, error: null })
       try {
-        const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password })
+        const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password, address })
         set({ user: data.user, token: data.accessToken, refreshToken: data.refreshToken ?? null, isAuthenticated: true, isLoading: false })
         toast.success('¡Registro exitoso! Bienvenido a RifaLovers')
       } catch (err: unknown) {

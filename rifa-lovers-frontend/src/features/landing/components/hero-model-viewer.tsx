@@ -1,4 +1,4 @@
-import { Suspense, useRef, useEffect } from 'react'
+import { Suspense, useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, ContactShadows, OrbitControls, Center, Environment } from '@react-three/drei'
 import * as THREE from 'three'
@@ -164,17 +164,30 @@ interface HeroModelViewerProps {
 export default function HeroModelViewer({ isVisible = true, pausedRef: externalPausedRef }: HeroModelViewerProps) {
   const { userRotation, paused: internalPaused, lock, unlock, locked, pointerHandlers } = useModelDrag()
   
-  // Combine internal paused (drag state) with external paused (visibility/tab state)
-  const paused = useRef<boolean>(false)
+  // Use state to force re-render when internal paused changes (refs don't trigger re-renders)
+  const [isPaused, setIsPaused] = useState(false)
   
-  // Sync the combined paused state
+  // Sync the combined paused state - check every 100ms for changes in internalPaused
   useEffect(() => {
-    paused.current = internalPaused.current || (externalPausedRef?.current ?? false) || !isVisible
+    const interval = setInterval(() => {
+      const combinedPaused = internalPaused.current || (externalPausedRef?.current ?? false) || !isVisible
+      setIsPaused(combinedPaused)
+      if (externalPausedRef) {
+        externalPausedRef.current = combinedPaused
+      }
+    }, 100)
+    return () => clearInterval(interval)
   }, [internalPaused, externalPausedRef, isVisible])
   const animateCameraRef = useRef<((pos: [number, number, number], target: [number, number, number]) => void) | null>(null)
   const resetCameraRef = useRef<(() => void) | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controlsRef = useRef<any>(null)
+  const pausedRef = useRef(isPaused)
+  
+  // Keep the ref in sync with state for the 3D scene
+  useEffect(() => {
+    pausedRef.current = isPaused
+  }, [isPaused])
 
   return (
     <div
@@ -206,7 +219,7 @@ export default function HeroModelViewer({ isVisible = true, pausedRef: externalP
 
           <InnerScene
             userRotation={userRotation}
-            paused={paused}
+            paused={pausedRef}
             onAnimateCamera={animateCameraRef}
             onResetCamera={resetCameraRef}
             lock={lock}

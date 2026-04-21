@@ -13,7 +13,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { email, password, firstName, lastName, phone } = registerDto;
+    const { email, password, firstName, lastName, phone, address } = registerDto;
 
     const existingUser = await this.prisma.user.findFirst({
       where: { email: email.toLowerCase() },
@@ -44,6 +44,7 @@ export class AuthService {
         lastName,
         phone: parseFloat(phone),
         role: 'customer',
+        address,
       },
     });
 

@@ -2,20 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Ticket, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useRecentPurchases } from '@/hooks/use-recent-purchases'
-
-// Fallback mock data for SSR or when no real data available
-const MOCK_ACTIVITIES = [
-  { id: '1', name: 'María C.', action: 'compró', ticketCount: 5, timeAgo: 'hace 2 min', city: 'Santiago' },
-  { id: '2', name: 'Felipe R.', action: 'compró', ticketCount: 10, timeAgo: 'hace 4 min', city: 'Viña del Mar' },
-  { id: '3', name: 'Carla M.', action: 'compró', ticketCount: 3, timeAgo: 'hace 7 min', city: 'Concepción' },
-  { id: '4', name: 'Diego S.', action: 'compró', ticketCount: 15, timeAgo: 'hace 10 min', city: 'Temuco' },
-  { id: '5', name: 'Andrea P.', action: 'compró', ticketCount: 5, timeAgo: 'hace 12 min', city: 'Antofagasta' },
-  { id: '6', name: 'Tomás L.', action: 'compró', ticketCount: 10, timeAgo: 'hace 15 min', city: 'Valparaíso' },
-  { id: '7', name: 'Valentina G.', action: 'compró', ticketCount: 3, timeAgo: 'hace 18 min', city: 'Rancagua' },
-  { id: '8', name: 'Matías F.', action: 'compró', ticketCount: 25, timeAgo: 'hace 22 min', city: 'La Serena' },
-  { id: '9', name: 'Javiera H.', action: 'compró', ticketCount: 5, timeAgo: 'hace 25 min', city: 'Iquique' },
-  { id: '10', name: 'Sebastián V.', action: 'compró', ticketCount: 10, timeAgo: 'hace 30 min', city: 'Puerto Montt' },
-]
+import type { RecentPurchase } from '@/hooks/use-recent-purchases'
 
 function TickerItem({ name, action, ticketCount, timeAgo, city }: {
   name: string
@@ -37,13 +24,9 @@ function TickerItem({ name, action, ticketCount, timeAgo, city }: {
   )
 }
 
-export function LiveTickerSection() {
+function TickerContent({ purchases, isConnected }: { purchases: RecentPurchase[]; isConnected: boolean }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const isPaused = useRef(false)
-  const { purchases, isConnected } = useRecentPurchases()
-  
-  // Use real data if available, fallback to mock
-  const activities = purchases.length > 0 ? purchases : MOCK_ACTIVITIES
 
   useEffect(() => {
     const el = scrollRef.current
@@ -70,7 +53,7 @@ export function LiveTickerSection() {
     return () => cancelAnimationFrame(animId)
   }, [])
 
-  const doubledActivities = [...activities, ...activities]
+  const doubledActivities = [...purchases, ...purchases]
 
   return (
     <section
@@ -107,4 +90,15 @@ export function LiveTickerSection() {
       </div>
     </section>
   )
+}
+
+export function LiveTickerSection() {
+  const { purchases, isConnected } = useRecentPurchases()
+
+  // Only show if we have 5 or more real purchases from the database
+  if (purchases.length < 5) {
+    return null
+  }
+
+  return <TickerContent purchases={purchases} isConnected={isConnected} />
 }

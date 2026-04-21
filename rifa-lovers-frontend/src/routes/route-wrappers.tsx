@@ -1,4 +1,5 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
+import { useLocation } from 'react-router'
 import { PageLayout } from '@/components/shared/layout/page-layout'
 import { Spinner } from '@/components/ui/spinner'
 
@@ -10,6 +11,16 @@ function DefaultFallback() {
   )
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
+  return null
+}
+
 export function PageWithSuspense({
   children,
   fallback,
@@ -19,6 +30,7 @@ export function PageWithSuspense({
 }) {
   return (
     <PageLayout>
+      <ScrollToTop />
       <Suspense fallback={fallback ?? <DefaultFallback />}>{children}</Suspense>
     </PageLayout>
   )

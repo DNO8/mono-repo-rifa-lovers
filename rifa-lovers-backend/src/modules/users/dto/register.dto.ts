@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, IsNumberString, MinLength, MaxLength, Matches } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsNumberString, IsOptional, MinLength, MaxLength, Matches } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class RegisterDto {
@@ -29,4 +29,10 @@ export class RegisterDto {
   @MinLength(2, { message: 'El apellido debe tener al menos 2 caracteres' })
   @MaxLength(120, { message: 'El apellido no puede exceder 120 caracteres' })
   lastName: string;
+
+  @IsString({ message: 'La dirección debe ser un string' })
+  @IsOptional()
+  @MinLength(10, { message: 'La dirección debe tener al menos 10 caracteres' })
+  @MaxLength(200, { message: 'La dirección no puede exceder 200 caracteres' })
+  address?: string;
 }

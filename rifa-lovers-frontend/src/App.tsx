@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router'
 import { useShallow } from 'zustand/react/shallow'
 import { router } from '@/routes/router'
 import { useAuthStore } from '@/stores/auth.store'
+import { ChunkErrorBoundary } from '@/components/shared/chunk-error-boundary'
 
 function App() {
   const { isAuthenticated, refreshUser } = useAuthStore(
@@ -13,7 +14,11 @@ function App() {
     if (isAuthenticated) refreshUser()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <RouterProvider router={router} />
+  return (
+    <ChunkErrorBoundary>
+      <RouterProvider router={router} />
+    </ChunkErrorBoundary>
+  )
 }
 
 export default App

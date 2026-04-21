@@ -3,6 +3,7 @@ import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router'
 import { PageWithSuspense } from './route-wrappers'
 import { ProtectedRoute } from './protected-route'
+import { RouteErrorBoundary } from '@/components/shared/chunk-error-boundary'
 import { LandingPageSkeleton } from '@/components/skeletons/landing-skeleton'
 import { ImpactPageSkeleton } from '@/components/skeletons/impact-skeleton'
 import { AboutPageSkeleton } from '@/components/skeletons/about-skeleton'
@@ -40,6 +41,7 @@ export const router = createBrowserRouter([
         <LazyLandingPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/impacto',
@@ -48,6 +50,7 @@ export const router = createBrowserRouter([
         <LazyImpactPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/nosotros',
@@ -56,6 +59,7 @@ export const router = createBrowserRouter([
         <LazyAboutPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/contacto',
@@ -64,6 +68,7 @@ export const router = createBrowserRouter([
         <LazyContactPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/login',
@@ -72,6 +77,7 @@ export const router = createBrowserRouter([
         <LazyLoginPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/registro',
@@ -80,6 +86,7 @@ export const router = createBrowserRouter([
         <LazyRegisterPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/recuperar-contrasena',
@@ -88,6 +95,7 @@ export const router = createBrowserRouter([
         <LazyForgotPasswordPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/reset-password',
@@ -96,6 +104,7 @@ export const router = createBrowserRouter([
         <LazyResetPasswordPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/dashboard',
@@ -106,6 +115,7 @@ export const router = createBrowserRouter([
         </ProtectedRoute>
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/checkout',
@@ -116,6 +126,7 @@ export const router = createBrowserRouter([
         </ProtectedRoute>
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/bases-legales',
@@ -124,6 +135,7 @@ export const router = createBrowserRouter([
         <LazyBasesLegalesPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/emprendedor',
@@ -132,6 +144,7 @@ export const router = createBrowserRouter([
         <LazyEmprendedorPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/admin',
@@ -142,6 +155,7 @@ export const router = createBrowserRouter([
         </ProtectedRoute>
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/payment/return',
@@ -150,6 +164,7 @@ export const router = createBrowserRouter([
         <LazyPaymentReturnPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/raffle/:id',
@@ -160,6 +175,7 @@ export const router = createBrowserRouter([
         </ProtectedRoute>
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/raffle/:id/winners',
@@ -168,6 +184,7 @@ export const router = createBrowserRouter([
         <LazyWinnersPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/stream/:raffleId',
@@ -178,6 +195,7 @@ export const router = createBrowserRouter([
         </ProtectedRoute>
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '*',
@@ -186,5 +204,6 @@ export const router = createBrowserRouter([
         <LazyNotFoundPage />
       </PageWithSuspense>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
 ])

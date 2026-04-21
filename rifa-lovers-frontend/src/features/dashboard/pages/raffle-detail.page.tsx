@@ -97,7 +97,7 @@ export default function RaffleDetailPage() {
                   <h2 className="text-lg font-bold text-text-primary">
                     Tu LuckyPass <span className="text-primary">#{String(activeTicket.number).padStart(5, '0')}</span>
                   </h2>
-                  <Badge variant="outline-primary">Rifa {raffleId}</Badge>
+                  <Badge variant="outline-primary">Rifa {raffleTitle}</Badge>
                 </div>
 
                 <TicketModelViewer ticketNumber={activeTicket.number} />

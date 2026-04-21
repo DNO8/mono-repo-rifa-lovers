@@ -19,6 +19,8 @@ const LazyAboutPage = lazy(() => import('@/features/about/pages/about.page'))
 const LazyContactPage = lazy(() => import('@/features/contact/pages/contact.page'))
 const LazyLoginPage = lazy(() => import('@/features/auth/pages/login.page'))
 const LazyRegisterPage = lazy(() => import('@/features/auth/pages/register.page'))
+const LazyForgotPasswordPage = lazy(() => import('@/features/auth/pages/forgot-password.page'))
+const LazyResetPasswordPage = lazy(() => import('@/features/auth/pages/reset-password.page'))
 const LazyDashboardPage = lazy(() => import('@/features/dashboard/pages/dashboard.page'))
 const LazyCheckoutPage = lazy(() => import('@/features/checkout/pages/checkout.page'))
 const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffle-detail.page'))
@@ -76,6 +78,22 @@ export const router = createBrowserRouter([
     element: (
       <PageWithSuspense fallback={<AuthPageSkeleton />}>
         <LazyRegisterPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/recuperar-contrasena',
+    element: (
+      <PageWithSuspense fallback={<AuthPageSkeleton />}>
+        <LazyForgotPasswordPage />
+      </PageWithSuspense>
+    ),
+  },
+  {
+    path: '/reset-password',
+    element: (
+      <PageWithSuspense fallback={<AuthPageSkeleton />}>
+        <LazyResetPasswordPage />
       </PageWithSuspense>
     ),
   },

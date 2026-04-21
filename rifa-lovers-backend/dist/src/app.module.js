@@ -26,6 +26,7 @@ const testimonials_module_1 = require("./modules/testimonials/testimonials.modul
 const admin_module_1 = require("./modules/admin/admin.module");
 const jobs_module_1 = require("./modules/jobs/jobs.module");
 const ticket_reservations_module_1 = require("./modules/ticket-reservations/ticket-reservations.module");
+const contact_module_1 = require("./modules/contact/contact.module");
 const all_exceptions_filter_1 = require("./common/filters/all-exceptions.filter");
 const throttler_config_1 = require("./config/throttler.config");
 let AppModule = class AppModule {
@@ -54,6 +55,7 @@ exports.AppModule = AppModule = __decorate([
             admin_module_1.AdminModule,
             jobs_module_1.JobsModule,
             ticket_reservations_module_1.TicketReservationsModule,
+            contact_module_1.ContactModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

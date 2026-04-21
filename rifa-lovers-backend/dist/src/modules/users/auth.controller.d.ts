@@ -1,11 +1,26 @@
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, AuthResponseDto } from './dto';
+import { SupabaseService } from '../../config/supabase.service';
+import { ConfigService } from '@nestjs/config';
+import type { Response } from 'express';
 export declare class AuthController {
     private readonly authService;
-    constructor(authService: AuthService);
+    private readonly supabaseService;
+    private readonly config;
+    constructor(authService: AuthService, supabaseService: SupabaseService, config: ConfigService);
     register(registerDto: RegisterDto): Promise<AuthResponseDto>;
     login(loginDto: LoginDto): Promise<AuthResponseDto>;
     refreshToken(refreshToken: string): Promise<{
         accessToken: string;
+    }>;
+    confirmEmail(token: string, type: 'email' | 'recovery', email: string, res: Response): Promise<void>;
+    resendConfirmation(email: string): Promise<{
+        message: string;
+    }>;
+    forgotPassword(email: string): Promise<{
+        message: string;
+    }>;
+    resetPassword(token: string, email: string, password: string): Promise<{
+        message: string;
     }>;
 }

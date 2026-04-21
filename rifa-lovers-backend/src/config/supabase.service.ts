@@ -46,4 +46,53 @@ export class SupabaseService {
   async updateUser(userId: string, attributes: { email?: string; password?: string; data?: Record<string, any> }) {
     return this.supabase.auth.admin.updateUserById(userId, attributes);
   }
+
+  // Email verification methods for custom redirect URLs
+
+  async verifyEmailWithRedirect(email: string, token: string, redirectTo: string) {
+    return this.supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email',
+    }).then((result) => {
+      // After verification, we redirect to the specified URL
+      return { ...result, redirectTo };
+    });
+  }
+
+  async getUserByEmail(email: string) {
+    return this.supabase.auth.admin.listUsers().then(({ data, error }) => {
+      if (error) return { data: null, error };
+      const user = data?.users.find((u) => u.email === email);
+      return { data: { user }, error: user ? null : { message: 'User not found' } };
+    });
+  }
+
+  async resendConfirmationEmail(email: string, redirectUrl: string) {
+    return this.supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+  }
+
+  async sendPasswordResetEmail(email: string, redirectUrl: string) {
+    return this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+  }
+
+  async exchangeCodeForSession(code: string) {
+    return this.supabase.auth.exchangeCodeForSession(code);
+  }
+
+  async verifyOTP(email: string, token: string, type: 'email' | 'recovery') {
+    return this.supabase.auth.verifyOtp({
+      email,
+      token,
+      type,
+    });
+  }
 }

@@ -8,24 +8,34 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var NotificationsService_1;
+var ContactService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NotificationsService = void 0;
+exports.ContactService = void 0;
 const common_1 = require("@nestjs/common");
 const resend_service_1 = require("../email/resend.service");
-let NotificationsService = NotificationsService_1 = class NotificationsService {
+let ContactService = ContactService_1 = class ContactService {
     constructor(resendService) {
         this.resendService = resendService;
-        this.logger = new common_1.Logger(NotificationsService_1.name);
+        this.logger = new common_1.Logger(ContactService_1.name);
     }
-    async sendWinnerEmail(data) {
-        this.logger.log(`Enviando email de ganador a ${data.toEmail}`);
-        await this.resendService.sendWinnerEmail(data);
+    async submitContactForm(dto) {
+        this.logger.log(`Procesando formulario de contacto de ${dto.email}`);
+        await this.resendService.sendContactFormToAdmin({
+            name: dto.name,
+            email: dto.email,
+            message: dto.message,
+        });
+        await this.resendService.sendContactConfirmationToUser({
+            name: dto.name,
+            email: dto.email,
+            message: dto.message,
+        });
+        this.logger.log(`Formulario de contacto procesado exitosamente — ${dto.email}`);
     }
 };
-exports.NotificationsService = NotificationsService;
-exports.NotificationsService = NotificationsService = NotificationsService_1 = __decorate([
+exports.ContactService = ContactService;
+exports.ContactService = ContactService = ContactService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [resend_service_1.ResendService])
-], NotificationsService);
-//# sourceMappingURL=notifications.service.js.map
+], ContactService);
+//# sourceMappingURL=contact.service.js.map

@@ -25,7 +25,13 @@ const envSchema = z.object({
   FLOW_SECRET_KEY: z.string().min(1, 'FLOW_SECRET_KEY es requerida'),
   FLOW_BASE_URL: z.string().default('https://sandbox.flow.cl/api'),
   
-  // Email (opcionales para desarrollo)
+  // Resend Email (REEMPLAZA SMTP - opcional en dev, requerido en prod)
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM_NOREPLY: z.string().default('noreply@rifalovers.cl'),
+  EMAIL_FROM_CONTACT: z.string().default('contacto@rifalovers.cl'),
+  EMAIL_TO_CONTACT: z.string().default('contacto@rifalovers.cl'),
+
+  // Legacy SMTP (deprecated - solo para compatibilidad temporal)
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().default('587'),
   SMTP_USER: z.string().optional(),

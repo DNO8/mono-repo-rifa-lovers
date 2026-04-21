@@ -47,6 +47,47 @@ let SupabaseService = class SupabaseService {
     async updateUser(userId, attributes) {
         return this.supabase.auth.admin.updateUserById(userId, attributes);
     }
+    async verifyEmailWithRedirect(email, token, redirectTo) {
+        return this.supabase.auth.verifyOtp({
+            email,
+            token,
+            type: 'email',
+        }).then((result) => {
+            return { ...result, redirectTo };
+        });
+    }
+    async getUserByEmail(email) {
+        return this.supabase.auth.admin.listUsers().then(({ data, error }) => {
+            if (error)
+                return { data: null, error };
+            const user = data?.users.find((u) => u.email === email);
+            return { data: { user }, error: user ? null : { message: 'User not found' } };
+        });
+    }
+    async resendConfirmationEmail(email, redirectUrl) {
+        return this.supabase.auth.resend({
+            type: 'signup',
+            email,
+            options: {
+                emailRedirectTo: redirectUrl,
+            },
+        });
+    }
+    async sendPasswordResetEmail(email, redirectUrl) {
+        return this.supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectUrl,
+        });
+    }
+    async exchangeCodeForSession(code) {
+        return this.supabase.auth.exchangeCodeForSession(code);
+    }
+    async verifyOTP(email, token, type) {
+        return this.supabase.auth.verifyOtp({
+            email,
+            token,
+            type,
+        });
+    }
 };
 exports.SupabaseService = SupabaseService;
 exports.SupabaseService = SupabaseService = __decorate([

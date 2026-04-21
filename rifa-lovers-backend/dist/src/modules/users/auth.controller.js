@@ -17,9 +17,13 @@ const common_1 = require("@nestjs/common");
 const throttler_1 = require("@nestjs/throttler");
 const auth_service_1 = require("./auth.service");
 const dto_1 = require("./dto");
+const supabase_service_1 = require("../../config/supabase.service");
+const config_1 = require("@nestjs/config");
 let AuthController = class AuthController {
-    constructor(authService) {
+    constructor(authService, supabaseService, config) {
         this.authService = authService;
+        this.supabaseService = supabaseService;
+        this.config = config;
     }
     async register(registerDto) {
         return this.authService.register(registerDto);
@@ -29,6 +33,54 @@ let AuthController = class AuthController {
     }
     async refreshToken(refreshToken) {
         return this.authService.refreshToken(refreshToken);
+    }
+    async confirmEmail(token, type, email, res) {
+        const frontendUrl = this.config.get('FRONTEND_URL') ?? 'http://localhost:5173';
+        if (!token || !email) {
+            res.redirect(`${frontendUrl}/auth/error?reason=missing_params`);
+            return;
+        }
+        try {
+            const { error } = await this.supabaseService.verifyOTP(email, token, type);
+            if (error) {
+                res.redirect(`${frontendUrl}/auth/error?reason=invalid_token`);
+                return;
+            }
+            const redirectPath = type === 'recovery' ? '/auth/reset-password' : '/login?verified=true';
+            res.redirect(`${frontendUrl}${redirectPath}`);
+        }
+        catch {
+            res.redirect(`${frontendUrl}/auth/error?reason=verification_failed`);
+        }
+    }
+    async resendConfirmation(email) {
+        const frontendUrl = this.config.get('FRONTEND_URL') ?? 'http://localhost:5173';
+        const redirectUrl = `${frontendUrl}/auth/confirm`;
+        const { error } = await this.supabaseService.resendConfirmationEmail(email, redirectUrl);
+        if (error) {
+            return { message: 'Error al reenviar el email. Intenta más tarde.' };
+        }
+        return { message: 'Email de confirmación reenviado. Revisa tu bandeja de entrada.' };
+    }
+    async forgotPassword(email) {
+        const frontendUrl = this.config.get('FRONTEND_URL') ?? 'http://localhost:5173';
+        const redirectUrl = `${frontendUrl}/auth/confirm`;
+        const { error } = await this.supabaseService.sendPasswordResetEmail(email, redirectUrl);
+        if (error) {
+            return { message: 'Error al enviar el email. Intenta más tarde.' };
+        }
+        return { message: 'Email de recuperación enviado. Revisa tu bandeja de entrada.' };
+    }
+    async resetPassword(token, email, password) {
+        const { error: verifyError, data } = await this.supabaseService.verifyOTP(email, token, 'recovery');
+        if (verifyError || !data.user) {
+            return { message: 'Token inválido o expirado.' };
+        }
+        const { error: updateError } = await this.supabaseService.updateUser(data.user.id, { password });
+        if (updateError) {
+            return { message: 'Error al actualizar la contraseña. Intenta de nuevo.' };
+        }
+        return { message: 'Contraseña actualizada exitosamente.' };
     }
 };
 exports.AuthController = AuthController;
@@ -59,8 +111,49 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "refreshToken", null);
+__decorate([
+    (0, common_1.Get)('confirm'),
+    __param(0, (0, common_1.Query)('token')),
+    __param(1, (0, common_1.Query)('type')),
+    __param(2, (0, common_1.Query)('email')),
+    __param(3, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "confirmEmail", null);
+__decorate([
+    (0, common_1.Post)('resend-confirmation'),
+    (0, throttler_1.Throttle)({ auth: { limit: 3, ttl: 900000 } }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)('email')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "resendConfirmation", null);
+__decorate([
+    (0, common_1.Post)('forgot-password'),
+    (0, throttler_1.Throttle)({ auth: { limit: 3, ttl: 900000 } }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)('email')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "forgotPassword", null);
+__decorate([
+    (0, common_1.Post)('reset-password'),
+    (0, throttler_1.Throttle)({ auth: { limit: 5, ttl: 900000 } }),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)('token')),
+    __param(1, (0, common_1.Body)('email')),
+    __param(2, (0, common_1.Body)('password')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "resetPassword", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService,
+        supabase_service_1.SupabaseService,
+        config_1.ConfigService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

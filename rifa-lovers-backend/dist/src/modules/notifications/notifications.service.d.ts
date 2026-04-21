@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import { ResendService } from '../email/resend.service';
 export interface WinnerEmailData {
     toEmail: string;
     toName: string;
@@ -7,9 +7,8 @@ export interface WinnerEmailData {
     raffleName: string | null;
 }
 export declare class NotificationsService {
-    private readonly config;
+    private readonly resendService;
     private readonly logger;
-    private transporter;
-    constructor(config: ConfigService);
+    constructor(resendService: ResendService);
     sendWinnerEmail(data: WinnerEmailData): Promise<void>;
 }

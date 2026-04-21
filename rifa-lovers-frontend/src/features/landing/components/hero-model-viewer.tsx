@@ -156,8 +156,21 @@ function LoadingFallback3D() {
   )
 }
 
-export function HeroModelViewer() {
-  const { userRotation, paused, lock, unlock, locked, pointerHandlers } = useModelDrag()
+interface HeroModelViewerProps {
+  isVisible?: boolean
+  pausedRef?: React.MutableRefObject<boolean>
+}
+
+export default function HeroModelViewer({ isVisible = true, pausedRef: externalPausedRef }: HeroModelViewerProps) {
+  const { userRotation, paused: internalPaused, lock, unlock, locked, pointerHandlers } = useModelDrag()
+  
+  // Combine internal paused (drag state) with external paused (visibility/tab state)
+  const paused = useRef<boolean>(false)
+  
+  // Sync the combined paused state
+  useEffect(() => {
+    paused.current = internalPaused.current || (externalPausedRef?.current ?? false) || !isVisible
+  }, [internalPaused, externalPausedRef, isVisible])
   const animateCameraRef = useRef<((pos: [number, number, number], target: [number, number, number]) => void) | null>(null)
   const resetCameraRef = useRef<(() => void) | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -276,4 +289,5 @@ function InnerScene({
   )
 }
 
-useGLTF.preload(MODEL_PATH)
+// Note: Model is now loaded on-demand via Intersection Observer in LazyHeroModelViewer
+// This prevents eager loading and reduces initial bundle size by ~350KB

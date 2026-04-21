@@ -8,9 +8,11 @@ import { PurchasesRepository } from './purchases.repository'
 import { PacksRepository } from '../packs/packs.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
 import { PrismaService } from '../../database/prisma.service'
-import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto } from './dto'
+import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto, RecentPurchaseDto } from './dto'
 import { Purchase, Raffle, UserPack, Pack } from '@prisma/client'
 import { mapPurchaseToDto } from './mappers/purchase.mapper'
+import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 // Tipo que incluye la relación raffle
 
@@ -358,5 +360,57 @@ export class PurchasesService {
       include: { purchase: true },
     })
     return paymentTx?.purchase ?? null
+  }
+
+  /**
+   * Obtiene las últimas 10 compras pagadas para el ticker en vivo
+   * Incluye nombre del usuario y cantidad real de LuckyPasses generados
+   */
+  async getRecentPurchases(): Promise<RecentPurchaseDto[]> {
+    this.logger.debug('Obteniendo compras recientes para ticker')
+
+    const purchases = await this.prisma.purchase.findMany({
+      where: { status: 'paid', paidAt: { not: null } },
+      orderBy: { paidAt: 'desc' },
+      take: 10,
+      include: {
+        user: { select: { firstName: true, lastName: true } },
+        userPacks: {
+          include: {
+            luckyPasses: { select: { id: true } },
+          },
+        },
+      },
+    })
+
+    return purchases.map((purchase) => {
+      const firstName = purchase.user?.firstName ?? 'Usuario'
+      const lastName = purchase.user?.lastName ?? ''
+      const lastNameInitial = lastName.charAt(0)
+      const name = lastNameInitial ? `${firstName} ${lastNameInitial}.` : firstName
+
+      // Count actual LuckyPasses generated across all userPacks in this purchase
+      const ticketCount = purchase.userPacks.reduce(
+        (sum, userPack) => sum + userPack.luckyPasses.length,
+        0
+      )
+
+      // Format time ago in Spanish
+      const timeAgo = purchase.paidAt
+        ? formatDistanceToNow(new Date(purchase.paidAt), {
+            addSuffix: true,
+            locale: es,
+          })
+        : 'hace un momento'
+
+      return {
+        id: purchase.id,
+        name,
+        action: 'compró',
+        ticketCount,
+        timeAgo,
+        city: 'Santiago', // Mock for now
+      }
+    })
   }
 }

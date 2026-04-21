@@ -16,6 +16,7 @@ export const ENDPOINTS = {
     my: '/purchases/my',
     create: '/purchases',
     detail: (id: string) => `/purchases/${id}`,
+    recentStream: '/purchases/recent/stream',
   },
 
   luckyPasses: {

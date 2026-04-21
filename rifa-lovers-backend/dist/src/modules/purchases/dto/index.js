@@ -17,4 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./create-purchase.dto"), exports);
 __exportStar(require("./purchase-response.dto"), exports);
 __exportStar(require("./create-purchase-response.dto"), exports);
+__exportStar(require("./recent-purchase.dto"), exports);
 //# sourceMappingURL=index.js.map

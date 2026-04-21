@@ -132,6 +132,19 @@ CREATE TABLE public.testimonials (
   CONSTRAINT testimonials_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT testimonials_lucky_pass_id_fkey FOREIGN KEY (lucky_pass_id) REFERENCES public.lucky_passes(id)
 );
+CREATE TABLE public.ticket_reservations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  raffle_id uuid NOT NULL,
+  ticket_number integer NOT NULL,
+  user_id uuid NOT NULL,
+  purchase_id uuid,
+  expires_at timestamp with time zone NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT ticket_reservations_pkey PRIMARY KEY (id),
+  CONSTRAINT ticket_reservations_raffle_id_fkey FOREIGN KEY (raffle_id) REFERENCES public.raffles(id),
+  CONSTRAINT ticket_reservations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT ticket_reservations_purchase_id_fkey FOREIGN KEY (purchase_id) REFERENCES public.purchases(id)
+);
 CREATE TABLE public.user_packs (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id uuid,
@@ -159,6 +172,7 @@ CREATE TABLE public.users (
   created_at timestamp without time zone DEFAULT now(),
   updated_at timestamp without time zone DEFAULT now(),
   phone_number numeric NOT NULL,
+  address character varying,
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),
   CONSTRAINT users_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id)

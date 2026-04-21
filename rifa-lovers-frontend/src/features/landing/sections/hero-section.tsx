@@ -4,8 +4,7 @@ import { gsap } from '@/lib/gsap'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SplitText } from '@/components/shared/split-text'
-import { HeroModelViewer } from '../components/hero-model-viewer'
-import { HeroLiveFrame } from '../components/hero-live-frame'
+import { LazyHeroModelViewer } from '../components/lazy-hero-model-viewer'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 
 export function HeroSection() {
@@ -159,15 +158,13 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Right: Live frame with 3D model */}
+        {/* Right: Live frame with 3D model (lazy loaded) */}
         <div
           data-gsap
           className="relative z-10 flex-1 flex items-center justify-center px-4 pb-8 lg:px-4 xl:px-8 lg:py-16"
         >
           <div className="w-full max-w-[700px]">
-            <HeroLiveFrame>
-              <HeroModelViewer />
-            </HeroLiveFrame>
+            <LazyHeroModelViewer />
             <p className="flex items-center justify-center gap-1.5 text-xs text-text-tertiary mt-3 opacity-60">
               <Hand className="size-3.5" />
               Arrastra para rotar · toca los <span className="font-semibold">números</span> para explorar specs

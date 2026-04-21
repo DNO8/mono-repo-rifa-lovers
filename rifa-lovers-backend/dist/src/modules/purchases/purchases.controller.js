@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PurchasesController = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
+const rxjs_1 = require("rxjs");
 const purchases_service_1 = require("./purchases.service");
 const decorators_1 = require("../../common/decorators");
 const dto_1 = require("./dto");
@@ -30,6 +31,9 @@ let PurchasesController = class PurchasesController {
     }
     async create(userId, createDto) {
         return this.purchasesService.create(userId, createDto);
+    }
+    recentPurchasesStream() {
+        return (0, rxjs_1.interval)(30000).pipe((0, rxjs_1.switchMap)(() => this.purchasesService.getRecentPurchases()), (0, rxjs_1.map)((data) => ({ data })));
     }
 };
 exports.PurchasesController = PurchasesController;
@@ -58,6 +62,12 @@ __decorate([
     __metadata("design:paramtypes", [String, dto_1.CreatePurchaseDto]),
     __metadata("design:returntype", Promise)
 ], PurchasesController.prototype, "create", null);
+__decorate([
+    (0, common_1.Sse)('recent/stream'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", rxjs_1.Observable)
+], PurchasesController.prototype, "recentPurchasesStream", null);
 exports.PurchasesController = PurchasesController = __decorate([
     (0, common_1.Controller)('purchases'),
     __metadata("design:paramtypes", [purchases_service_1.PurchasesService])

@@ -1,18 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { Ticket, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useRecentPurchases } from '@/hooks/use-recent-purchases'
 
-// TODO: Replace with real-time feed from backend when available
-interface LiveActivity {
-  id: string
-  name: string
-  action: string
-  ticketCount: number
-  timeAgo: string
-  city: string
-}
-
-const MOCK_ACTIVITIES: LiveActivity[] = [
+// Fallback mock data for SSR or when no real data available
+const MOCK_ACTIVITIES = [
   { id: '1', name: 'María C.', action: 'compró', ticketCount: 5, timeAgo: 'hace 2 min', city: 'Santiago' },
   { id: '2', name: 'Felipe R.', action: 'compró', ticketCount: 10, timeAgo: 'hace 4 min', city: 'Viña del Mar' },
   { id: '3', name: 'Carla M.', action: 'compró', ticketCount: 3, timeAgo: 'hace 7 min', city: 'Concepción' },
@@ -24,7 +16,6 @@ const MOCK_ACTIVITIES: LiveActivity[] = [
   { id: '9', name: 'Javiera H.', action: 'compró', ticketCount: 5, timeAgo: 'hace 25 min', city: 'Iquique' },
   { id: '10', name: 'Sebastián V.', action: 'compró', ticketCount: 10, timeAgo: 'hace 30 min', city: 'Puerto Montt' },
 ]
-const LIVE_ACTIVITIES: LiveActivity[] = MOCK_ACTIVITIES
 
 function TickerItem({ name, action, ticketCount, timeAgo, city }: {
   name: string
@@ -49,6 +40,10 @@ function TickerItem({ name, action, ticketCount, timeAgo, city }: {
 export function LiveTickerSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const isPaused = useRef(false)
+  const { purchases, isConnected } = useRecentPurchases()
+  
+  // Use real data if available, fallback to mock
+  const activities = purchases.length > 0 ? purchases : MOCK_ACTIVITIES
 
   useEffect(() => {
     const el = scrollRef.current
@@ -75,7 +70,7 @@ export function LiveTickerSection() {
     return () => cancelAnimationFrame(animId)
   }, [])
 
-  const doubledActivities = [...LIVE_ACTIVITIES, ...LIVE_ACTIVITIES]
+  const doubledActivities = [...activities, ...activities]
 
   return (
     <section
@@ -84,10 +79,18 @@ export function LiveTickerSection() {
       onMouseLeave={() => { isPaused.current = false }}
     >
       <div className="flex items-center gap-2 mb-3 px-4 md:px-8 mx-auto max-w-[1200px]">
-        <div className="size-5 rounded-full bg-success/10 flex items-center justify-center animate-pulse-subtle">
-          <Zap className="size-3 text-success" />
+        <div className={cn(
+          "size-5 rounded-full flex items-center justify-center animate-pulse-subtle",
+          isConnected ? "bg-success/10" : "bg-warning/10"
+        )}>
+          <Zap className={cn("size-3", isConnected ? "text-success" : "text-warning")} />
         </div>
-        <span className="text-xs font-bold uppercase tracking-wider text-success">En vivo</span>
+        <span className={cn(
+          "text-xs font-bold uppercase tracking-wider",
+          isConnected ? "text-success" : "text-warning"
+        )}>
+          {isConnected ? 'En vivo' : 'Cargando...'}
+        </span>
       </div>
 
       <div className={cn('flex gap-3 will-change-transform')} ref={scrollRef}>

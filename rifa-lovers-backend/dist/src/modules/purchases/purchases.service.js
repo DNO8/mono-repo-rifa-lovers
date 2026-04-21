@@ -17,6 +17,8 @@ const packs_repository_1 = require("../packs/packs.repository");
 const raffles_repository_1 = require("../raffles/raffles.repository");
 const prisma_service_1 = require("../../database/prisma.service");
 const purchase_mapper_1 = require("./mappers/purchase.mapper");
+const date_fns_1 = require("date-fns");
+const locale_1 = require("date-fns/locale");
 let PurchasesService = PurchasesService_1 = class PurchasesService {
     constructor(purchasesRepository, packsRepository, rafflesRepository, prisma) {
         this.purchasesRepository = purchasesRepository;
@@ -254,6 +256,43 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
             include: { purchase: true },
         });
         return paymentTx?.purchase ?? null;
+    }
+    async getRecentPurchases() {
+        this.logger.debug('Obteniendo compras recientes para ticker');
+        const purchases = await this.prisma.purchase.findMany({
+            where: { status: 'paid', paidAt: { not: null } },
+            orderBy: { paidAt: 'desc' },
+            take: 10,
+            include: {
+                user: { select: { firstName: true, lastName: true } },
+                userPacks: {
+                    include: {
+                        luckyPasses: { select: { id: true } },
+                    },
+                },
+            },
+        });
+        return purchases.map((purchase) => {
+            const firstName = purchase.user?.firstName ?? 'Usuario';
+            const lastName = purchase.user?.lastName ?? '';
+            const lastNameInitial = lastName.charAt(0);
+            const name = lastNameInitial ? `${firstName} ${lastNameInitial}.` : firstName;
+            const ticketCount = purchase.userPacks.reduce((sum, userPack) => sum + userPack.luckyPasses.length, 0);
+            const timeAgo = purchase.paidAt
+                ? (0, date_fns_1.formatDistanceToNow)(new Date(purchase.paidAt), {
+                    addSuffix: true,
+                    locale: locale_1.es,
+                })
+                : 'hace un momento';
+            return {
+                id: purchase.id,
+                name,
+                action: 'compró',
+                ticketCount,
+                timeAgo,
+                city: 'Santiago',
+            };
+        });
     }
 };
 exports.PurchasesService = PurchasesService;

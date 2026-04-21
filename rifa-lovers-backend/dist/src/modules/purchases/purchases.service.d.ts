@@ -2,7 +2,7 @@ import { PurchasesRepository } from './purchases.repository';
 import { PacksRepository } from '../packs/packs.repository';
 import { RafflesRepository } from '../raffles/raffles.repository';
 import { PrismaService } from '../../database/prisma.service';
-import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto } from './dto';
+import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto, RecentPurchaseDto } from './dto';
 export declare class PurchasesService {
     private readonly purchasesRepository;
     private readonly packsRepository;
@@ -28,4 +28,5 @@ export declare class PurchasesService {
         totalAmount: import("@prisma/client/runtime/client").Decimal | null;
         paidAt: Date | null;
     } | null>;
+    getRecentPurchases(): Promise<RecentPurchaseDto[]>;
 }

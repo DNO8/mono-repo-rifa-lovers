@@ -15,18 +15,37 @@ export function ContactForm() {
     e.preventDefault()
     setIsLoading(true)
     const formData = new FormData(e.currentTarget)
+    
+    // Get and trim values
+    const name = String(formData.get('name') || '').trim()
+    const email = String(formData.get('email') || '').trim()
+    const message = String(formData.get('message') || '').trim()
+    
+    // Frontend validation
+    if (!name || name.length < 2) {
+      toast.error('El nombre debe tener al menos 2 caracteres')
+      setIsLoading(false)
+      return
+    }
+    if (!email || !email.includes('@')) {
+      toast.error('Debes proporcionar un email válido')
+      setIsLoading(false)
+      return
+    }
+    if (!message || message.length < 10) {
+      toast.error('El mensaje debe tener al menos 10 caracteres')
+      setIsLoading(false)
+      return
+    }
+    
     try {
-      await apiClient.post(ENDPOINTS.contact, {
-        name: formData.get('name'),
-        email: formData.get('email'),
-        message: formData.get('message'),
-      })
+      await apiClient.post(ENDPOINTS.contact, { name, email, message })
       toast.success('¡Mensaje enviado! Te responderemos pronto.')
+      setSubmitted(true)
     } catch (err: unknown) {
       toastError(err, undefined, 'Error al enviar el mensaje. Intenta más tarde.')
     } finally {
       setIsLoading(false)
-      setSubmitted(true)
     }
   }
 

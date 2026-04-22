@@ -13,11 +13,13 @@ const purchases_service_1 = require("./purchases.service");
 const purchases_repository_1 = require("./purchases.repository");
 const packs_repository_1 = require("../packs/packs.repository");
 const raffles_repository_1 = require("../raffles/raffles.repository");
+const email_module_1 = require("../email/email.module");
 let PurchasesModule = class PurchasesModule {
 };
 exports.PurchasesModule = PurchasesModule;
 exports.PurchasesModule = PurchasesModule = __decorate([
     (0, common_1.Module)({
+        imports: [email_module_1.EmailModule],
         controllers: [purchases_controller_1.PurchasesController],
         providers: [purchases_service_1.PurchasesService, purchases_repository_1.PurchasesRepository, packs_repository_1.PacksRepository, raffles_repository_1.RafflesRepository],
         exports: [purchases_service_1.PurchasesService, purchases_repository_1.PurchasesRepository],

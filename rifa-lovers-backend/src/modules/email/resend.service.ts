@@ -16,6 +16,18 @@ export interface ContactFormData {
   message: string
 }
 
+export interface PurchaseConfirmationData {
+  toEmail: string
+  toName: string
+  purchaseId: string
+  raffleName: string
+  packName: string
+  quantity: number
+  totalAmount: number
+  luckyPassCount: number
+  ticketNumbers: number[]
+}
+
 @Injectable()
 export class ResendService {
   private readonly logger = new Logger(ResendService.name)
@@ -139,6 +151,104 @@ export class ResendService {
     } catch (err) {
       this.logger.error(`Error enviando confirmación: ${err}`)
     }
+  }
+
+  async sendPurchaseConfirmation(data: PurchaseConfirmationData): Promise<void> {
+    if (!this.resend) {
+      this.logger.warn(`[EMAIL SKIP] Compra confirmada: ${data.toEmail} — ${data.purchaseId}`)
+      return
+    }
+
+    const from = this.getFromEmail('noreply')
+    const firstName = data.toName.split(' ')[0] || 'Comprador'
+
+    const html = this.buildPurchaseConfirmationTemplate({
+      firstName,
+      raffleName: data.raffleName,
+      packName: data.packName,
+      quantity: data.quantity,
+      totalAmount: data.totalAmount,
+      luckyPassCount: data.luckyPassCount,
+      ticketNumbers: data.ticketNumbers,
+      purchaseId: data.purchaseId,
+      frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+    })
+
+    try {
+      const { error } = await this.resend.emails.send({
+        from: `RifaLovers <${from}>`,
+        to: data.toEmail,
+        subject: `✅ Compra confirmada - ${data.raffleName}`,
+        html,
+      })
+
+      if (error) {
+        this.logger.error(`Error enviando confirmación de compra a ${data.toEmail}: ${error.message}`)
+        return
+      }
+
+      this.logger.log(`Confirmación de compra enviada a ${data.toEmail} — ${data.purchaseId}`)
+    } catch (err) {
+      this.logger.error(`Error enviando confirmación de compra a ${data.toEmail}: ${err}`)
+    }
+  }
+
+  private buildPurchaseConfirmationTemplate(params: {
+    firstName: string
+    raffleName: string
+    packName: string
+    quantity: number
+    totalAmount: number
+    luckyPassCount: number
+    ticketNumbers: number[]
+    purchaseId: string
+    frontendUrl: string
+  }): string {
+    const ticketList = params.ticketNumbers
+      .map((n) => `<span style="display:inline-block;background:#f9f5ff;border:1px solid #ede9fe;border-radius:6px;padding:6px 12px;margin:4px;font-size:14px;font-weight:600;color:#7c3aed;">#${String(n).padStart(5, '0')}</span>`)
+      .join('')
+
+    const formattedAmount = params.totalAmount.toLocaleString('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    })
+
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Compra confirmada</title></head>
+<body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
+  <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:40px 32px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:12px;">🎟️</div>
+      <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">¡Compra confirmada, ${params.firstName}!</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu participación está lista</p>
+    </div>
+    <div style="padding:32px;">
+      <div style="background:#f9f5ff;border:2px solid #ede9fe;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Rifa</p>
+        <p style="margin:0;font-size:20px;font-weight:700;color:#111827;">${params.raffleName}</p>
+        <p style="margin:12px 0 0;font-size:13px;color:#6b7280;">
+          ${params.quantity}x ${params.packName} · <strong style="color:#7c3aed;">${formattedAmount}</strong>
+        </p>
+      </div>
+      <div style="margin-bottom:24px;">
+        <p style="margin:0 0 12px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Tus LuckyPasses (${params.luckyPassCount})</p>
+        <div style="text-align:center;">${ticketList}</div>
+      </div>
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Guarda estos números, son tu ticket para ganar. ¡Mucha suerte en el sorteo!</p>
+      <div style="margin-top:28px;text-align:center;">
+        <a href="${params.frontendUrl}/dashboard" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+          Ver en mi cuenta
+        </a>
+      </div>
+    </div>
+    <div style="padding:20px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;">Orden: ${params.purchaseId} · RifaLovers · Chile</p>
+    </div>
+  </div>
+</body>
+</html>`
   }
 
   private buildWinnerEmailTemplate(params: {

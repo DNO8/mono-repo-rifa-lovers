@@ -8,6 +8,7 @@ import { PurchasesRepository } from './purchases.repository'
 import { PacksRepository } from '../packs/packs.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
 import { PrismaService } from '../../database/prisma.service'
+import { ResendService } from '../email/resend.service'
 import { CreatePurchaseDto, PurchaseResponseDto, CreatePurchaseResponseDto, RecentPurchaseDto } from './dto'
 import { Purchase, Raffle, UserPack, Pack } from '@prisma/client'
 import { mapPurchaseToDto } from './mappers/purchase.mapper'
@@ -27,6 +28,7 @@ export class PurchasesService {
     private readonly packsRepository: PacksRepository,
     private readonly rafflesRepository: RafflesRepository,
     private readonly prisma: PrismaService,
+    private readonly resendService: ResendService,
   ) {}
 
   async findByUser(userId: string): Promise<PurchaseResponseDto[]> {
@@ -337,17 +339,61 @@ export class PurchasesService {
       )
     })
 
-    // Obtener la compra actualizada con la relación
-    const purchaseWithRaffle = await this.purchasesRepository.findUnique(
+    // Obtener la compra actualizada con relaciones completas
+    const purchaseWithDetails = await this.purchasesRepository.findUnique(
       { id: purchaseId },
-      { raffle: true },
+      {
+        raffle: true,
+        user: { select: { email: true, firstName: true, lastName: true } },
+        userPacks: {
+          include: {
+            pack: true,
+            luckyPasses: { select: { ticketNumber: true } },
+          },
+        },
+      },
     )
 
-    if (!purchaseWithRaffle) {
+    if (!purchaseWithDetails) {
       throw new NotFoundException('Error al recuperar la compra actualizada')
     }
 
-    return mapPurchaseToDto(purchaseWithRaffle as PurchaseWithRaffle)
+    // Enviar email de confirmación (async - no bloquea respuesta)
+    if (purchaseWithDetails.user?.email) {
+      const userName = purchaseWithDetails.user.firstName
+        ? `${purchaseWithDetails.user.firstName} ${purchaseWithDetails.user.lastName || ''}`.trim()
+        : 'Comprador'
+
+      const ticketNumbers = purchaseWithDetails.userPacks.flatMap((up) =>
+        up.luckyPasses.map((lp) => lp.ticketNumber),
+      )
+
+      const pack = purchaseWithDetails.userPacks[0]?.pack
+      const packName = pack?.name || 'Pack'
+      const quantity = purchaseWithDetails.userPacks.reduce((sum, up) => sum + up.quantity, 0)
+      const luckyPassCount = ticketNumbers.length
+      const totalAmount = purchaseWithDetails.totalAmount?.toNumber() ?? 0
+      const raffleName = purchaseWithDetails.raffle?.title || 'Rifa'
+
+      // Fire-and-forget: no bloquear respuesta al webhook
+      this.resendService
+        .sendPurchaseConfirmation({
+          toEmail: purchaseWithDetails.user.email,
+          toName: userName,
+          purchaseId: purchaseWithDetails.id,
+          raffleName,
+          packName,
+          quantity,
+          totalAmount,
+          luckyPassCount,
+          ticketNumbers,
+        })
+        .catch((err) => {
+          this.logger.error(`Error enviando email de compra: ${err}`)
+        })
+    }
+
+    return mapPurchaseToDto(purchaseWithDetails as PurchaseWithRaffle)
   }
 
   /**

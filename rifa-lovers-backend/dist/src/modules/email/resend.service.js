@@ -122,6 +122,116 @@ let ResendService = ResendService_1 = class ResendService {
             this.logger.error(`Error enviando confirmación: ${err}`);
         }
     }
+    async sendPurchaseConfirmation(data) {
+        if (!this.resend) {
+            this.logger.warn(`[EMAIL SKIP] Compra confirmada: ${data.toEmail} — ${data.purchaseId}`);
+            return;
+        }
+        const from = this.getFromEmail('noreply');
+        const firstName = data.toName.split(' ')[0] || 'Comprador';
+        const html = this.buildPurchaseConfirmationTemplate({
+            firstName,
+            raffleName: data.raffleName,
+            packName: data.packName,
+            quantity: data.quantity,
+            totalAmount: data.totalAmount,
+            luckyPassCount: data.luckyPassCount,
+            ticketNumbers: data.ticketNumbers,
+            purchaseId: data.purchaseId,
+            frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+        });
+        try {
+            const { error } = await this.resend.emails.send({
+                from: `RifaLovers <${from}>`,
+                to: data.toEmail,
+                subject: `✅ Compra confirmada - ${data.raffleName}`,
+                html,
+            });
+            if (error) {
+                this.logger.error(`Error enviando confirmación de compra a ${data.toEmail}: ${error.message}`);
+                return;
+            }
+            this.logger.log(`Confirmación de compra enviada a ${data.toEmail} — ${data.purchaseId}`);
+        }
+        catch (err) {
+            this.logger.error(`Error enviando confirmación de compra a ${data.toEmail}: ${err}`);
+        }
+    }
+    buildPurchaseConfirmationTemplate(params) {
+        const ticketList = params.ticketNumbers
+            .map((n) => `<span style="display:inline-block;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;padding:6px 12px;margin:4px;font-size:14px;font-weight:600;color:#111827;">#${String(n).padStart(5, '0')}</span>`)
+            .join('');
+        const formattedAmount = params.totalAmount.toLocaleString('es-CL', {
+            style: 'currency',
+            currency: 'CLP',
+            minimumFractionDigits: 0,
+        });
+        return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Compra confirmada - RifaLovers</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#ffffff;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#ffffff;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <!-- Card Container -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="max-width:560px;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);border:1px solid #e5e7eb;">
+          <!-- Logo Header -->
+          <tr>
+            <td align="center" style="padding:40px 32px 24px;border-bottom:1px solid #f3f4f6;">
+              <div style="font-size:48px;margin-bottom:8px;">🎟️</div>
+              <div style="color:#7c3aed;font-size:24px;font-weight:800;">RifaLovers</div>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding:40px 32px;">
+              <h1 style="margin:0 0 8px;font-size:28px;font-weight:800;color:#111827;text-align:center;">¡Compra confirmada, ${params.firstName}!</h1>
+              <p style="margin:0 0 32px;font-size:16px;line-height:1.6;color:#374151;text-align:center;">Tu participación está lista en <span style="color:#7c3aed;font-weight:600;">${params.raffleName}</span></p>
+              
+              <!-- Order Summary Box -->
+              <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                <p style="margin:0 0 4px;font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Resumen de compra</p>
+                <p style="margin:8px 0;font-size:18px;font-weight:700;color:#111827;">${params.quantity}x ${params.packName}</p>
+                <p style="margin:0;font-size:16px;color:#7c3aed;font-weight:700;">${formattedAmount}</p>
+              </div>
+              
+              <!-- LuckyPasses Section -->
+              <div style="margin-bottom:24px;">
+                <p style="margin:0 0 16px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Tus LuckyPasses <span style="color:#7c3aed;">(${params.luckyPassCount})</span></p>
+                <div style="text-align:center;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                  ${ticketList}
+                </div>
+              </div>
+              
+              <p style="color:#374151;line-height:1.6;font-size:15px;margin-bottom:32px;text-align:center;">Guarda estos números, son tu <span style="color:#7c3aed;font-weight:600;">ticket para ganar</span>. ¡Mucha suerte en el sorteo!</p>
+              
+              <!-- CTA Button -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
+                <tr>
+                  <td align="center" style="border-radius:10px;background-color:#7c3aed;box-shadow:0 4px 12px rgba(124,58,237,0.3);">
+                    <a href="${params.frontendUrl}/dashboard" style="display:inline-block;padding:16px 40px;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;border-radius:10px;">Ver en mi cuenta</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+              <p style="color:#9ca3af;font-size:12px;margin:0 0 8px;">Orden: <span style="color:#7c3aed;">${params.purchaseId}</span> · <strong style="color:#111827;">RifaLovers</strong> · Chile</p>
+              <p style="color:#9ca3af;font-size:11px;margin:0;">© 2026 RifaLovers. Todos los derechos reservados.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+    }
     buildWinnerEmailTemplate(params) {
         return `<!DOCTYPE html>
 <html>

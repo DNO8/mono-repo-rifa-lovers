@@ -340,9 +340,9 @@ export class PurchasesService {
     })
 
     // Obtener la compra actualizada con relaciones completas
-    const purchaseWithDetails = await this.purchasesRepository.findUnique(
-      { id: purchaseId },
-      {
+    const purchaseWithDetails = await this.prisma.purchase.findUnique({
+      where: { id: purchaseId },
+      include: {
         raffle: true,
         user: { select: { email: true, firstName: true, lastName: true } },
         userPacks: {
@@ -352,7 +352,7 @@ export class PurchasesService {
           },
         },
       },
-    )
+    })
 
     if (!purchaseWithDetails) {
       throw new NotFoundException('Error al recuperar la compra actualizada')
@@ -365,7 +365,7 @@ export class PurchasesService {
         : 'Comprador'
 
       const ticketNumbers = purchaseWithDetails.userPacks.flatMap((up) =>
-        up.luckyPasses.map((lp) => lp.ticketNumber),
+        up.luckyPasses.map((lp) => lp.ticketNumber).filter((n): n is number => n !== null),
       )
 
       const pack = purchaseWithDetails.userPacks[0]?.pack

@@ -11,6 +11,17 @@ export interface ContactFormData {
     email: string;
     message: string;
 }
+export interface PurchaseConfirmationData {
+    toEmail: string;
+    toName: string;
+    purchaseId: string;
+    raffleName: string;
+    packName: string;
+    quantity: number;
+    totalAmount: number;
+    luckyPassCount: number;
+    ticketNumbers: number[];
+}
 export declare class ResendService {
     private readonly config;
     private readonly logger;
@@ -20,6 +31,8 @@ export declare class ResendService {
     sendWinnerEmail(data: WinnerEmailData): Promise<void>;
     sendContactFormToAdmin(data: ContactFormData): Promise<void>;
     sendContactConfirmationToUser(data: ContactFormData): Promise<void>;
+    sendPurchaseConfirmation(data: PurchaseConfirmationData): Promise<void>;
+    private buildPurchaseConfirmationTemplate;
     private buildWinnerEmailTemplate;
     private buildContactFormTemplate;
     private buildContactConfirmationTemplate;

@@ -16,15 +16,17 @@ const purchases_repository_1 = require("./purchases.repository");
 const packs_repository_1 = require("../packs/packs.repository");
 const raffles_repository_1 = require("../raffles/raffles.repository");
 const prisma_service_1 = require("../../database/prisma.service");
+const resend_service_1 = require("../email/resend.service");
 const purchase_mapper_1 = require("./mappers/purchase.mapper");
 const date_fns_1 = require("date-fns");
 const locale_1 = require("date-fns/locale");
 let PurchasesService = PurchasesService_1 = class PurchasesService {
-    constructor(purchasesRepository, packsRepository, rafflesRepository, prisma) {
+    constructor(purchasesRepository, packsRepository, rafflesRepository, prisma, resendService) {
         this.purchasesRepository = purchasesRepository;
         this.packsRepository = packsRepository;
         this.rafflesRepository = rafflesRepository;
         this.prisma = prisma;
+        this.resendService = resendService;
         this.logger = new common_1.Logger(PurchasesService_1.name);
     }
     async findByUser(userId) {
@@ -244,11 +246,50 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
             }
             this.logger.log(`Pago confirmado: purchase=${purchaseId}, luckyPasses=${totalLuckyPasses}, packsSold=${totalQuantity}`);
         });
-        const purchaseWithRaffle = await this.purchasesRepository.findUnique({ id: purchaseId }, { raffle: true });
-        if (!purchaseWithRaffle) {
+        const purchaseWithDetails = await this.prisma.purchase.findUnique({
+            where: { id: purchaseId },
+            include: {
+                raffle: true,
+                user: { select: { email: true, firstName: true, lastName: true } },
+                userPacks: {
+                    include: {
+                        pack: true,
+                        luckyPasses: { select: { ticketNumber: true } },
+                    },
+                },
+            },
+        });
+        if (!purchaseWithDetails) {
             throw new common_1.NotFoundException('Error al recuperar la compra actualizada');
         }
-        return (0, purchase_mapper_1.mapPurchaseToDto)(purchaseWithRaffle);
+        if (purchaseWithDetails.user?.email) {
+            const userName = purchaseWithDetails.user.firstName
+                ? `${purchaseWithDetails.user.firstName} ${purchaseWithDetails.user.lastName || ''}`.trim()
+                : 'Comprador';
+            const ticketNumbers = purchaseWithDetails.userPacks.flatMap((up) => up.luckyPasses.map((lp) => lp.ticketNumber).filter((n) => n !== null));
+            const pack = purchaseWithDetails.userPacks[0]?.pack;
+            const packName = pack?.name || 'Pack';
+            const quantity = purchaseWithDetails.userPacks.reduce((sum, up) => sum + up.quantity, 0);
+            const luckyPassCount = ticketNumbers.length;
+            const totalAmount = purchaseWithDetails.totalAmount?.toNumber() ?? 0;
+            const raffleName = purchaseWithDetails.raffle?.title || 'Rifa';
+            this.resendService
+                .sendPurchaseConfirmation({
+                toEmail: purchaseWithDetails.user.email,
+                toName: userName,
+                purchaseId: purchaseWithDetails.id,
+                raffleName,
+                packName,
+                quantity,
+                totalAmount,
+                luckyPassCount,
+                ticketNumbers,
+            })
+                .catch((err) => {
+                this.logger.error(`Error enviando email de compra: ${err}`);
+            });
+        }
+        return (0, purchase_mapper_1.mapPurchaseToDto)(purchaseWithDetails);
     }
     async findByProviderTransactionId(providerTransactionId) {
         const paymentTx = await this.prisma.paymentTransaction.findFirst({
@@ -303,6 +344,7 @@ exports.PurchasesService = PurchasesService = PurchasesService_1 = __decorate([
     __metadata("design:paramtypes", [purchases_repository_1.PurchasesRepository,
         packs_repository_1.PacksRepository,
         raffles_repository_1.RafflesRepository,
-        prisma_service_1.PrismaService])
+        prisma_service_1.PrismaService,
+        resend_service_1.ResendService])
 ], PurchasesService);
 //# sourceMappingURL=purchases.service.js.map

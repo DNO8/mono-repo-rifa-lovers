@@ -81,6 +81,7 @@ export declare class AdminService {
         firstName: string | null;
         lastName: string | null;
         phone: number | null;
+        address: string | null;
         role: import("@prisma/client").$Enums.UserRole;
     }>;
     updateUserStatus(userId: string, dto: UpdateUserStatusDto): Promise<{
@@ -93,6 +94,7 @@ export declare class AdminService {
         firstName: string | null;
         lastName: string | null;
         phone: number | null;
+        address: string | null;
         role: import("@prisma/client").$Enums.UserRole;
     }>;
     getAllUsers(skip?: number, take?: number): Promise<{

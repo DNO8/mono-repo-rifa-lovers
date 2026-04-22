@@ -7,6 +7,7 @@ export declare class AuthController {
     private readonly authService;
     private readonly supabaseService;
     private readonly config;
+    private readonly logger;
     constructor(authService: AuthService, supabaseService: SupabaseService, config: ConfigService);
     register(registerDto: RegisterDto): Promise<AuthResponseDto>;
     login(loginDto: LoginDto): Promise<AuthResponseDto>;
@@ -21,6 +22,7 @@ export declare class AuthController {
         message: string;
     }>;
     resetPassword(token: string, email: string, password: string): Promise<{
+        success: boolean;
         message: string;
     }>;
 }

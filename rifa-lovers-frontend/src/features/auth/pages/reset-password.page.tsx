@@ -44,11 +44,16 @@ export default function ResetPasswordPage() {
 
     try {
       // Update password via backend API
-      await apiClient.post(ENDPOINTS.auth.resetPassword, {
+      const response = await apiClient.post<{ success: boolean; message: string }>(ENDPOINTS.auth.resetPassword, {
         token,
         email,
         password,
       })
+
+      if (!response.data.success) {
+        setError(response.data.message)
+        return
+      }
 
       setIsSuccess(true)
       toast.success('Contraseña actualizada exitosamente')

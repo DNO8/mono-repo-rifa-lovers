@@ -75,6 +75,7 @@ export declare class AdminController {
         firstName: string | null;
         lastName: string | null;
         phone: number | null;
+        address: string | null;
         role: import("@prisma/client").$Enums.UserRole;
     }>;
     blockUser(userId: string, dto: UpdateUserStatusDto): Promise<{
@@ -87,6 +88,7 @@ export declare class AdminController {
         firstName: string | null;
         lastName: string | null;
         phone: number | null;
+        address: string | null;
         role: import("@prisma/client").$Enums.UserRole;
     }>;
     getJobsStatus(): Promise<{

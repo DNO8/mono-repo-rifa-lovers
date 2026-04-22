@@ -272,7 +272,8 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 },
             },
         });
-        return purchases.map((purchase) => {
+        return purchases
+            .map((purchase) => {
             const firstName = purchase.user?.firstName ?? 'Usuario';
             const lastName = purchase.user?.lastName ?? '';
             const lastNameInitial = lastName.charAt(0);
@@ -292,7 +293,8 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 timeAgo,
                 city: 'Santiago',
             };
-        });
+        })
+            .filter((purchase) => purchase.ticketCount > 0);
     }
 };
 exports.PurchasesService = PurchasesService;

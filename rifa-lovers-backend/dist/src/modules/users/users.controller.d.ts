@@ -17,6 +17,7 @@ export declare class UsersController {
         firstName: string | null;
         lastName: string | null;
         phone: number | null;
+        address: string | null;
         role: import("@prisma/client").$Enums.UserRole;
     }[]>;
     findOne(id: string): Promise<{
@@ -29,6 +30,7 @@ export declare class UsersController {
         firstName: string | null;
         lastName: string | null;
         phone: number | null;
+        address: string | null;
         role: import("@prisma/client").$Enums.UserRole;
     } | null>;
 }

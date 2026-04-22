@@ -21,7 +21,7 @@ let AuthService = class AuthService {
         this.supabaseService = supabaseService;
     }
     async register(registerDto) {
-        const { email, password, firstName, lastName, phone } = registerDto;
+        const { email, password, firstName, lastName, phone, address } = registerDto;
         const existingUser = await this.prisma.user.findFirst({
             where: { email: email.toLowerCase() },
         });
@@ -43,6 +43,7 @@ let AuthService = class AuthService {
                 lastName,
                 phone: parseFloat(phone),
                 role: 'customer',
+                address,
             },
         });
         return {

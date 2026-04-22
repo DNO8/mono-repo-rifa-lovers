@@ -16,16 +16,19 @@ class ContactFormDto {
 exports.ContactFormDto = ContactFormDto;
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'El nombre es requerido' }),
     (0, class_validator_1.MinLength)(2, { message: 'El nombre debe tener al menos 2 caracteres' }),
     (0, class_validator_1.MaxLength)(100, { message: 'El nombre no puede exceder 100 caracteres' }),
     __metadata("design:type", String)
 ], ContactFormDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsEmail)({}, { message: 'Debes proporcionar un email válido' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'El email es requerido' }),
     __metadata("design:type", String)
 ], ContactFormDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'El mensaje es requerido' }),
     (0, class_validator_1.MinLength)(10, { message: 'El mensaje debe tener al menos 10 caracteres' }),
     (0, class_validator_1.MaxLength)(2000, { message: 'El mensaje no puede exceder 2000 caracteres' }),
     __metadata("design:type", String)

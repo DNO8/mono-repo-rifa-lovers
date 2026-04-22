@@ -39,7 +39,9 @@ export function ContactForm() {
     }
     
     try {
-      await apiClient.post(ENDPOINTS.contact, { name, email, message })
+      const payload = { name, email, message }
+      console.log('[ContactForm] Sending payload:', payload)
+      await apiClient.post(ENDPOINTS.contact, payload)
       toast.success('¡Mensaje enviado! Te responderemos pronto.')
       setSubmitted(true)
     } catch (err: unknown) {

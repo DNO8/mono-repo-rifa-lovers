@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, HttpCode, HttpStatus, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, HttpCode, HttpStatus, Res, Logger } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, AuthResponseDto } from './dto';
@@ -8,6 +8,8 @@ import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly supabaseService: SupabaseService,
@@ -122,21 +124,24 @@ export class AuthController {
     @Body('token') token: string,
     @Body('email') email: string,
     @Body('password') password: string,
-  ): Promise<{ message: string }> {
-    // First verify the OTP
-    const { error: verifyError, data } = await this.supabaseService.verifyOTP(email, token, 'recovery');
+  ): Promise<{ success: boolean; message: string }> {
+    // Verify the access token and get user
+    const { data: userData, error: userError } = await this.supabaseService.getUser(token);
 
-    if (verifyError || !data.user) {
-      return { message: 'Token inválido o expirado.' };
+    if (userError || !userData.user) {
+      this.logger.warn(`Invalid or expired token for password reset: ${email}`);
+      return { success: false, message: 'Token inválido o expirado.' };
     }
 
-    // Update the password
-    const { error: updateError } = await this.supabaseService.updateUser(data.user.id, { password });
+    // Update the password using admin client
+    const { error: updateError } = await this.supabaseService.updateUser(userData.user.id, { password });
 
     if (updateError) {
-      return { message: 'Error al actualizar la contraseña. Intenta de nuevo.' };
+      this.logger.error(`Failed to update password for user ${userData.user.id}: ${updateError.message}`);
+      return { success: false, message: 'Error al actualizar la contraseña. Intenta de nuevo.' };
     }
 
-    return { message: 'Contraseña actualizada exitosamente.' };
+    this.logger.log(`Password successfully updated for user: ${userData.user.id}`);
+    return { success: true, message: 'Contraseña actualizada exitosamente.' };
   }
 }

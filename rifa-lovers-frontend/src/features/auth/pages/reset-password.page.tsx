@@ -22,7 +22,10 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (!token || !email) {
-      setError('Enlace inválido o expirado. Solicita un nuevo enlace de recuperación.')
+      // Defer setState to avoid cascading renders lint error
+      queueMicrotask(() => {
+        setError('Enlace inválido o expirado. Solicita un nuevo enlace de recuperación.')
+      })
     }
   }, [token, email])
 
@@ -50,8 +53,8 @@ export default function ResetPasswordPage() {
         password,
       })
 
-      if (!response.data.success) {
-        setError(response.data.message)
+      if (!response.success) {
+        setError(response.message)
         return
       }
 

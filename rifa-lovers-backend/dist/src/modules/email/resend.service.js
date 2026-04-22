@@ -181,8 +181,9 @@ let ResendService = ResendService_1 = class ResendService {
           <!-- Logo Header -->
           <tr>
             <td align="center" style="padding:40px 32px 24px;border-bottom:1px solid #f3f4f6;">
-              <div style="font-size:48px;margin-bottom:8px;">🎟️</div>
-              <div style="color:#7c3aed;font-size:24px;font-weight:800;">RifaLovers</div>
+              <div style="font-size:48px;margin-bottom:8px;">
+              <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;">
+              </div>
             </td>
           </tr>
           <!-- Content -->

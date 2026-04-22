@@ -23,6 +23,7 @@ const LazyRegisterPage = lazy(() => import('@/features/auth/pages/register.page'
 const LazyForgotPasswordPage = lazy(() => import('@/features/auth/pages/forgot-password.page'))
 const LazyResetPasswordPage = lazy(() => import('@/features/auth/pages/reset-password.page'))
 const LazyConfirmPage = lazy(() => import('@/features/auth/pages/confirm.page'))
+const LazyVerifyEmailPage = lazy(() => import('@/features/auth/pages/verify-email.page'))
 const LazyDashboardPage = lazy(() => import('@/features/dashboard/pages/dashboard.page'))
 const LazyCheckoutPage = lazy(() => import('@/features/checkout/pages/checkout.page'))
 const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffle-detail.page'))
@@ -112,6 +113,15 @@ export const router = createBrowserRouter([
     element: (
       <PageWithSuspense fallback={<AuthPageSkeleton />}>
         <LazyConfirmPage />
+      </PageWithSuspense>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/verificar-correo',
+    element: (
+      <PageWithSuspense fallback={<AuthPageSkeleton />}>
+        <LazyVerifyEmailPage />
       </PageWithSuspense>
     ),
     errorElement: <RouteErrorBoundary />,

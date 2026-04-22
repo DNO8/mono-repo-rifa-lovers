@@ -45,8 +45,8 @@ export default function RegisterPage() {
 
     try {
       await register(name, lastName, phone, email, password, address || undefined)
-      const { isAuthenticated } = useAuthStore.getState()
-      if (isAuthenticated) navigate('/dashboard')
+      // Redirect to email verification page - user must confirm email before accessing dashboard
+      navigate(`/verificar-correo?email=${encodeURIComponent(email)}`)
     } catch {
       // Error ya mostrado por auth store
     }

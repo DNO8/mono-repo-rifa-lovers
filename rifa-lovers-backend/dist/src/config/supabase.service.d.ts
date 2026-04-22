@@ -54,4 +54,12 @@ export declare class SupabaseService {
     }>;
     exchangeCodeForSession(code: string): Promise<import("@supabase/supabase-js").AuthTokenResponse>;
     verifyOTP(email: string, token: string, type: 'email' | 'recovery'): Promise<import("@supabase/supabase-js").AuthResponse>;
+    listUnconfirmedUsers(): Promise<{
+        data: null;
+        error: import("@supabase/supabase-js").AuthError;
+    } | {
+        data: import("@supabase/supabase-js").AuthUser[];
+        error: null;
+    }>;
+    deleteUser(userId: string): Promise<import("@supabase/supabase-js").UserResponse>;
 }

@@ -10,7 +10,7 @@ export class SupabaseService {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL') || '';
     const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_KEY') || '';
 
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.supabase = createClient(supabaseUrl, supabaseKey) as SupabaseClient;
   }
 
   getClient(): SupabaseClient {
@@ -94,5 +94,20 @@ export class SupabaseService {
       token,
       type,
     });
+  }
+
+  // Admin methods for user cleanup
+
+  async listUnconfirmedUsers() {
+    return this.supabase.auth.admin.listUsers().then(({ data, error }) => {
+      if (error) return { data: null, error };
+      // Filter users who haven't confirmed their email
+      const unconfirmedUsers = data?.users.filter((u) => !u.email_confirmed_at) || [];
+      return { data: unconfirmedUsers, error: null };
+    });
+  }
+
+  async deleteUser(userId: string) {
+    return this.supabase.auth.admin.deleteUser(userId);
   }
 }

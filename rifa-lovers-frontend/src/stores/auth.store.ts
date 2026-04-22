@@ -47,9 +47,10 @@ export const useAuthStore = create<AuthState>()(
     register: async (name: string, lastName: string, phone: string, email: string, password: string, address?: string) => {
       set({ isLoading: true, error: null })
       try {
-        const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password, address })
-        set({ user: data.user, token: data.accessToken, refreshToken: data.refreshToken ?? null, isAuthenticated: true, isLoading: false })
-        toast.success('¡Registro exitoso! Bienvenido a RifaLovers')
+        await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password, address })
+        // Don't authenticate automatically - user must confirm email first
+        set({ isLoading: false })
+        toast.success('¡Registro exitoso! Revisa tu correo para confirmar tu cuenta.')
       } catch (err: unknown) {
         const message = toastError(err, 'register', 'No se pudo completar el registro. Intenta de nuevo.')
         set({ error: message, isLoading: false })

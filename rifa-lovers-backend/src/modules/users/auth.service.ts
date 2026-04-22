@@ -67,6 +67,11 @@ export class AuthService {
       throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
     }
 
+    // Check if email is confirmed
+    if (!supabaseData.user.email_confirmed_at) {
+      throw new UnauthorizedException('Debes confirmar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: supabaseData.user.id },
     });

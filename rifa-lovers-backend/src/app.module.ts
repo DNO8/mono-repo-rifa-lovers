@@ -17,7 +17,8 @@ import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { TicketReservationsModule } from './modules/ticket-reservations/ticket-reservations.module';
-import { ContactModule } from './modules/contact/contact.module';
+import { ContactModule } from './modules/contact/contact.module'
+import { TasksModule } from './modules/tasks/tasks.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { throttlerConfig } from './config/throttler.config';
 
@@ -48,6 +49,7 @@ import { throttlerConfig } from './config/throttler.config';
     JobsModule,
     TicketReservationsModule,
     ContactModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [

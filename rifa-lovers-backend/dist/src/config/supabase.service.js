@@ -88,6 +88,17 @@ let SupabaseService = class SupabaseService {
             type,
         });
     }
+    async listUnconfirmedUsers() {
+        return this.supabase.auth.admin.listUsers().then(({ data, error }) => {
+            if (error)
+                return { data: null, error };
+            const unconfirmedUsers = data?.users.filter((u) => !u.email_confirmed_at) || [];
+            return { data: unconfirmedUsers, error: null };
+        });
+    }
+    async deleteUser(userId) {
+        return this.supabase.auth.admin.deleteUser(userId);
+    }
 };
 exports.SupabaseService = SupabaseService;
 exports.SupabaseService = SupabaseService = __decorate([

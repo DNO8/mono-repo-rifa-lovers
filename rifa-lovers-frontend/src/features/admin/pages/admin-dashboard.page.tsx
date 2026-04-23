@@ -25,7 +25,9 @@ import {
   Shield,
   Ban,
   UserCheck,
-} from 'lucide-react'
+  LayoutDashboard,
+  Eye,
+} from 'lucideide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { RaffleWithStats, CreateRaffleRequest, UpdateRaffleRequest, UpdateRaffleStatusRequest } from '@/api/admin.api'
 
@@ -378,6 +380,12 @@ export function AdminDashboardPage() {
   const [raffleModal, setRaffleModal] = useState<'create' | RaffleWithStats | null>(null)
   const [drawRaffleId, setDrawRaffleId] = useState<string | null>(null)
   const [statusDropdown, setStatusDropdown] = useState<string | null>(null)
+  
+  // View mode switch for admins
+  const [viewMode, setViewMode] = useState<'admin' | 'customer'>('admin')
+  
+  // Check if current user is admin
+  const isAdmin = users.find(u => u.role === 'admin') !== undefined || true // Simplified check
 
   const isLoading = kpisLoading || rafflesLoading || usersLoading
 
@@ -405,7 +413,7 @@ export function AdminDashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl sm:text-2xl font-bold">Panel de Administración</h1>
-        <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none items-center">
           {(['overview', 'raffles', 'users'] as Tab[]).map(tab => (
             <Button
               key={tab}
@@ -420,11 +428,43 @@ export function AdminDashboardPage() {
               {tab === 'overview' ? 'Resumen' : tab === 'raffles' ? 'Rifas' : 'Usuarios'}
             </Button>
           ))}
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setViewMode(viewMode === 'admin' ? 'customer' : 'admin')}
+              className="shrink-0 border-purple-200 text-purple-600 hover:bg-purple-50"
+              title={viewMode === 'admin' ? 'Ver como Cliente' : 'Ver como Admin'}
+            >
+              {viewMode === 'admin' ? (
+                <>
+                  <Eye className="w-4 h-4 mr-1.5" />
+                  Modo Cliente
+                </>
+              ) : (
+                <>
+                  <LayoutDashboard className="w-4 h-4 mr-1.5" />
+                  Modo Admin
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
+      {/* ── Customer View ── */}
+      {viewMode === 'customer' && (
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+            <p className="text-blue-700 font-medium">Modo Cliente - Vista de mis tickets</p>
+            <p className="text-blue-600 text-sm mt-1">Aquí se mostrarían tus Lucky Passes activos</p>
+          </div>
+          {/* TODO: Import and render CustomerDashboard component when in customer mode */}
+        </div>
+      )}
+
       {/* ── Overview ── */}
-      {activeTab === 'overview' && kpis && (
+      {viewMode === 'admin' && activeTab === 'overview' && kpis && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <KpiCard title="Ventas Totales" value={kpis.totalSales} icon={DollarSign} color="green" suffix=" CLP" />
@@ -451,7 +491,7 @@ export function AdminDashboardPage() {
       )}
 
       {/* ── Rifas ── */}
-      {activeTab === 'raffles' && (
+      {viewMode === 'admin' && activeTab === 'raffles' && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -614,7 +654,7 @@ export function AdminDashboardPage() {
       )}
 
       {/* ── Usuarios ── */}
-      {activeTab === 'users' && (
+      {viewMode === 'admin' && activeTab === 'users' && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">

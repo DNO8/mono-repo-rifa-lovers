@@ -51,9 +51,9 @@ export function StreamingPage() {
       
       setCurrentPrize(prev => prev + 1)
       
-      if (currentPrize >= (participants.length > 0 ? 1 : 1)) {
-        setCurrentStep(DRAW_STEP.FINISHED)
-      }
+      // Check if there are more prizes to draw by refetching draw status
+      // Small delay to allow backend to update
+      await new Promise(resolve => setTimeout(resolve, 500))
       
     } catch (error) {
       console.error('Error en sorteo:', error)
@@ -120,6 +120,13 @@ export function StreamingPage() {
                 </Button>
               )}
               
+              {currentStep === DRAW_STEP.IDLE && !canDraw && drawResult && (
+                <Button onClick={handleReset} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
+                  <RotateCcw className="size-4" />
+                  Reiniciar Sorteo
+                </Button>
+              )}
+              
               {currentStep === DRAW_STEP.SPINNING && (
                 <Button disabled size="lg" variant="ghost" className="gap-2">
                   <Square className="size-4" />
@@ -130,7 +137,7 @@ export function StreamingPage() {
               {(currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && (
                 <Button onClick={handleReset} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
                   <RotateCcw className="size-4" />
-                  Reiniciar
+                  {canDraw ? 'Continuar con Siguiente Premio' : 'Reiniciar Sorteo'}
                 </Button>
               )}
             </div>

@@ -211,14 +211,16 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         const textX = centerX + Math.cos(midAngle) * textRadius
         const textY = centerY + Math.sin(midAngle) * textRadius
 
-        // Draw ticket number - rotated to face center
+        // Draw ticket number - rotated to face center (vertical/radial text)
         ctx.save()
         ctx.translate(textX, textY)
-        // Rotate text to be readable (pointing toward center or outward)
-        let textRotation = midAngle + Math.PI / 2
-        // Ensure text is always upright
+        // Rotate text to be vertical and readable
+        // Text should point toward center like a pizza slice
+        let textRotation = midAngle - Math.PI / 2
+        // Ensure text is always upright (not upside down)
+        // If angle is in left half of wheel, flip text so it's readable
         if (midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2) {
-          textRotation = midAngle - Math.PI / 2
+          textRotation = midAngle + Math.PI / 2
         }
         ctx.rotate(textRotation)
         

@@ -10,9 +10,10 @@ export interface HistoryItem {
 
 interface TicketHistoryProps {
   items: HistoryItem[]
+  onItemClick?: (item: HistoryItem) => void
 }
 
-export function TicketHistory({ items }: TicketHistoryProps) {
+export function TicketHistory({ items, onItemClick }: TicketHistoryProps) {
   return (
     <div className="glass-medium rounded-2xl p-5">
       <div className="flex items-center justify-between mb-5">
@@ -30,6 +31,7 @@ export function TicketHistory({ items }: TicketHistoryProps) {
             <div
               key={item.id}
               className="flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-bg-purple-soft/50 cursor-pointer"
+              onClick={() => onItemClick?.(item)}
             >
               <div className="size-10 rounded-full bg-linear-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0">
                 <Gift className="size-4 text-primary" />

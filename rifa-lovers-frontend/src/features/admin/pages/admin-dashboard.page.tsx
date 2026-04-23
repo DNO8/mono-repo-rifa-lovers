@@ -109,7 +109,7 @@ function RaffleFormModal({
   onSubmit: (data: CreateRaffleRequest | UpdateRaffleRequest) => Promise<void>
 }) {
   // Parse initial dates (converting from UTC to Chile local)
-  const parseInitialDateTime = (dateStr?: string) => {
+  const parseInitialDateTime = (dateStr: string | null | undefined) => {
     if (!dateStr) return { date: '', time: '' }
     const date = new Date(dateStr)
     // Convert to Chile timezone (UTC-4)

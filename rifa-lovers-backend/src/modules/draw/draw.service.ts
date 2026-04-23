@@ -61,6 +61,21 @@ export class DrawService {
       throw new BadRequestException(`La rifa debe estar cerrada para ejecutar el sorteo (estado actual: ${raffle.status})`)
     }
 
+    // DEBUG: Ver todos los premios de la rifa
+    const allPrizes = await this.prisma.prize.findMany({
+      where: { raffleId: raffleId },
+      include: { 
+        milestone: true,
+        prizeWinners: true 
+      },
+      orderBy: { milestone: { sortOrder: 'asc' } }
+    })
+    
+    this.logger.log(`[DEBUG] Total premios en rifa: ${allPrizes.length}`)
+    allPrizes.forEach((p, idx) => {
+      this.logger.log(`[DEBUG] Premio ${idx + 1}: id=${p.id}, name=${p.name}, milestoneUnlocked=${p.milestone?.isUnlocked}, winnersCount=${p.prizeWinners?.length || 0}`)
+    })
+
     // 2. Obtener el premio a sortear
     let prizeToDraw: { id: string; name: string | null; description: string | null; milestone: { sortOrder: number } | null } | null = null
     

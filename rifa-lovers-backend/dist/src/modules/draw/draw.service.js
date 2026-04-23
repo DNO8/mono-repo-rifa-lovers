@@ -40,6 +40,18 @@ let DrawService = DrawService_1 = class DrawService {
         if (raffle.status !== 'closed') {
             throw new common_1.BadRequestException(`La rifa debe estar cerrada para ejecutar el sorteo (estado actual: ${raffle.status})`);
         }
+        const allPrizes = await this.prisma.prize.findMany({
+            where: { raffleId: raffleId },
+            include: {
+                milestone: true,
+                prizeWinners: true
+            },
+            orderBy: { milestone: { sortOrder: 'asc' } }
+        });
+        this.logger.log(`[DEBUG] Total premios en rifa: ${allPrizes.length}`);
+        allPrizes.forEach((p, idx) => {
+            this.logger.log(`[DEBUG] Premio ${idx + 1}: id=${p.id}, name=${p.name}, milestoneUnlocked=${p.milestone?.isUnlocked}, winnersCount=${p.prizeWinners?.length || 0}`);
+        });
         let prizeToDraw = null;
         if (prizeId) {
             prizeToDraw = await this.prisma.prize.findFirst({

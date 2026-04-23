@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Logger } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
-import { AdminService, KpiData, RaffleWithStats } from './admin.service'
+import { AdminService, Participant, KpiData, RaffleWithStats } from './admin.service'
+import { DrawService } from '../draw/draw.service'
 import { CreateRaffleDto, UpdateRaffleDto, UpdateRaffleStatusDto, UpdateUserRoleDto, UpdateUserStatusDto } from './dto'
 import { CurrentUser } from '../../common/decorators'
 import { RolesGuard } from '../users/guards/roles.guard'
@@ -14,6 +15,7 @@ export class AdminController {
 
   constructor(
     private readonly adminService: AdminService,
+    private readonly drawService: DrawService,
     private readonly jobsService: JobsService,
   ) {}
 
@@ -50,6 +52,40 @@ export class AdminController {
   ) {
     this.logger.log(`PATCH /admin/raffles/${raffleId}/status`)
     return this.adminService.updateRaffleStatus(raffleId, dto)
+  }
+
+  // ==================== STREAMING / SORTEO ====================
+
+  @Get('raffles/:id/detail')
+  async getRaffleById(@Param('id') raffleId: string) {
+    this.logger.log(`GET /admin/raffles/${raffleId}/detail`)
+    return this.adminService.getRaffleDetail(raffleId)
+  }
+
+  @Get('raffles/:id/participants')
+  async getRaffleParticipants(@Param('id') raffleId: string): Promise<Participant[]> {
+    this.logger.log(`GET /admin/raffles/${raffleId}/participants`)
+    return this.adminService.getRaffleParticipants(raffleId)
+  }
+
+  @Get('raffles/:id/draw/status')
+  async getDrawStatus(@Param('id') raffleId: string) {
+    this.logger.log(`GET /admin/raffles/${raffleId}/draw/status`)
+    const canExecute = await this.drawService.canExecuteDraw(raffleId)
+    const results = await this.drawService.getDrawResults(raffleId)
+    return {
+      canExecute,
+      results: results && results.winners.length > 0 ? results : null,
+    }
+  }
+
+  @Post('raffles/:id/draw')
+  async executeDraw(
+    @Param('id') raffleId: string,
+    @CurrentUser('id') operatorId: string,
+  ) {
+    this.logger.log(`POST /admin/raffles/${raffleId}/draw - Operator: ${operatorId}`)
+    return this.drawService.executeDraw(raffleId, operatorId)
   }
 
   // ==================== KPIs ====================

@@ -67,6 +67,15 @@ export interface RaffleDetails {
   createdAt: string;
 }
 
+// Participant for admin view
+export interface Participant {
+  id: string;
+  name: string;
+  email: string;
+  ticketCount: number;
+  tickets: number[];
+}
+
 // Export constants for runtime use
 export { DRAW_STEP, RAFFLE_STATUS };
 export type { DrawStep };

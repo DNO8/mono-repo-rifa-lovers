@@ -87,6 +87,79 @@ let AdminService = AdminService_1 = class AdminService {
         this.logger.log(`Estado actualizado: ${raffle.status} → ${dto.status}`);
         return updated;
     }
+    async getRaffleDetail(raffleId) {
+        this.logger.log(`Obteniendo detalle de rifa: ${raffleId}`);
+        const raffle = await this.prisma.raffle.findUnique({
+            where: { id: raffleId },
+            include: {
+                _count: {
+                    select: {
+                        luckyPasses: true,
+                        purchases: true,
+                    },
+                },
+            },
+        });
+        if (!raffle) {
+            throw new common_1.NotFoundException('Rifa no encontrada');
+        }
+        return {
+            id: raffle.id,
+            title: raffle.title,
+            description: raffle.description,
+            goalPacks: raffle.goalPacks,
+            maxTicketNumber: raffle.maxTicketNumber,
+            status: raffle.status,
+            createdAt: raffle.createdAt.toISOString(),
+            endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+            totalPasses: raffle._count.luckyPasses,
+            totalPurchases: raffle._count.purchases,
+        };
+    }
+    async getRaffleParticipants(raffleId) {
+        this.logger.log(`Obteniendo participantes de rifa: ${raffleId}`);
+        const raffle = await this.prisma.raffle.findUnique({
+            where: { id: raffleId },
+        });
+        if (!raffle) {
+            throw new common_1.NotFoundException('Rifa no encontrada');
+        }
+        const luckyPasses = await this.prisma.luckyPass.findMany({
+            where: { raffleId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                    },
+                },
+            },
+        });
+        const participantsMap = new Map();
+        for (const pass of luckyPasses) {
+            if (!pass.user)
+                continue;
+            const userId = pass.user.id;
+            if (!participantsMap.has(userId)) {
+                const fullName = `${pass.user.firstName ?? ''} ${pass.user.lastName ?? ''}`.trim();
+                participantsMap.set(userId, {
+                    id: userId,
+                    name: fullName || (pass.user.email ?? ''),
+                    email: pass.user.email ?? '',
+                    ticketCount: 0,
+                    tickets: [],
+                });
+            }
+            const participant = participantsMap.get(userId);
+            participant.ticketCount++;
+            if (pass.ticketNumber !== null) {
+                participant.tickets.push(pass.ticketNumber);
+            }
+        }
+        return Array.from(participantsMap.values());
+    }
     async getAllRaffles() {
         const raffles = await this.prisma.raffle.findMany({
             orderBy: { createdAt: 'desc' },

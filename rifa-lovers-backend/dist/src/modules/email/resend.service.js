@@ -271,7 +271,7 @@ let ResendService = ResendService_1 = class ResendService {
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:32px;text-align:center;">
-      <h1 style="color:#fff;margin:0;font-size:24px;font-weight:800;">📩 Nuevo mensaje de contacto</h1>
+      <h1 style="color:#000;margin:0;font-size:24px;font-weight:800;">📩 Nuevo mensaje de contacto</h1>
     </div>
     <div style="padding:32px;">
       <div style="margin-bottom:24px;">

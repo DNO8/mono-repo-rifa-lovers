@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -8,45 +8,31 @@ import { RuletaCanvas } from '../components/ruleta-canvas'
 import { ParticipantesList } from '../components/participantes-list'
 import { GanadoresList } from '../components/ganadores-list'
 import { NumeroAguaModal } from '../components/numero-agua-modal'
-import { useCustomerRaffle } from '@/hooks/use-customer-raffle'
-import { useCustomerDraw } from '@/hooks/use-customer-draw'
-import type { CustomerDrawParticipant, CustomerDrawResult, DrawStep } from '@/types/streaming.types'
+import { useStreaming } from '@/hooks/use-streaming'
+import type { CustomerDrawResult, DrawStep } from '@/types/streaming.types'
 import { DRAW_STEP } from '@/types/streaming.types'
 
 export function StreamingPage() {
   const { raffleId } = useParams<{ raffleId: string }>()
-  const { raffle, isLoading: isLoadingRaffle } = useCustomerRaffle(raffleId!)
   const { 
-    availability, 
-    isLoading: isLoadingAvailability,
-    checkAvailability,
-    executeDraw 
-  } = useCustomerDraw(raffleId!)
+    raffle,
+    participants,
+    drawStatus,
+    isLoadingRaffle,
+    isLoadingDrawStatus,
+    executeDraw,
+  } = useStreaming(raffleId)
 
   const [currentStep, setCurrentStep] = useState<DrawStep>(DRAW_STEP.IDLE)
-  const [participants, setParticipants] = useState<CustomerDrawParticipant[]>([])
   const [currentPrize, setCurrentPrize] = useState(1)
   const [drawResult, setDrawResult] = useState<CustomerDrawResult | null>(null)
   const [showWaterModal, setShowWaterModal] = useState(false)
-  const [waterInfo, setWaterInfo] = useState<{ participant: CustomerDrawParticipant; passNumber: number } | null>(null)
 
-  // Cargar disponibilidad inicial
-  useEffect(() => {
-    if (raffleId) {
-      checkAvailability()
-    }
-  }, [raffleId, checkAvailability])
-
-  // Actualizar participantes cuando cambia la disponibilidad
-  useEffect(() => {
-    if (availability?.participants) {
-      // Use setTimeout to avoid synchronous setState in effect
-      setTimeout(() => setParticipants(availability.participants), 0)
-    }
-  }, [availability])
+  // Check if user can draw
+  const canDraw = drawStatus?.canExecute ?? false
 
   const handleStartDraw = async () => {
-    if (!availability?.canDraw) return
+    if (!canDraw) return
     
     setCurrentStep(DRAW_STEP.LOADING)
     
@@ -54,40 +40,16 @@ export function StreamingPage() {
       // Cargar participantes en la ruleta
       await new Promise(resolve => setTimeout(resolve, 2000)) // Simular carga
       setCurrentStep(DRAW_STEP.SPINNING)
-      
-      // Simular animación de ruleta
-      await new Promise(resolve => setTimeout(resolve, 5000))
-      
-      // Ejecutar sorteo real
+
+      // Ejecutar sorteo en el backend
       const result = await executeDraw()
+      
       setDrawResult(result)
-      
-      // Mostrar números al agua (simulado)
-      if (result.discarded.length > 0) {
-        for (const discarded of result.discarded.slice(0, 2)) {
-          const participant = participants.find(p => p.userId === discarded.userId)
-          if (participant) {
-            setWaterInfo({ participant, passNumber: discarded.passNumber })
-            setShowWaterModal(true)
-            setCurrentStep(DRAW_STEP.WATER)
-            await new Promise(resolve => setTimeout(resolve, 3000))
-            setShowWaterModal(false)
-          }
-        }
-      }
-      
-      // Mostrar ganador
       setCurrentStep(DRAW_STEP.WINNER)
-      await new Promise(resolve => setTimeout(resolve, 3000))
       
-      // Si hay más premios, continuar
-      if (currentPrize < availability.prizesCount) {
-        setCurrentPrize(currentPrize + 1)
-        setCurrentStep(DRAW_STEP.IDLE)
-        // Filtrar participantes para remover ganador
-        const winner = result.winners[0]
-        setParticipants(prev => prev.filter(p => p.userId !== winner.userId))
-      } else {
+      setCurrentPrize(prev => prev + 1)
+      
+      if (currentPrize >= (participants.length > 0 ? 1 : 1)) {
         setCurrentStep(DRAW_STEP.FINISHED)
       }
       
@@ -101,11 +63,9 @@ export function StreamingPage() {
     setCurrentStep(DRAW_STEP.IDLE)
     setCurrentPrize(1)
     setDrawResult(null)
-    setParticipants(availability?.participants || [])
-    checkAvailability()
   }
 
-  if (isLoadingRaffle || isLoadingAvailability) {
+  if (isLoadingRaffle || isLoadingDrawStatus) {
     return (
       <div className="min-h-screen bg-bg-dark flex items-center justify-center">
         <div className="text-white">Cargando...</div>
@@ -134,13 +94,13 @@ export function StreamingPage() {
                   {raffle.status === 'closed' ? 'Lista para sorteo' : raffle.status}
                 </Badge>
                 <span className="text-sm text-text-secondary">
-                  {participants.length} participantes • {availability?.prizesCount || 0} premios
+                  {participants.length} participantes • 1 premio
                 </span>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
-              {currentStep === DRAW_STEP.IDLE && availability?.canDraw && (
+              {currentStep === DRAW_STEP.IDLE && canDraw && (
                 <Button onClick={handleStartDraw} size="lg" className="gap-2">
                   <Play className="size-4" />
                   Iniciar Premio {currentPrize}
@@ -212,8 +172,8 @@ export function StreamingPage() {
       <NumeroAguaModal
         isOpen={showWaterModal}
         onClose={() => setShowWaterModal(false)}
-        participant={waterInfo?.participant}
-        passNumber={waterInfo?.passNumber}
+        participant={null}
+        passNumber={null}
       />
     </div>
   )

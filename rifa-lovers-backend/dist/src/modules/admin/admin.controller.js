@@ -18,13 +18,15 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const client_1 = require("@prisma/client");
 const admin_service_1 = require("./admin.service");
+const draw_service_1 = require("../draw/draw.service");
 const dto_1 = require("./dto");
 const decorators_1 = require("../../common/decorators");
 const roles_guard_1 = require("../users/guards/roles.guard");
 const jobs_service_1 = require("../jobs/jobs.service");
 let AdminController = AdminController_1 = class AdminController {
-    constructor(adminService, jobsService) {
+    constructor(adminService, drawService, jobsService) {
         this.adminService = adminService;
+        this.drawService = drawService;
         this.jobsService = jobsService;
         this.logger = new common_1.Logger(AdminController_1.name);
     }
@@ -43,6 +45,27 @@ let AdminController = AdminController_1 = class AdminController {
     async updateRaffleStatus(raffleId, dto) {
         this.logger.log(`PATCH /admin/raffles/${raffleId}/status`);
         return this.adminService.updateRaffleStatus(raffleId, dto);
+    }
+    async getRaffleById(raffleId) {
+        this.logger.log(`GET /admin/raffles/${raffleId}/detail`);
+        return this.adminService.getRaffleDetail(raffleId);
+    }
+    async getRaffleParticipants(raffleId) {
+        this.logger.log(`GET /admin/raffles/${raffleId}/participants`);
+        return this.adminService.getRaffleParticipants(raffleId);
+    }
+    async getDrawStatus(raffleId) {
+        this.logger.log(`GET /admin/raffles/${raffleId}/draw/status`);
+        const canExecute = await this.drawService.canExecuteDraw(raffleId);
+        const results = await this.drawService.getDrawResults(raffleId);
+        return {
+            canExecute,
+            results: results && results.winners.length > 0 ? results : null,
+        };
+    }
+    async executeDraw(raffleId, operatorId) {
+        this.logger.log(`POST /admin/raffles/${raffleId}/draw - Operator: ${operatorId}`);
+        return this.drawService.executeDraw(raffleId, operatorId);
     }
     async getKpis() {
         this.logger.log('GET /admin/kpis');
@@ -103,6 +126,35 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "updateRaffleStatus", null);
 __decorate([
+    (0, common_1.Get)('raffles/:id/detail'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getRaffleById", null);
+__decorate([
+    (0, common_1.Get)('raffles/:id/participants'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getRaffleParticipants", null);
+__decorate([
+    (0, common_1.Get)('raffles/:id/draw/status'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getDrawStatus", null);
+__decorate([
+    (0, common_1.Post)('raffles/:id/draw'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, decorators_1.CurrentUser)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "executeDraw", null);
+__decorate([
     (0, common_1.Get)('kpis'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -149,6 +201,7 @@ exports.AdminController = AdminController = AdminController_1 = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), new roles_guard_1.RolesGuard([client_1.UserRole.admin, client_1.UserRole.operator])),
     __metadata("design:paramtypes", [admin_service_1.AdminService,
+        draw_service_1.DrawService,
         jobs_service_1.JobsService])
 ], AdminController);
 //# sourceMappingURL=admin.controller.js.map

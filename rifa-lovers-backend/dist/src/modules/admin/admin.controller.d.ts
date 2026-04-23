@@ -1,11 +1,13 @@
-import { AdminService, KpiData, RaffleWithStats } from './admin.service';
+import { AdminService, Participant, KpiData, RaffleWithStats } from './admin.service';
+import { DrawService } from '../draw/draw.service';
 import { CreateRaffleDto, UpdateRaffleDto, UpdateRaffleStatusDto, UpdateUserRoleDto, UpdateUserStatusDto } from './dto';
 import { JobsService } from '../jobs/jobs.service';
 export declare class AdminController {
     private readonly adminService;
+    private readonly drawService;
     private readonly jobsService;
     private readonly logger;
-    constructor(adminService: AdminService, jobsService: JobsService);
+    constructor(adminService: AdminService, drawService: DrawService, jobsService: JobsService);
     createRaffle(dto: CreateRaffleDto, adminId: string): Promise<{
         id: string;
         organizationId: string | null;
@@ -46,6 +48,29 @@ export declare class AdminController {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    getRaffleById(raffleId: string): Promise<{
+        id: string;
+        title: string | null;
+        description: string | null;
+        goalPacks: number;
+        maxTicketNumber: number;
+        status: import("@prisma/client").$Enums.RaffleStatus;
+        createdAt: string;
+        endDate: string | null;
+        totalPasses: number;
+        totalPurchases: number;
+    }>;
+    getRaffleParticipants(raffleId: string): Promise<Participant[]>;
+    getDrawStatus(raffleId: string): Promise<{
+        canExecute: {
+            canDraw: boolean;
+            reason?: string;
+            prizesCount: number;
+            activePassesCount: number;
+        };
+        results: import("../draw/draw.service").DrawResult | null;
+    }>;
+    executeDraw(raffleId: string, operatorId: string): Promise<import("../draw/draw.service").DrawResult>;
     getKpis(): Promise<KpiData>;
     getAllUsers(skip?: string, take?: string): Promise<{
         users: {

@@ -108,12 +108,29 @@ function RaffleFormModal({
   onClose: () => void
   onSubmit: (data: CreateRaffleRequest | UpdateRaffleRequest) => Promise<void>
 }) {
+  // Parse initial dates (converting from UTC to Chile local)
+  const parseInitialDateTime = (dateStr?: string) => {
+    if (!dateStr) return { date: '', time: '' }
+    const date = new Date(dateStr)
+    // Convert to Chile timezone (UTC-4)
+    const chileDate = new Date(date.getTime() - (4 * 60 * 60 * 1000))
+    return {
+      date: chileDate.toISOString().slice(0, 10),
+      time: chileDate.toISOString().slice(11, 16),
+    }
+  }
+
+  const initialStart = parseInitialDateTime(initial?.startDate)
+  const initialEnd = parseInitialDateTime(initial?.endDate)
+
   const [form, setForm] = useState({
     title: initial?.title || '',
     description: initial?.description || '',
     goalPacks: initial?.goalPacks?.toString() || '',
-    startDate: initial?.startDate ? initial.startDate.slice(0, 10) : '',
-    endDate: initial?.endDate ? initial.endDate.slice(0, 10) : '',
+    startDate: initialStart.date,
+    startTime: initialStart.time || '00:00',
+    endDate: initialEnd.date,
+    endTime: initialEnd.time || '23:59',
   })
   const [saving, setSaving] = useState(false)
 
@@ -121,12 +138,22 @@ function RaffleFormModal({
     e.preventDefault()
     setSaving(true)
     try {
+      // Convert Chile local datetime to UTC ISO string
+      const toUTC = (date: string, time: string) => {
+        if (!date) return undefined
+        const [year, month, day] = date.split('-').map(Number)
+        const [hours, minutes] = time.split(':').map(Number)
+        // Create date in Chile timezone (UTC-4), then convert to UTC
+        const chileDate = new Date(Date.UTC(year, month - 1, day, hours + 4, minutes))
+        return chileDate.toISOString()
+      }
+
       await onSubmit({
         title: form.title,
         description: form.description || undefined,
         goalPacks: parseInt(form.goalPacks, 10),
-        startDate: form.startDate || undefined,
-        endDate: form.endDate || undefined,
+        startDate: toUTC(form.startDate, form.startTime),
+        endDate: toUTC(form.endDate, form.endTime),
       })
       onClose()
     } catch (err: unknown) {
@@ -172,23 +199,39 @@ function RaffleFormModal({
               onChange={e => setForm(f => ({ ...f, goalPacks: e.target.value }))}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Inicio</label>
+          {/* Start Date & Time */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Inicio (Chile)</label>
+            <div className="grid grid-cols-2 gap-2">
               <input
                 type="date"
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 value={form.startDate}
                 onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
               />
+              <input
+                type="time"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={form.startTime}
+                onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))}
+              />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cierre</label>
+          </div>
+          {/* End Date & Time */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cierre (Chile)</label>
+            <div className="grid grid-cols-2 gap-2">
               <input
                 type="date"
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 value={form.endDate}
                 onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+              />
+              <input
+                type="time"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                value={form.endTime}
+                onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))}
               />
             </div>
           </div>

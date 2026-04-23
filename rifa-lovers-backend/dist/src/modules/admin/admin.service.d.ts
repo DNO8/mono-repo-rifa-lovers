@@ -26,6 +26,13 @@ export interface RaffleWithStats {
     progressPercentage: number;
     totalRevenue: number;
 }
+export interface Participant {
+    id: string;
+    name: string;
+    email: string;
+    ticketCount: number;
+    tickets: number[];
+}
 export declare class AdminService {
     private readonly prisma;
     private readonly logger;
@@ -69,6 +76,19 @@ export declare class AdminService {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    getRaffleDetail(raffleId: string): Promise<{
+        id: string;
+        title: string | null;
+        description: string | null;
+        goalPacks: number;
+        maxTicketNumber: number;
+        status: import("@prisma/client").$Enums.RaffleStatus;
+        createdAt: string;
+        endDate: string | null;
+        totalPasses: number;
+        totalPurchases: number;
+    }>;
+    getRaffleParticipants(raffleId: string): Promise<Participant[]>;
     getAllRaffles(): Promise<RaffleWithStats[]>;
     getKpis(): Promise<KpiData>;
     updateUserRole(userId: string, dto: UpdateUserRoleDto): Promise<{

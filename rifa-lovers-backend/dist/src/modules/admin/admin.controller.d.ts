@@ -70,7 +70,12 @@ export declare class AdminController {
         };
         results: import("../draw/draw.service").DrawResult | null;
     }>;
-    executeDraw(raffleId: string, operatorId: string): Promise<import("../draw/draw.service").DrawResult>;
+    executeDraw(raffleId: string, operatorId: string, prizeId?: string): Promise<import("../draw/draw.service").DrawResult>;
+    resetDraw(raffleId: string, operatorId: string): Promise<{
+        success: boolean;
+        message: string;
+        raffleId: string;
+    }>;
     getKpis(): Promise<KpiData>;
     getAllUsers(skip?: string, take?: string): Promise<{
         users: {

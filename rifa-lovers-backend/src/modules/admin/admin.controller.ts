@@ -83,9 +83,19 @@ export class AdminController {
   async executeDraw(
     @Param('id') raffleId: string,
     @CurrentUser('id') operatorId: string,
+    @Body('prizeId') prizeId?: string,
   ) {
-    this.logger.log(`POST /admin/raffles/${raffleId}/draw - Operator: ${operatorId}`)
-    return this.drawService.executeDraw(raffleId, operatorId)
+    this.logger.log(`POST /admin/raffles/${raffleId}/draw - Operator: ${operatorId}${prizeId ? ` for prize ${prizeId}` : ''}`)
+    return this.drawService.executeDraw(raffleId, operatorId, prizeId)
+  }
+
+  @Post('raffles/:id/draw/reset')
+  async resetDraw(
+    @Param('id') raffleId: string,
+    @CurrentUser('id') operatorId: string,
+  ) {
+    this.logger.log(`POST /admin/raffles/${raffleId}/draw/reset - Operator: ${operatorId}`)
+    return this.drawService.resetDraw(raffleId, operatorId)
   }
 
   // ==================== KPIs ====================

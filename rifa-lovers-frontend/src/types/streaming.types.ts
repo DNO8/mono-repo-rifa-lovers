@@ -76,6 +76,28 @@ export interface Participant {
   tickets: number[];
 }
 
+// Lucky Pass Slot for roulette - individual ticket representation
+export interface LuckyPassSlot {
+  passId: string;
+  passNumber: number;
+  userId: string;
+  userName: string;
+  userEmail: string | null;
+  userInitials: string;
+}
+
+// Extended winner info with display data
+export interface WinnerDisplayInfo {
+  userId: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  prizeId: string;
+  prizeName: string;
+  luckyPassId: string;
+  passNumber: number;
+}
+
 // Export constants for runtime use
 export { DRAW_STEP, RAFFLE_STATUS };
 export type { DrawStep };

@@ -17,10 +17,12 @@ export function StreamingPage() {
   const { 
     raffle,
     participants,
+    luckyPassSlots,
     drawStatus,
     isLoadingRaffle,
     isLoadingDrawStatus,
     executeDraw,
+    resetDraw,
   } = useStreaming(raffleId)
 
   const [currentStep, setCurrentStep] = useState<DrawStep>(DRAW_STEP.IDLE)
@@ -59,10 +61,21 @@ export function StreamingPage() {
     }
   }
 
-  const handleReset = () => {
-    setCurrentStep(DRAW_STEP.IDLE)
-    setCurrentPrize(1)
-    setDrawResult(null)
+  const handleReset = async () => {
+    const confirmed = window.confirm(
+      '¿Estás seguro de reiniciar el sorteo?\n\nSe eliminarán todos los ganadores y se podrá volver a sortear.'
+    )
+    if (!confirmed) return
+
+    try {
+      await resetDraw()
+      setCurrentStep(DRAW_STEP.IDLE)
+      setCurrentPrize(1)
+      setDrawResult(null)
+    } catch (error) {
+      console.error('Error reiniciando sorteo:', error)
+      alert('Error al reiniciar el sorteo. Intenta nuevamente.')
+    }
   }
 
   if (isLoadingRaffle || isLoadingDrawStatus) {
@@ -103,7 +116,7 @@ export function StreamingPage() {
               {currentStep === DRAW_STEP.IDLE && canDraw && (
                 <Button onClick={handleStartDraw} size="lg" className="gap-2">
                   <Play className="size-4" />
-                  Iniciar Premio {currentPrize}
+                  Iniciar Sorteo Premio {currentPrize}
                 </Button>
               )}
               
@@ -115,7 +128,7 @@ export function StreamingPage() {
               )}
               
               {(currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && (
-                <Button onClick={handleReset} variant="outline" size="lg" className="gap-2">
+                <Button onClick={handleReset} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
                   <RotateCcw className="size-4" />
                   Reiniciar
                 </Button>
@@ -148,7 +161,7 @@ export function StreamingPage() {
           {/* Centro - Ruleta */}
           <section className="flex items-center justify-center">
             <RuletaCanvas
-              participants={participants}
+              slots={luckyPassSlots}
               currentStep={currentStep}
               winner={drawResult?.winners[0]}
             />

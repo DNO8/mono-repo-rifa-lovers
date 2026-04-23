@@ -20,6 +20,7 @@ export interface DrawResult {
     drawnAt: Date;
     winners: DrawWinner[];
     discarded: DrawDiscarded[];
+    isComplete?: boolean;
 }
 export interface UserDetails {
     id: string;

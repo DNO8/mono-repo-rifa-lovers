@@ -24,6 +24,7 @@ export interface DrawResult {
   drawnAt: Date;
   winners: DrawWinner[];
   discarded: DrawDiscarded[];
+  isComplete?: boolean; // Indica si todos los premios han sido sorteados
 }
 
 // Interface for user details from repository

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
 import { streamingService, type AdminDrawStatus } from '@/services/streaming.service'
-import type { RaffleDetails, CustomerDrawResult, CustomerDrawParticipant } from '@/types/streaming.types'
+import type { RaffleDetails, CustomerDrawResult, CustomerDrawParticipant, LuckyPassSlot } from '@/types/streaming.types'
 import { USER_ROLE } from '@/types/domain.types'
 
 interface StreamingState {
@@ -19,6 +19,8 @@ interface StreamingActions {
   refreshParticipants: () => Promise<void>
   refreshDrawStatus: () => Promise<void>
   executeDraw: () => Promise<CustomerDrawResult>
+  resetDraw: () => Promise<void>
+  luckyPassSlots: LuckyPassSlot[]
 }
 
 export function useStreaming(raffleId: string | undefined): StreamingState & StreamingActions {
@@ -126,12 +128,12 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
     }
   }, [raffleId, isAdminOrOperator, setLoading])
 
-  // Execute draw
-  const executeDraw = useCallback(async (): Promise<CustomerDrawResult> => {
+  // Execute draw for a specific prize or the next pending prize
+  const executeDraw = useCallback(async (prizeId?: string): Promise<CustomerDrawResult> => {
     if (!raffleId) throw new Error('No raffle ID provided')
     
     const result = isAdminOrOperator
-      ? await streamingService.executeAdminDraw(raffleId)
+      ? await streamingService.executeAdminDraw(raffleId, prizeId)
       : await streamingService.executeDraw(raffleId)
     
     // Refresh draw status after execution
@@ -139,6 +141,52 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
     
     return result
   }, [raffleId, isAdminOrOperator, refreshDrawStatus])
+
+  // Reset draw (clear winners and allow re-draw)
+  const resetDraw = useCallback(async (): Promise<void> => {
+    if (!raffleId) throw new Error('No raffle ID provided')
+    if (!isAdminOrOperator) throw new Error('Only admin/operator can reset draw')
+    
+    await streamingService.resetAdminDraw(raffleId)
+    
+    // Refresh all data after reset
+    await Promise.all([
+      refreshRaffle(),
+      refreshParticipants(),
+      refreshDrawStatus()
+    ])
+  }, [raffleId, isAdminOrOperator, refreshRaffle, refreshParticipants, refreshDrawStatus])
+
+  // Transform participants into individual lucky pass slots for roulette
+  const luckyPassSlots = useMemo<LuckyPassSlot[]>(() => {
+    const slots: LuckyPassSlot[] = []
+    
+    state.participants.forEach((participant) => {
+      // Create a slot for each lucky pass the participant has
+      participant.luckyPassIds.forEach((passId, index) => {
+        // Get the ticket number from the passId (typically formatted like "raffleId-number")
+        const passNumber = parseInt(passId.split('-').pop() || String(index + 1), 10) || index + 1
+        
+        const firstName = participant.firstName || ''
+        const lastName = participant.lastName || ''
+        const email = participant.email || ''
+        
+        slots.push({
+          passId,
+          passNumber,
+          userId: participant.userId,
+          userName: `${firstName} ${lastName}`.trim() || email || 'Usuario',
+          userEmail: participant.email,
+          userInitials: firstName && lastName 
+            ? `${firstName[0]}${lastName[0]}`.toUpperCase()
+            : firstName?.[0]?.toUpperCase() || email?.[0]?.toUpperCase() || '?'
+        })
+      })
+    })
+    
+    // Sort by pass number for consistent ordering
+    return slots.sort((a, b) => a.passNumber - b.passNumber)
+  }, [state.participants])
 
   // Initial fetch - use ref to track if we've already fetched
   const hasFetchedRef = useRef(false)
@@ -158,5 +206,7 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
     refreshParticipants,
     refreshDrawStatus,
     executeDraw,
+    resetDraw,
+    luckyPassSlots,
   }
 }

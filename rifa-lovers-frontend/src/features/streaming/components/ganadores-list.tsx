@@ -12,6 +12,7 @@ interface GanadoresListProps {
     prizeId: string
     prizeName: string
     luckyPassId: string
+    passNumber?: number
   }>
 }
 
@@ -67,9 +68,12 @@ export function GanadoresList({ winners }: GanadoresListProps) {
                   {winner.email}
                 </div>
                 
-                <div className="flex items-center gap-1">
-                  <Trophy className="size-3 text-yellow-500" />
-                  <span className="text-xs font-medium text-yellow-400">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-primary font-medium">
+                    Lucky Pass #{winner.passNumber || '?'}
+                  </span>
+                  <span className="text-text-secondary">•</span>
+                  <span className="text-yellow-400 font-medium">
                     {winner.prizeName}
                   </span>
                 </div>

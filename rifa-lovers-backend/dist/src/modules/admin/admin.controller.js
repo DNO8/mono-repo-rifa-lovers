@@ -63,9 +63,13 @@ let AdminController = AdminController_1 = class AdminController {
             results: results && results.winners.length > 0 ? results : null,
         };
     }
-    async executeDraw(raffleId, operatorId) {
-        this.logger.log(`POST /admin/raffles/${raffleId}/draw - Operator: ${operatorId}`);
-        return this.drawService.executeDraw(raffleId, operatorId);
+    async executeDraw(raffleId, operatorId, prizeId) {
+        this.logger.log(`POST /admin/raffles/${raffleId}/draw - Operator: ${operatorId}${prizeId ? ` for prize ${prizeId}` : ''}`);
+        return this.drawService.executeDraw(raffleId, operatorId, prizeId);
+    }
+    async resetDraw(raffleId, operatorId) {
+        this.logger.log(`POST /admin/raffles/${raffleId}/draw/reset - Operator: ${operatorId}`);
+        return this.drawService.resetDraw(raffleId, operatorId);
     }
     async getKpis() {
         this.logger.log('GET /admin/kpis');
@@ -150,10 +154,19 @@ __decorate([
     (0, common_1.Post)('raffles/:id/draw'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, decorators_1.CurrentUser)('id')),
+    __param(2, (0, common_1.Body)('prizeId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "executeDraw", null);
+__decorate([
+    (0, common_1.Post)('raffles/:id/draw/reset'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, decorators_1.CurrentUser)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], AdminController.prototype, "executeDraw", null);
+], AdminController.prototype, "resetDraw", null);
 __decorate([
     (0, common_1.Get)('kpis'),
     __metadata("design:type", Function),

@@ -28,7 +28,7 @@ export declare class DrawService {
     private readonly logger;
     constructor(prisma: PrismaService, notifications: NotificationsService);
     private buildUserFullName;
-    executeDraw(raffleId: string, adminUserId: string): Promise<DrawResult>;
+    executeDraw(raffleId: string, adminUserId: string, prizeId?: string): Promise<DrawResult>;
     getDrawResults(raffleId: string): Promise<DrawResult | null>;
     canExecuteDraw(raffleId: string): Promise<{
         canDraw: boolean;
@@ -38,4 +38,9 @@ export declare class DrawService {
     }>;
     getWinnersCount(raffleId: string): Promise<number>;
     getUnlockedPrizesCount(raffleId: string): Promise<number>;
+    resetDraw(raffleId: string, operatorId: string): Promise<{
+        success: boolean;
+        message: string;
+        raffleId: string;
+    }>;
 }

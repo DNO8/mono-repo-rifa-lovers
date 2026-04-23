@@ -44,9 +44,13 @@ export class StreamingService {
     return data as AdminDrawStatus
   }
 
-  async executeAdminDraw(raffleId: string): Promise<CustomerDrawResult> {
-    const data = await apiClient.post(`/admin/raffles/${raffleId}/draw`)
+  async executeAdminDraw(raffleId: string, prizeId?: string): Promise<CustomerDrawResult> {
+    const data = await apiClient.post(`/admin/raffles/${raffleId}/draw`, { prizeId })
     return parseApiResponse(data, isCustomerDrawResult, 'Formato de resultado de sorteo inválido')
+  }
+
+  async resetAdminDraw(raffleId: string): Promise<void> {
+    await apiClient.post(`/admin/raffles/${raffleId}/draw/reset`)
   }
 }
 

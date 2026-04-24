@@ -27,7 +27,7 @@ import {
   UserCheck,
   LayoutDashboard,
   Eye,
-} from 'lucideide-react'
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { RaffleWithStats, CreateRaffleRequest, UpdateRaffleRequest, UpdateRaffleStatusRequest } from '@/api/admin.api'
 

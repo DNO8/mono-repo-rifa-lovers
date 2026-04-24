@@ -123,7 +123,7 @@ export function StreamingPage() {
               )}
               
               {currentStep === DRAW_STEP.IDLE && !canDraw && drawResult && (
-                <Button onClick={handleReset} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
+                <Button onClick={openResetModal} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
                   <RotateCcw className="size-4" />
                   Reiniciar Sorteo
                 </Button>
@@ -217,8 +217,8 @@ export function StreamingPage() {
         isOpen={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={confirmReset}
-        hasWinners={drawResult?.winners.length > 0}
-        raffleTitle={raffle?.title}
+        hasWinners={(drawResult?.winners?.length ?? 0) > 0}
+        raffleTitle={raffle?.title ?? undefined}
       />
     </div>
   )

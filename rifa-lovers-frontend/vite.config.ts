@@ -34,29 +34,34 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Manual code splitting for better caching and smaller initial chunks
-        manualChunks: {
+        manualChunks: (id: string) => {
           // Core React ecosystem
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+            return 'vendor-react'
+          }
           // State management & data fetching
-          'vendor-state': ['zustand', '@tanstack/react-query', 'axios'],
+          if (id.includes('zustand') || id.includes('@tanstack/react-query') || id.includes('axios')) {
+            return 'vendor-state'
+          }
           // UI Components (Radix primitives)
-          'vendor-ui': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-slot',
-          ],
+          if (id.includes('@radix-ui/')) {
+            return 'vendor-ui'
+          }
           // 3D & Animation (heavy libraries, load only when needed)
-          'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei'],
-          'vendor-anim': ['gsap', '@gsap/react'],
+          if (id.includes('three') || id.includes('@react-three/fiber') || id.includes('@react-three/drei')) {
+            return 'vendor-3d'
+          }
+          if (id.includes('gsap') || id.includes('@gsap/react')) {
+            return 'vendor-anim'
+          }
           // Icons
-          'vendor-icons': ['lucide-react'],
+          if (id.includes('lucide-react')) {
+            return 'vendor-icons'
+          }
           // Utilities
-          'vendor-utils': ['clsx', 'tailwind-merge', 'date-fns'],
+          if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('date-fns')) {
+            return 'vendor-utils'
+          }
         },
       },
     },

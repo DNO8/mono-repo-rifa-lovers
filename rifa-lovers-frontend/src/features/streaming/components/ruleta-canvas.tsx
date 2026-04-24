@@ -44,16 +44,6 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
     return () => window.removeEventListener('resize', updateSize)
   }, [])
 
-  // Calculate winning slot index based on rotation
-  const getWinningSlotIndex = useCallback(() => {
-    if (slots.length === 0) return -1
-    const normalizedRotation = ((rotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-    const anglePerSlot = (2 * Math.PI) / slots.length
-    const topAngle = (3 * Math.PI) / 2
-    const slotIndex = Math.round(((topAngle - normalizedRotation) / anglePerSlot) % slots.length)
-    return ((slotIndex % slots.length) + slots.length) % slots.length
-  }, [slots.length, rotation])
-
   // Calculate responsive font size based on number of slots
   const getFontSize = (slotCount: number, baseSize: number) => {
     if (slotCount <= 5) return baseSize * 0.9
@@ -81,10 +71,15 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      // Get winning slot index
-      const winningIndex = currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED
-        ? getWinningSlotIndex()
-        : -1
+      // Get winning slot index - calculate inline to avoid stale closure
+      let winningIndex = -1
+      if ((currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && slots.length > 0) {
+        const normalizedRotation = ((rotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
+        const anglePerSlot = (2 * Math.PI) / slots.length
+        const topAngle = (3 * Math.PI) / 2
+        const slotIndex = Math.round(((topAngle - normalizedRotation) / anglePerSlot) % slots.length)
+        winningIndex = ((slotIndex % slots.length) + slots.length) % slots.length
+      }
 
       if (slots.length === 0) {
         // Draw empty wheel
@@ -388,7 +383,7 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [slots, currentStep, rotation, targetRotation, winner, canvasSize, getWinningSlotIndex])
+  }, [slots, currentStep, rotation, targetRotation, winner, canvasSize])
 
   // Start spinning when step changes to spinning
   useEffect(() => {

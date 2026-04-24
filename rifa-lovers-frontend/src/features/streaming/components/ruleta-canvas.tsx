@@ -131,6 +131,53 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         ctx.fillStyle = '#FF4DA6'
         ctx.fillText('"Iniciar Sorteo"', centerX, centerY + 15)
         
+        // Draw center text FIRST (before center hole so it doesn't get covered)
+        if (currentStep === DRAW_STEP.SPINNING) {
+          ctx.beginPath()
+          ctx.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI)
+          ctx.fillStyle = '#1a1a1a'
+          ctx.fill()
+          ctx.strokeStyle = '#FF4DA6'
+          ctx.lineWidth = 4
+          ctx.stroke()
+
+          ctx.fillStyle = '#FF4DA6'
+          ctx.font = `bold ${canvasSize * 0.08}px sans-serif`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.shadowColor = '#FF4DA6'
+          ctx.shadowBlur = 15
+          ctx.fillText('SORTEANDO', centerX, centerY - 10)
+          ctx.shadowBlur = 0
+          
+          ctx.font = `bold ${canvasSize * 0.05}px sans-serif`
+          ctx.fillStyle = '#fff'
+          ctx.fillText('...', centerX, centerY + 20)
+        } else if (currentStep === DRAW_STEP.WATER) {
+          ctx.fillStyle = '#00BFFF'
+          ctx.font = `bold ${canvasSize * 0.07}px sans-serif`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.shadowColor = '#00BFFF'
+          ctx.shadowBlur = 15
+          ctx.fillText('AL AGUA', centerX, centerY)
+          ctx.shadowBlur = 0
+        } else if ((currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && winner) {
+          // Winner announcement in center
+          ctx.fillStyle = '#FFD700'
+          ctx.font = `bold ${canvasSize * 0.06}px sans-serif`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.shadowColor = '#FFD700'
+          ctx.shadowBlur = 20
+          ctx.fillText('¡GANADOR!', centerX, centerY - 15)
+          ctx.shadowBlur = 0
+          
+          ctx.font = `bold ${canvasSize * 0.04}px sans-serif`
+          ctx.fillStyle = '#fff'
+          ctx.fillText(`#${winner.passNumber}`, centerX, centerY + 20)
+        }
+        
         // Draw center hole
         ctx.beginPath()
         ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI)
@@ -152,12 +199,7 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         ctx.stroke()
 
         ctx.fillStyle = '#FF4DA6'
-        ctx.font = `bold ${canvasSize * 0.06}px sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('Cargando...', centerX, centerY)
-        
-        // Draw center hole
+        // Draw center hole FIRST
         ctx.beginPath()
         ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI)
         ctx.fillStyle = '#0a0a0a'
@@ -165,6 +207,13 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         ctx.strokeStyle = '#FF4DA6'
         ctx.lineWidth = 2
         ctx.stroke()
+        
+        // Draw loading text ON TOP of center hole
+        ctx.font = `bold ${canvasSize * 0.05}px sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillStyle = '#FF4DA6'
+        ctx.fillText('Cargando...', centerX, centerY)
         return
       }
 
@@ -172,7 +221,7 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
       const angleStep = (2 * Math.PI) / slots.length
       const fontSize = getFontSize(slots.length, canvasSize * 0.06)
 
-      slots.forEach((slot, index) => {
+      slots.forEach((slot: LuckyPassSlot, index: number) => {
         const startAngle = angleStep * index + rotation - Math.PI / 2
         const endAngle = startAngle + angleStep
         const midAngle = startAngle + angleStep / 2
@@ -214,13 +263,14 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         // Draw ticket number - rotated to face center (vertical/radial text)
         ctx.save()
         ctx.translate(textX, textY)
-        // Rotate text to be vertical and readable
-        // Text should point toward center like a pizza slice
-        let textRotation = midAngle - Math.PI / 2
-        // Ensure text is always upright (not upside down)
-        // If angle is in left half of wheel, flip text so it's readable
+        // Calculate rotation to make text point toward center (radial)
+        // Text angle = slice midpoint angle + 90 degrees (PI/2)
+        // This makes text perpendicular to the radius, pointing toward center
+        let textRotation = midAngle + Math.PI / 2
+        // Ensure text is always upright and readable
+        // If text would be upside down (left side of wheel), flip it 180 degrees
         if (midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2) {
-          textRotation = midAngle + Math.PI / 2
+          textRotation += Math.PI
         }
         ctx.rotate(textRotation)
         
@@ -248,6 +298,11 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
       ctx.lineWidth = 3
       ctx.stroke()
 
+      // Draw center text ON TOP of center hole
+      ctx.save()
+      // ...winner text drawing code...
+      ctx.restore()
+
       // Draw center text
       if (currentStep === DRAW_STEP.SPINNING) {
         ctx.fillStyle = '#FF4DA6'
@@ -272,20 +327,28 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         ctx.fillText('AL AGUA', centerX, centerY)
         ctx.shadowBlur = 0
       } else if ((currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && winner) {
-        // Winner announcement in center
-        ctx.fillStyle = '#FFD700'
-        ctx.font = `bold ${canvasSize * 0.06}px sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.shadowColor = '#FFD700'
-        ctx.shadowBlur = 20
-        ctx.fillText('¡GANADOR!', centerX, centerY - 15)
-        ctx.shadowBlur = 0
-        
-        ctx.font = `bold ${canvasSize * 0.04}px sans-serif`
-        ctx.fillStyle = '#fff'
-        ctx.fillText(`#${winner.passNumber}`, centerX, centerY + 20)
-      }
+      // Draw center hole FIRST (text will be drawn on top of it)
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI)
+      ctx.fillStyle = '#0a0a0a'
+      ctx.fill()
+      ctx.strokeStyle = '#7B3FE4'
+      ctx.lineWidth = 3
+      ctx.stroke()
+
+      // Draw winner text ON TOP of center hole
+      ctx.font = `bold ${canvasSize * 0.05}px sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = '#FFD700'
+      ctx.shadowColor = '#FFD700'
+      ctx.shadowBlur = 20
+      ctx.fillText('¡GANADOR!', centerX, centerY - 15)
+      ctx.shadowBlur = 0
+      
+      ctx.font = `bold ${canvasSize * 0.04}px sans-serif`
+      ctx.fillStyle = '#fff'
+      ctx.fillText(`#${winner.passNumber}`, centerX, centerY + 20)
 
       // Draw outer ring
       ctx.beginPath()
@@ -340,19 +403,19 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
 
   return (
     <div ref={containerRef} className="flex flex-col items-center space-y-4 w-full">
-      <div className="relative">
+      <div className="relative isolate">
         <canvas
           ref={canvasRef}
-          className="border-4 border-primary rounded-full shadow-2xl shadow-primary/20 max-w-full"
+          className="border-4 border-primary rounded-full shadow-2xl shadow-primary/20 max-w-full relative z-0"
           style={{
             background: 'radial-gradient(circle, #1a1a1a 0%, #0a0a0a 100%)',
             maxWidth: '100%',
             height: 'auto',
           }}
         />
-        {/* Winner indicator label */}
+        {/* Winner indicator label - z-10 to appear above canvas */}
         {(currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && winner && (
-          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
+          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse z-100">
             GANADOR
           </div>
         )}
@@ -361,7 +424,7 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
       {(currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && winner && (
         <div className="text-center animate-bounce bg-linear-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-xl p-6 shadow-lg">
           <div className="text-3xl font-bold text-yellow-400 mb-2">
-            🏆 ¡FELICITACIONES! 🏆
+             ¡FELICITACIONES! 
           </div>
           <div className="text-xl text-white font-semibold">
             {winner.firstName} {winner.lastName}

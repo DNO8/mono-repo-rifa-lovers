@@ -136,8 +136,11 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
       ? await streamingService.executeAdminDraw(raffleId, prizeId)
       : await streamingService.executeDraw(raffleId)
     
-    // Refresh draw status after execution
-    await refreshDrawStatus()
+    // Delay refresh to allow animation to complete (3 seconds)
+    // This prevents the component from re-rendering while the roulette is spinning
+    setTimeout(() => {
+      refreshDrawStatus()
+    }, 3000)
     
     return result
   }, [raffleId, isAdminOrOperator, refreshDrawStatus])

@@ -8,6 +8,7 @@ import { RuletaCanvas } from '../components/ruleta-canvas'
 import { ParticipantesList } from '../components/participantes-list'
 import { GanadoresList } from '../components/ganadores-list'
 import { NumeroAguaModal } from '../components/numero-agua-modal'
+import { ResetConfirmModal } from '../components/reset-confirm-modal'
 import { useStreaming } from '@/hooks/use-streaming'
 import type { CustomerDrawResult, DrawStep } from '@/types/streaming.types'
 import { DRAW_STEP } from '@/types/streaming.types'
@@ -15,15 +16,17 @@ import { DRAW_STEP } from '@/types/streaming.types'
 export function StreamingPage() {
   const { raffleId } = useParams<{ raffleId: string }>()
   const { 
-    raffle,
-    participants,
+    raffle, 
+    participants, 
     luckyPassSlots,
-    drawStatus,
     isLoadingRaffle,
     isLoadingDrawStatus,
+    drawStatus,
     executeDraw,
     resetDraw,
-  } = useStreaming(raffleId)
+  } = useStreaming(raffleId!)
+  
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false)
 
   const [currentStep, setCurrentStep] = useState<DrawStep>(DRAW_STEP.IDLE)
   const [currentPrize, setCurrentPrize] = useState(1)
@@ -61,12 +64,12 @@ export function StreamingPage() {
     }
   }
 
-  const handleReset = async () => {
-    const confirmed = window.confirm(
-      '¿Estás seguro de reiniciar el sorteo?\n\nSe eliminarán todos los ganadores y se podrá volver a sortear.'
-    )
-    if (!confirmed) return
+  const openResetModal = () => {
+    setIsResetModalOpen(true)
+  }
 
+  const confirmReset = async () => {
+    setIsResetModalOpen(false)
     try {
       await resetDraw()
       setCurrentStep(DRAW_STEP.IDLE)
@@ -74,7 +77,6 @@ export function StreamingPage() {
       setDrawResult(null)
     } catch (error) {
       console.error('Error reiniciando sorteo:', error)
-      alert('Error al reiniciar el sorteo. Intenta nuevamente.')
     }
   }
 
@@ -135,9 +137,23 @@ export function StreamingPage() {
               )}
               
               {(currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && (
-                <Button onClick={handleReset} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
-                  <RotateCcw className="size-4" />
-                  {canDraw ? 'Continuar con Siguiente Premio' : 'Reiniciar Sorteo'}
+                <Button 
+                  onClick={openResetModal} 
+                  variant={canDraw ? "default" : "outline"} 
+                  size="lg" 
+                  className={canDraw ? "gap-2" : "gap-2 border-red-500 text-red-400 hover:bg-red-500/10"}
+                >
+                  {canDraw ? (
+                    <>
+                      <Play className="size-4" />
+                      Continuar con Siguiente Premio
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="size-4" />
+                      Reiniciar Sorteo
+                    </>
+                  )}
                 </Button>
               )}
             </div>
@@ -194,6 +210,15 @@ export function StreamingPage() {
         onClose={() => setShowWaterModal(false)}
         participant={null}
         passNumber={null}
+      />
+
+      {/* Modal Confirmar Reinicio */}
+      <ResetConfirmModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirm={confirmReset}
+        hasWinners={drawResult?.winners.length > 0}
+        raffleTitle={raffle?.title}
       />
     </div>
   )

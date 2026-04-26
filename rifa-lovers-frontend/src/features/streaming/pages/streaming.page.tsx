@@ -12,6 +12,8 @@ import { useStreaming } from '@/hooks/use-streaming'
 import type { CustomerDrawResult, DrawStep, LuckyPassSlot } from '@/types/streaming.types'
 import { DRAW_STEP } from '@/types/streaming.types'
 
+type DrawWinner = CustomerDrawResult['winners'][number]
+
 // Animation constants
 const LOADING_DURATION = 1500
 const MIN_SPIN_DURATION = 5000
@@ -33,7 +35,8 @@ export function StreamingPage() {
   
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState<DrawStep>(DRAW_STEP.IDLE)
-  const [drawResult, setDrawResult] = useState<CustomerDrawResult | null>(null)
+  const [allWinners, setAllWinners] = useState<DrawWinner[]>([])
+  const [lastWinner, setLastWinner] = useState<DrawWinner | null>(null)
   const [targetWinnerSlot, setTargetWinnerSlot] = useState<LuckyPassSlot | null>(null)
   
   // Refs to prevent race conditions
@@ -80,7 +83,11 @@ export function StreamingPage() {
       ) || null
       
       setTargetWinnerSlot(winnerSlot)
-      setDrawResult(result)
+      const newWinner = result.winners[0] ?? null
+      setLastWinner(newWinner)
+      if (newWinner) {
+        setAllWinners(prev => [...prev, newWinner])
+      }
       
       // Allow animation to complete deceleration
       await new Promise(resolve => setTimeout(resolve, remainingTime))
@@ -117,7 +124,8 @@ export function StreamingPage() {
     try {
       await resetDraw()
       setCurrentStep(DRAW_STEP.IDLE)
-      setDrawResult(null)
+      setAllWinners([])
+      setLastWinner(null)
       setTargetWinnerSlot(null)
     } catch (error) {
       console.error('Error reiniciando sorteo:', error)
@@ -168,7 +176,7 @@ export function StreamingPage() {
               )}
               
               {/* IDLE + Cannot Draw + Has Result = Sorteo Completado, show Reset */}
-              {currentStep === DRAW_STEP.IDLE && !canDraw && drawResult && (
+              {currentStep === DRAW_STEP.IDLE && !canDraw && allWinners.length > 0 && (
                 <Button onClick={openResetModal} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
                   <RotateCcw className="size-4" />
                   Reiniciar Sorteo
@@ -187,7 +195,7 @@ export function StreamingPage() {
               {currentStep === DRAW_STEP.WINNER && canDraw && (
                 <Button onClick={handleContinueToNextPrize} size="lg" className="gap-2">
                   <Play className="size-4" />
-                  Continuar con Premio {currentPrize + 1}
+                  Continuar con Premio {currentPrize}
                 </Button>
               )}
               
@@ -205,7 +213,7 @@ export function StreamingPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_300px] gap-6 h-[calc(100vh-120px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_300px] gap-6 min-h-[calc(100vh-120px)]">
           
           {/* Aside Izquierdo - Participantes */}
           <aside className="space-y-4">
@@ -217,18 +225,18 @@ export function StreamingPage() {
               </div>
               <ParticipantesList 
                 participants={participants}
-                winners={drawResult?.winners || []}
-                discarded={drawResult?.discarded || []}
+                winners={allWinners}
+                discarded={[]}
               />
             </Card>
           </aside>
 
           {/* Centro - Ruleta */}
-          <section className="flex items-center justify-center">
+          <section className="flex flex-col items-center justify-start overflow-y-auto py-4">
             <RuletaCanvas
               slots={luckyPassSlots}
               currentStep={currentStep}
-              winner={drawResult?.winners[0]}
+              winner={lastWinner ?? undefined}
               targetSlot={targetWinnerSlot}
             />
           </section>
@@ -239,9 +247,9 @@ export function StreamingPage() {
               <div className="flex items-center gap-2 mb-4">
                 <Trophy className="size-5 text-yellow-500" />
                 <h2 className="text-lg font-semibold">Ganadores</h2>
-                <Badge variant="subtle">{drawResult?.winners.length || 0}</Badge>
+                <Badge variant="subtle">{allWinners.length}</Badge>
               </div>
-              <GanadoresList winners={drawResult?.winners || []} />
+              <GanadoresList winners={allWinners} />
             </Card>
           </aside>
         </div>
@@ -252,7 +260,7 @@ export function StreamingPage() {
         isOpen={isResetModalOpen}
         onClose={() => setIsResetModalOpen(false)}
         onConfirm={confirmReset}
-        hasWinners={(drawResult?.winners?.length ?? 0) > 0}
+        hasWinners={allWinners.length > 0}
         raffleTitle={raffle?.title ?? undefined}
       />
     </div>

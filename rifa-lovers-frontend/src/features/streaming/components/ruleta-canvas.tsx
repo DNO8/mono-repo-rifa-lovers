@@ -125,6 +125,10 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
 
       // Idle state
       if (currentStep === DRAW_STEP.IDLE) {
+        // Draw center hole FIRST so text appears on top
+        drawCenterHole(ctx, centerX, centerY, innerRadius)
+
+        // Draw text on top of center hole
         ctx.fillStyle = '#fff'
         ctx.font = `bold ${canvasSize * 0.06}px sans-serif`
         ctx.textAlign = 'center'
@@ -133,8 +137,6 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         ctx.font = `bold ${canvasSize * 0.045}px sans-serif`
         ctx.fillStyle = '#FF4DA6'
         ctx.fillText('"Iniciar Sorteo"', centerX, centerY + 15)
-
-        drawCenterHole(ctx, centerX, centerY, innerRadius)
         return
       }
 
@@ -192,10 +194,12 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         const textX = centerX + Math.cos(midAngle) * textRadius
         const textY = centerY + Math.sin(midAngle) * textRadius
 
-        // Draw ticket number
+        // Draw ticket number - radial/vertical (pointing to center)
         ctx.save()
         ctx.translate(textX, textY)
-        let textRotation = midAngle + Math.PI / 2
+        // Text angle = slice midpoint (points toward center)
+        // Flip 180° for left side of wheel so text is always upright
+        let textRotation = midAngle
         if (midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2) {
           textRotation += Math.PI
         }

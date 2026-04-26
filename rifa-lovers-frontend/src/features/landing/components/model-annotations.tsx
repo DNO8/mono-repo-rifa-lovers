@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { Cpu, MemoryStick, HardDrive, Monitor, BatteryFull, Usb, Zap, Camera, X } from 'lucide-react'
@@ -118,7 +118,7 @@ function AnnotationDot({
   const Icon = hotspot.icon
 
   // Ref callback: when panel mounts, measure and reposition to stay within canvas bounds
-  const panelRefCallback = useCallback((node: HTMLDivElement | null) => {
+  const panelRefCallback = (node: HTMLDivElement | null) => {
     if (!node) return
     // Allow the browser to lay out the element first
     requestAnimationFrame(() => {
@@ -148,7 +148,7 @@ function AnnotationDot({
         node.style.transform = `translateY(calc(-50% + ${shift}px))`
       }
     })
-  }, [])
+  }
 
   return (
     <Html
@@ -262,7 +262,7 @@ export function ModelAnnotations({
 }) {
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  const handleClick = useCallback((hotspot: Hotspot) => {
+  const handleClick = (hotspot: Hotspot) => {
     if (activeId === hotspot.id) {
       // Deactivate — reset camera
       setActiveId(null)
@@ -278,7 +278,7 @@ export function ModelAnnotations({
       lock()
       onAnimateCamera.current?.(worldCamPos, worldCamTarget)
     }
-  }, [activeId, onAnimateCamera, onResetCamera, lock, unlock, pivotRef])
+  }
 
   return (
     <group>

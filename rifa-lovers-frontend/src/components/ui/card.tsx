@@ -3,7 +3,7 @@ import type { HTMLAttributes, Ref } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
-const cardVariants = cva('rounded-[var(--radius-xl)] transition-all', {
+const cardVariants = cva('rounded-xl transition-all', {
   variants: {
     variant: {
       default: 'bg-white shadow-md',
@@ -11,10 +11,10 @@ const cardVariants = cva('rounded-[var(--radius-xl)] transition-all', {
       'glass-light': 'glass-light',
       'glass-heavy': 'glass-heavy',
       highlight:
-        'bg-white shadow-md border-2 border-[var(--color-primary)]',
-      warm: 'bg-[var(--color-bg-warm)]',
-      'soft-purple': 'bg-[var(--color-bg-purple-soft)]',
-      'soft-pink': 'bg-[var(--color-bg-pink-soft)]',
+        'bg-white shadow-md border-2 border-primary',
+      warm: 'bg-bg-warm',
+      'soft-purple': 'bg-bg-purple-soft',
+      'soft-pink': 'bg-bg-pink-soft',
     },
   },
   defaultVariants: {

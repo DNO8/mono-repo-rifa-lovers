@@ -1,17 +1,21 @@
 import { useParams } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { Play, Square, RotateCcw, Trophy, Users } from 'lucide-react'
+import { Play, RotateCcw, Trophy, Users } from 'lucide-react'
 import { RuletaCanvas } from '../components/ruleta-canvas'
 import { ParticipantesList } from '../components/participantes-list'
 import { GanadoresList } from '../components/ganadores-list'
-import { NumeroAguaModal } from '../components/numero-agua-modal'
 import { ResetConfirmModal } from '../components/reset-confirm-modal'
 import { useStreaming } from '@/hooks/use-streaming'
-import type { CustomerDrawResult, DrawStep } from '@/types/streaming.types'
+import type { CustomerDrawResult, DrawStep, LuckyPassSlot } from '@/types/streaming.types'
 import { DRAW_STEP } from '@/types/streaming.types'
+
+// Animation constants
+const LOADING_DURATION = 1500
+const MIN_SPIN_DURATION = 5000
+const SPIN_EASING_DURATION = 3000
 
 export function StreamingPage() {
   const { raffleId } = useParams<{ raffleId: string }>()
@@ -24,44 +28,84 @@ export function StreamingPage() {
     drawStatus,
     executeDraw,
     resetDraw,
+    refreshDrawStatus,
   } = useStreaming(raffleId!)
   
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
-
   const [currentStep, setCurrentStep] = useState<DrawStep>(DRAW_STEP.IDLE)
-  const [currentPrize, setCurrentPrize] = useState(1)
   const [drawResult, setDrawResult] = useState<CustomerDrawResult | null>(null)
-  const [showWaterModal, setShowWaterModal] = useState(false)
+  const [targetWinnerSlot, setTargetWinnerSlot] = useState<LuckyPassSlot | null>(null)
+  
+  // Refs to prevent race conditions
+  const isDrawingRef = useRef(false)
+  const spinStartTimeRef = useRef<number>(0)
 
+  // Calculate current prize number based on existing winners
+  const currentPrize = (drawStatus?.winnersCount ?? 0) + 1
+  const totalPrizes = drawStatus?.prizesCount ?? 1
+  
   // Check if user can draw
-  const canDraw = drawStatus?.canExecute ?? false
+  const canDraw = drawStatus?.canDraw ?? false
 
   const handleStartDraw = async () => {
-    if (!canDraw) return
+    if (!canDraw || isDrawingRef.current) return
     
+    isDrawingRef.current = true
     setCurrentStep(DRAW_STEP.LOADING)
     
     try {
-      // Cargar participantes en la ruleta
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Simular carga
-      setCurrentStep(DRAW_STEP.SPINNING)
-
-      // Ejecutar sorteo en el backend
-      const result = await executeDraw()
+      // Step 1: Loading phase
+      await new Promise(resolve => setTimeout(resolve, LOADING_DURATION))
       
+      // Step 2: Start spinning animation and execute draw in parallel
+      setCurrentStep(DRAW_STEP.SPINNING)
+      spinStartTimeRef.current = Date.now()
+      
+      // Execute draw in background while animation runs
+      const drawPromise = executeDraw()
+      
+      // Wait minimum spin duration
+      const minSpinPromise = new Promise(resolve => setTimeout(resolve, MIN_SPIN_DURATION))
+      
+      // Get result and wait for minimum animation time
+      const [result] = await Promise.all([drawPromise, minSpinPromise])
+      
+      // Calculate remaining animation time for smooth deceleration
+      const elapsed = Date.now() - spinStartTimeRef.current
+      const remainingTime = Math.max(SPIN_EASING_DURATION - (elapsed - MIN_SPIN_DURATION), 500)
+      
+      // Find the winning slot
+      const winnerSlot = luckyPassSlots.find(slot => 
+        slot.passId === result.winners[0]?.luckyPassId
+      ) || null
+      
+      setTargetWinnerSlot(winnerSlot)
       setDrawResult(result)
+      
+      // Allow animation to complete deceleration
+      await new Promise(resolve => setTimeout(resolve, remainingTime))
+      
+      // Show winner
       setCurrentStep(DRAW_STEP.WINNER)
       
-      setCurrentPrize(prev => prev + 1)
-      
-      // Check if there are more prizes to draw by refetching draw status
-      // Small delay to allow backend to update
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Refresh draw status to get updated counts
+      await refreshDrawStatus()
       
     } catch (error) {
       console.error('Error en sorteo:', error)
       setCurrentStep(DRAW_STEP.IDLE)
+    } finally {
+      isDrawingRef.current = false
     }
+  }
+
+  const handleContinueToNextPrize = async () => {
+    // Reset step and start new draw
+    setCurrentStep(DRAW_STEP.IDLE)
+    setTargetWinnerSlot(null)
+    // Small delay to allow UI update
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await handleStartDraw()
   }
 
   const openResetModal = () => {
@@ -73,8 +117,8 @@ export function StreamingPage() {
     try {
       await resetDraw()
       setCurrentStep(DRAW_STEP.IDLE)
-      setCurrentPrize(1)
       setDrawResult(null)
+      setTargetWinnerSlot(null)
     } catch (error) {
       console.error('Error reiniciando sorteo:', error)
     }
@@ -109,12 +153,13 @@ export function StreamingPage() {
                   {raffle.status === 'closed' ? 'Lista para sorteo' : raffle.status}
                 </Badge>
                 <span className="text-sm text-text-secondary">
-                  {participants.length} participantes • 1 premio
+                  {participants.length} participantes • Premio {currentPrize} de {totalPrizes}
                 </span>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
+              {/* IDLE + Can Draw = Start New Draw */}
               {currentStep === DRAW_STEP.IDLE && canDraw && (
                 <Button onClick={handleStartDraw} size="lg" className="gap-2">
                   <Play className="size-4" />
@@ -122,6 +167,7 @@ export function StreamingPage() {
                 </Button>
               )}
               
+              {/* IDLE + Cannot Draw + Has Result = Sorteo Completado, show Reset */}
               {currentStep === DRAW_STEP.IDLE && !canDraw && drawResult && (
                 <Button onClick={openResetModal} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
                   <RotateCcw className="size-4" />
@@ -129,31 +175,27 @@ export function StreamingPage() {
                 </Button>
               )}
               
+              {/* SPINNING = Disabled button */}
               {currentStep === DRAW_STEP.SPINNING && (
                 <Button disabled size="lg" variant="ghost" className="gap-2">
-                  <Square className="size-4" />
+                  <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Sorteando...
                 </Button>
               )}
               
-              {(currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && (
-                <Button 
-                  onClick={openResetModal} 
-                  variant={canDraw ? "default" : "outline"} 
-                  size="lg" 
-                  className={canDraw ? "gap-2" : "gap-2 border-red-500 text-red-400 hover:bg-red-500/10"}
-                >
-                  {canDraw ? (
-                    <>
-                      <Play className="size-4" />
-                      Continuar con Siguiente Premio
-                    </>
-                  ) : (
-                    <>
-                      <RotateCcw className="size-4" />
-                      Reiniciar Sorteo
-                    </>
-                  )}
+              {/* WINNER + Can Draw = Continue to next prize */}
+              {currentStep === DRAW_STEP.WINNER && canDraw && (
+                <Button onClick={handleContinueToNextPrize} size="lg" className="gap-2">
+                  <Play className="size-4" />
+                  Continuar con Premio {currentPrize + 1}
+                </Button>
+              )}
+              
+              {/* WINNER + Cannot Draw = Sorteo terminado, show Reset */}
+              {currentStep === DRAW_STEP.WINNER && !canDraw && (
+                <Button onClick={openResetModal} variant="outline" size="lg" className="gap-2 border-red-500 text-red-400 hover:bg-red-500/10">
+                  <RotateCcw className="size-4" />
+                  Reiniciar Sorteo
                 </Button>
               )}
             </div>
@@ -187,6 +229,7 @@ export function StreamingPage() {
               slots={luckyPassSlots}
               currentStep={currentStep}
               winner={drawResult?.winners[0]}
+              targetSlot={targetWinnerSlot}
             />
           </section>
 
@@ -203,14 +246,6 @@ export function StreamingPage() {
           </aside>
         </div>
       </main>
-
-      {/* Modal Número al Agua */}
-      <NumeroAguaModal
-        isOpen={showWaterModal}
-        onClose={() => setShowWaterModal(false)}
-        participant={null}
-        passNumber={null}
-      />
 
       {/* Modal Confirmar Reinicio */}
       <ResetConfirmModal

@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useRef } from 'react'
 
 interface UseModelDragOptions {
   resumeDelayMs?: number
@@ -18,12 +18,12 @@ export function useModelDrag({
   const resumeTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const inertiaRaf = useRef<number>(0)
 
-  const scheduleResume = useCallback(() => {
+  const scheduleResume = () => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current)
     resumeTimer.current = setTimeout(() => {
       paused.current = false
     }, resumeDelayMs)
-  }, [resumeDelayMs])
+  }
 
   const startInertia = () => {
     const decay = () => {
@@ -39,18 +39,18 @@ export function useModelDrag({
     inertiaRaf.current = requestAnimationFrame(decay)
   }
 
-  const lock = useCallback(() => {
+  const lock = () => {
     locked.current = true
     dragRef.current.active = false
     cancelAnimationFrame(inertiaRaf.current)
     paused.current = true
     if (resumeTimer.current) clearTimeout(resumeTimer.current)
-  }, [])
+  }
 
-  const unlock = useCallback(() => {
+  const unlock = () => {
     locked.current = false
     scheduleResume()
-  }, [scheduleResume])
+  }
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (locked.current) return

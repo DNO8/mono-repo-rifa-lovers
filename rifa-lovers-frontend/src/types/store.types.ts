@@ -28,13 +28,3 @@ export interface TicketState {
   clearSelection: () => void
 }
 
-export interface UiState {
-  isSidebarOpen: boolean
-  isModalOpen: boolean
-  modalContent: string | null
-  globalLoading: boolean
-  toggleSidebar: () => void
-  openModal: (content: string) => void
-  closeModal: () => void
-  setGlobalLoading: (loading: boolean) => void
-}

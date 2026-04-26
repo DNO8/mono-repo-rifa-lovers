@@ -35,6 +35,8 @@ export declare class DrawService {
         reason?: string;
         prizesCount: number;
         activePassesCount: number;
+        winnersCount?: number;
+        pendingPrizesCount?: number;
     }>;
     getWinnersCount(raffleId: string): Promise<number>;
     getUnlockedPrizesCount(raffleId: string): Promise<number>;

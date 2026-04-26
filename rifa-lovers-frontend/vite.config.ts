@@ -15,6 +15,8 @@ export default defineConfig({
       presets: [reactCompilerPreset()],
       // Exclude node_modules from Babel processing to speed up build
       exclude: /node_modules/,
+      // Only process files with JSX — skip pure .ts files (types, utils, constants)
+      include: /src\/.*\.(tsx|jsx)$/,
     })
   ],
   resolve: {
@@ -30,14 +32,18 @@ export default defineConfig({
   },
   build: {
     // Increase chunk size warning limit (optional, reduces noise)
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
         // Manual code splitting for better caching and smaller initial chunks
         manualChunks: (id: string) => {
-          // Core React ecosystem
-          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+          // Core React (react + react-dom only)
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
             return 'vendor-react'
+          }
+          // Router
+          if (id.includes('react-router')) {
+            return 'vendor-router'
           }
           // State management & data fetching
           if (id.includes('zustand') || id.includes('@tanstack/react-query') || id.includes('axios')) {
@@ -47,9 +53,15 @@ export default defineConfig({
           if (id.includes('@radix-ui/')) {
             return 'vendor-ui'
           }
-          // 3D & Animation (heavy libraries, load only when needed)
-          if (id.includes('three') || id.includes('@react-three/fiber') || id.includes('@react-three/drei')) {
-            return 'vendor-3d'
+          // 3D libraries — split for granular caching
+          if (id.includes('three') && !id.includes('@react-three')) {
+            return 'vendor-three-core'
+          }
+          if (id.includes('@react-three/fiber')) {
+            return 'vendor-r3f'
+          }
+          if (id.includes('@react-three/drei')) {
+            return 'vendor-drei'
           }
           if (id.includes('gsap') || id.includes('@gsap/react')) {
             return 'vendor-anim'

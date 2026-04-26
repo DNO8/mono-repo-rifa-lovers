@@ -67,6 +67,8 @@ export declare class AdminController {
             reason?: string;
             prizesCount: number;
             activePassesCount: number;
+            winnersCount?: number;
+            pendingPrizesCount?: number;
         };
         results: import("../draw/draw.service").DrawResult | null;
     }>;

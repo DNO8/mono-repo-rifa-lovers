@@ -98,6 +98,21 @@ export interface WinnerDisplayInfo {
   passNumber: number;
 }
 
+// Admin Draw Status - matches backend response
+export interface AdminDrawStatus {
+  canDraw: boolean
+  reason?: string
+  prizesCount: number
+  activePassesCount: number
+  winnersCount?: number
+  pendingPrizesCount?: number
+}
+
+export interface AdminDrawStatusResponse {
+  canExecute: AdminDrawStatus
+  results: CustomerDrawResult | null
+}
+
 // Export constants for runtime use
 export { DRAW_STEP, RAFFLE_STATUS };
 export type { DrawStep };

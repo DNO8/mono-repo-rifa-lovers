@@ -304,6 +304,8 @@ export class DrawService {
     reason?: string
     prizesCount: number
     activePassesCount: number
+    winnersCount?: number
+    pendingPrizesCount?: number
   }> {
     const raffle = await this.prisma.raffle.findUnique({
       where: { id: raffleId },
@@ -322,24 +324,6 @@ export class DrawService {
       }
     }
 
-    // Verificar si ya hay ganadores
-    const existingWinners = await this.prisma.prizeWinner.count({
-      where: {
-        prize: {
-          raffleId: raffleId,
-        },
-      },
-    })
-
-    if (existingWinners > 0) {
-      return {
-        canDraw: false,
-        reason: 'El sorteo ya ha sido ejecutado',
-        prizesCount: 0,
-        activePassesCount: 0,
-      }
-    }
-
     // Contar premios desbloqueados
     const prizes = await this.prisma.prize.count({
       where: {
@@ -349,6 +333,27 @@ export class DrawService {
         },
       },
     })
+
+    // Verificar si ya hay ganadores y contar premios pendientes
+    const existingWinners = await this.prisma.prizeWinner.count({
+      where: {
+        prize: {
+          raffleId: raffleId,
+        },
+      },
+    })
+
+    // Solo bloquear si TODOS los premios desbloqueados ya tienen ganador
+    if (existingWinners >= prizes && prizes > 0) {
+      return {
+        canDraw: false,
+        reason: 'Todos los premios ya han sido asignados',
+        prizesCount: prizes,
+        activePassesCount: 0,
+        winnersCount: existingWinners,
+        pendingPrizesCount: 0,
+      }
+    }
 
     // Contar passes activos
     const activePasses = await this.prisma.luckyPass.count({
@@ -380,6 +385,8 @@ export class DrawService {
       canDraw: true,
       prizesCount: prizes,
       activePassesCount: activePasses,
+      winnersCount: existingWinners,
+      pendingPrizesCount: prizes - existingWinners,
     }
   }
 

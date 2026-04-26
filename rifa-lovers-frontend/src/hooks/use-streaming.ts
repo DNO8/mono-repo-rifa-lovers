@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
-import { streamingService, type AdminDrawStatus } from '@/services/streaming.service'
-import type { RaffleDetails, CustomerDrawResult, CustomerDrawParticipant, LuckyPassSlot } from '@/types/streaming.types'
+import { streamingService } from '@/services/streaming.service'
+import type { RaffleDetails, CustomerDrawResult, CustomerDrawParticipant, LuckyPassSlot, AdminDrawStatus } from '@/types/streaming.types'
 import { USER_ROLE } from '@/types/domain.types'
 
 interface StreamingState {
@@ -18,7 +18,7 @@ interface StreamingActions {
   refreshRaffle: () => Promise<void>
   refreshParticipants: () => Promise<void>
   refreshDrawStatus: () => Promise<void>
-  executeDraw: () => Promise<CustomerDrawResult>
+  executeDraw: (prizeId?: string) => Promise<CustomerDrawResult>
   resetDraw: () => Promise<void>
   luckyPassSlots: LuckyPassSlot[]
 }
@@ -27,10 +27,7 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
   const user = useAuthStore(state => state.user)
   
   // Detect if user is admin or operator
-  const isAdminOrOperator = useMemo(() => {
-    if (!user) return false
-    return user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.OPERATOR
-  }, [user])
+  const isAdminOrOperator = user?.role === USER_ROLE.ADMIN || user?.role === USER_ROLE.OPERATOR
 
   const [state, setState] = useState<StreamingState>({
     raffle: null,
@@ -42,16 +39,16 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
     error: null,
   })
 
-  const setLoading = useCallback((key: keyof Pick<StreamingState, 'isLoadingRaffle' | 'isLoadingParticipants' | 'isLoadingDrawStatus'>, value: boolean) => {
+  const setLoading = (key: keyof Pick<StreamingState, 'isLoadingRaffle' | 'isLoadingParticipants' | 'isLoadingDrawStatus'>, value: boolean) => {
     setState(prev => ({ ...prev, [key]: value }))
-  }, [])
+  }
 
-  const setError = useCallback((error: string | null) => {
+  const setError = (error: string | null) => {
     setState(prev => ({ ...prev, error }))
-  }, [])
+  }
 
   // Fetch raffle details
-  const refreshRaffle = useCallback(async () => {
+  const refreshRaffle = async () => {
     if (!raffleId) return
     
     setLoading('isLoadingRaffle', true)
@@ -70,10 +67,10 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
     } finally {
       setLoading('isLoadingRaffle', false)
     }
-  }, [raffleId, isAdminOrOperator, setLoading, setError])
+  }
 
   // Fetch participants
-  const refreshParticipants = useCallback(async () => {
+  const refreshParticipants = async () => {
     if (!raffleId) return
     
     setLoading('isLoadingParticipants', true)
@@ -103,50 +100,48 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
     } finally {
       setLoading('isLoadingParticipants', false)
     }
-  }, [raffleId, isAdminOrOperator, setLoading])
+  }
 
   // Fetch draw status
-  const refreshDrawStatus = useCallback(async () => {
+  const refreshDrawStatus = async () => {
     if (!raffleId) return
     
     setLoading('isLoadingDrawStatus', true)
     
     try {
-      const drawStatus = isAdminOrOperator
+      const statusResponse = isAdminOrOperator
         ? await streamingService.getAdminDrawStatus(raffleId)
-        : await streamingService.checkDrawAvailability(raffleId).then(availability => ({
-            canExecute: availability.canDraw,
+        : {
+            canExecute: await streamingService.checkDrawAvailability(raffleId),
             results: null,
-          }))
+          }
       
-      setState(prev => ({ ...prev, drawStatus }))
+      // Extract the canExecute object which contains canDraw, prizesCount, etc.
+      setState(prev => ({ ...prev, drawStatus: statusResponse.canExecute }))
     } catch (err) {
       console.error('Error fetching draw status:', err)
       // Don't set error for draw status, just log it
     } finally {
       setLoading('isLoadingDrawStatus', false)
     }
-  }, [raffleId, isAdminOrOperator, setLoading])
+  }
 
   // Execute draw for a specific prize or the next pending prize
-  const executeDraw = useCallback(async (prizeId?: string): Promise<CustomerDrawResult> => {
+  const executeDraw = async (prizeId?: string): Promise<CustomerDrawResult> => {
     if (!raffleId) throw new Error('No raffle ID provided')
     
     const result = isAdminOrOperator
       ? await streamingService.executeAdminDraw(raffleId, prizeId)
       : await streamingService.executeDraw(raffleId)
     
-    // Delay refresh to allow animation to complete (3 seconds)
-    // This prevents the component from re-rendering while the roulette is spinning
-    setTimeout(() => {
-      refreshDrawStatus()
-    }, 3000)
+    // Do NOT refresh immediately - let the animation complete first
+    // The component will call refreshDrawStatus after animation
     
     return result
-  }, [raffleId, isAdminOrOperator, refreshDrawStatus])
+  }
 
   // Reset draw (clear winners and allow re-draw)
-  const resetDraw = useCallback(async (): Promise<void> => {
+  const resetDraw = async (): Promise<void> => {
     if (!raffleId) throw new Error('No raffle ID provided')
     if (!isAdminOrOperator) throw new Error('Only admin/operator can reset draw')
     
@@ -158,10 +153,10 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
       refreshParticipants(),
       refreshDrawStatus()
     ])
-  }, [raffleId, isAdminOrOperator, refreshRaffle, refreshParticipants, refreshDrawStatus])
+  }
 
   // Transform participants into individual lucky pass slots for roulette
-  const luckyPassSlots = useMemo<LuckyPassSlot[]>(() => {
+  const luckyPassSlots: LuckyPassSlot[] = (() => {
     const slots: LuckyPassSlot[] = []
     
     state.participants.forEach((participant) => {
@@ -189,7 +184,7 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
     
     // Sort by pass number for consistent ordering
     return slots.sort((a, b) => a.passNumber - b.passNumber)
-  }, [state.participants])
+  })()
 
   // Initial fetch - use ref to track if we've already fetched
   const hasFetchedRef = useRef(false)
@@ -201,7 +196,7 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
       void refreshParticipants()
       void refreshDrawStatus()
     }
-  }, [raffleId, refreshRaffle, refreshParticipants, refreshDrawStatus])
+  }, [raffleId])
 
   return {
     ...state,

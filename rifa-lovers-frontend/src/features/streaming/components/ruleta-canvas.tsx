@@ -6,6 +6,7 @@ interface RuletaCanvasProps {
   slots: LuckyPassSlot[]
   currentStep: DrawStep
   winner?: CustomerDrawResult['winners'][0]
+  targetSlot?: LuckyPassSlot | null
 }
 
 const BRAND_COLORS = [
@@ -21,12 +22,13 @@ const BRAND_COLORS = [
   '#3B82F6', // Blue
 ]
 
-export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) {
+export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const animationRef = useRef<number | null>(null)
   const [rotation, setRotation] = useState(0)
   const [targetRotation, setTargetRotation] = useState(0)
   const [canvasSize, setCanvasSize] = useState(400)
+  const targetSlotRef = useRef<LuckyPassSlot | null>(null)
 
   // Responsive canvas size
   useEffect(() => {
@@ -42,16 +44,45 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
     return () => window.removeEventListener('resize', updateSize)
   }, [])
 
+  // Store targetSlot in ref to access in animation without dependency
+  useEffect(() => {
+    targetSlotRef.current = targetSlot ?? null
+  }, [targetSlot])
+
   // Start spinning when step changes to spinning
   useEffect(() => {
-    if (currentStep === DRAW_STEP.SPINNING) {
-      const spins = 5 + Math.random() * 3
-      const randomAngle = Math.random() * 2 * Math.PI
-      const newRotation = rotation + spins * 2 * Math.PI + randomAngle
-
+    if (currentStep === DRAW_STEP.SPINNING && slots.length > 0) {
+      const spins = 5 + Math.random() * 3 // Minimum 5 full rotations
+      
+      let targetAngle: number
+      
+      if (targetSlotRef.current) {
+        // Calculate exact angle to land on the target slot
+        const slotIndex = slots.findIndex(s => s.passId === targetSlotRef.current?.passId)
+        if (slotIndex >= 0) {
+          const anglePerSlot = (2 * Math.PI) / slots.length
+          // Position the winning slot at the top (270° = 3π/2)
+          // slot angle starts at -π/2 (top), so we need to rotate opposite direction
+          const slotAngle = slotIndex * anglePerSlot
+          // Target: rotate so slotAngle aligns with top pointer (3π/2)
+          // rotation + slotAngle ≡ 3π/2 (mod 2π)
+          // targetRotation = 3π/2 - slotAngle + spins*2π
+          targetAngle = (3 * Math.PI) / 2 - slotAngle
+          // Normalize to positive
+          while (targetAngle < 0) targetAngle += 2 * Math.PI
+        } else {
+          // Fallback to random if slot not found
+          targetAngle = Math.random() * 2 * Math.PI
+        }
+      } else {
+        // No target yet, spin randomly until we get one
+        targetAngle = Math.random() * 2 * Math.PI
+      }
+      
+      const newRotation = rotation + spins * 2 * Math.PI + targetAngle
       setTimeout(() => setTargetRotation(newRotation), 100)
     }
-  }, [currentStep, rotation])
+  }, [currentStep, slots.length])
 
   // Calculate responsive font size
   const getFontSize = (slotCount: number, baseSize: number) => {
@@ -140,15 +171,15 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
         return
       }
 
-      // Loading state
+      // Loading state - draw center hole FIRST so text appears on top
       if (currentStep === DRAW_STEP.LOADING) {
+        drawCenterHole(ctx, centerX, centerY, innerRadius)
+        
         ctx.fillStyle = '#FF4DA6'
         ctx.font = `bold ${canvasSize * 0.05}px sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText('Cargando...', centerX, centerY)
-
-        drawCenterHole(ctx, centerX, centerY, innerRadius)
         return
       }
 
@@ -316,7 +347,7 @@ export function RuletaCanvas({ slots, currentStep, winner }: RuletaCanvasProps) 
           <div className="text-xl text-white font-semibold">
             {winner.firstName} {winner.lastName}
           </div>
-          <div className="text-lg text-primary font-bold mt-2 bg-white/10 rounded-lg px-4 py-2 inline-block">
+          <div className="text-lg text-yellow-300 font-bold mt-2 bg-white/10 rounded-lg px-4 py-2 inline-block">
             Lucky Pass #{winner.passNumber}
           </div>
           <div className="text-md text-text-secondary mt-2">

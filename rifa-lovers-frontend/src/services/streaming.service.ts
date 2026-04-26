@@ -1,12 +1,6 @@
 import { apiClient } from '@/api/client'
-import type { CustomerDrawAvailability, CustomerDrawResult, RaffleDetails, Participant } from '@/types/streaming.types'
+import type { CustomerDrawAvailability, CustomerDrawResult, RaffleDetails, Participant, AdminDrawStatusResponse } from '@/types/streaming.types'
 import { parseApiResponse, isCustomerDrawAvailability, isCustomerDrawResult, isRaffleDetails } from '@/utils/type-guards'
-
-// Admin Draw Status response type
-export interface AdminDrawStatus {
-  canExecute: boolean
-  results: CustomerDrawResult | null
-}
 
 // Streaming Service - High cohesion, single responsibility
 export class StreamingService {
@@ -39,9 +33,9 @@ export class StreamingService {
     return data as Participant[]
   }
 
-  async getAdminDrawStatus(raffleId: string): Promise<AdminDrawStatus> {
+  async getAdminDrawStatus(raffleId: string): Promise<AdminDrawStatusResponse> {
     const data = await apiClient.get(`/admin/raffles/${raffleId}/draw/status`)
-    return data as AdminDrawStatus
+    return data as AdminDrawStatusResponse
   }
 
   async executeAdminDraw(raffleId: string, prizeId?: string): Promise<CustomerDrawResult> {

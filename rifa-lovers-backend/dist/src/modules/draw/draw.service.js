@@ -242,21 +242,6 @@ let DrawService = DrawService_1 = class DrawService {
                 activePassesCount: 0,
             };
         }
-        const existingWinners = await this.prisma.prizeWinner.count({
-            where: {
-                prize: {
-                    raffleId: raffleId,
-                },
-            },
-        });
-        if (existingWinners > 0) {
-            return {
-                canDraw: false,
-                reason: 'El sorteo ya ha sido ejecutado',
-                prizesCount: 0,
-                activePassesCount: 0,
-            };
-        }
         const prizes = await this.prisma.prize.count({
             where: {
                 raffleId: raffleId,
@@ -265,6 +250,23 @@ let DrawService = DrawService_1 = class DrawService {
                 },
             },
         });
+        const existingWinners = await this.prisma.prizeWinner.count({
+            where: {
+                prize: {
+                    raffleId: raffleId,
+                },
+            },
+        });
+        if (existingWinners >= prizes && prizes > 0) {
+            return {
+                canDraw: false,
+                reason: 'Todos los premios ya han sido asignados',
+                prizesCount: prizes,
+                activePassesCount: 0,
+                winnersCount: existingWinners,
+                pendingPrizesCount: 0,
+            };
+        }
         const activePasses = await this.prisma.luckyPass.count({
             where: {
                 raffleId: raffleId,
@@ -291,6 +293,8 @@ let DrawService = DrawService_1 = class DrawService {
             canDraw: true,
             prizesCount: prizes,
             activePassesCount: activePasses,
+            winnersCount: existingWinners,
+            pendingPrizesCount: prizes - existingWinners,
         };
     }
     async getWinnersCount(raffleId) {

@@ -8,15 +8,15 @@ const badgeVariants = cva(
     variants: {
       variant: {
         gradient:
-          'gradient-rl text-white rounded-[var(--radius-full)] px-3 py-1 text-xs uppercase tracking-wider font-bold',
+          'gradient-rl text-white rounded-full px-3 py-1 text-xs uppercase tracking-wider font-bold',
         'outline-primary':
-          'border border-[var(--color-primary)] text-[var(--color-primary)] rounded-[var(--radius-full)] px-3 py-1 text-xs',
+          'border border-primary text-primary rounded-full px-3 py-1 text-xs',
         subtle:
-          'bg-[rgba(123,63,228,0.08)] text-[var(--color-primary)] rounded-[var(--radius-full)] px-3 py-1 text-xs',
+          'bg-primary/8 text-primary rounded-full px-3 py-1 text-xs',
         success:
-          'bg-[rgba(34,197,94,0.1)] text-[var(--color-success)] rounded-[var(--radius-full)] px-3 py-1 text-xs',
+          'bg-success/10 text-success rounded-full px-3 py-1 text-xs',
         muted:
-          'bg-[var(--color-bg-muted)] text-[var(--color-text-tertiary)] rounded-[var(--radius-full)] px-3 py-1 text-xs',
+          'bg-bg-muted text-text-tertiary rounded-full px-3 py-1 text-xs',
         step: 'text-[11px] uppercase tracking-[1.5px] font-bold',
       },
     },

@@ -4,7 +4,7 @@ import { ArrowLeft, ShoppingCart, Hand, Calendar, Hash, Trophy, Star } from 'luc
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
-import { TicketModelViewer } from '../components/ticket-model-viewer'
+import { LazyTicketModelViewer } from '../components/lazy-ticket-model-viewer'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
 import { Spinner } from '@/components/ui/spinner'
@@ -100,7 +100,7 @@ export default function RaffleDetailPage() {
                   <Badge variant="outline-primary">Rifa {raffleTitle}</Badge>
                 </div>
 
-                <TicketModelViewer ticketNumber={activeTicket.number} />
+                <LazyTicketModelViewer ticketNumber={activeTicket.number} />
 
                 <p className="flex items-center justify-center gap-1.5 text-xs text-text-tertiary mt-3 opacity-60">
                   <Hand className="size-3.5" />

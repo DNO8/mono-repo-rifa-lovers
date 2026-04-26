@@ -16,8 +16,10 @@ type DrawWinner = CustomerDrawResult['winners'][number]
 
 // Animation constants
 const LOADING_DURATION = 1500
-const MIN_SPIN_DURATION = 5000
-const SPIN_EASING_DURATION = 3000
+// How long the wheel free-spins while the API call is in-flight
+const MIN_SPIN_DURATION = 4000
+// Fixed time to let the easing animation complete after target is known
+const EASING_DURATION = 4500
 
 export function StreamingPage() {
   const { raffleId } = useParams<{ raffleId: string }>()
@@ -39,9 +41,8 @@ export function StreamingPage() {
   const [lastWinner, setLastWinner] = useState<DrawWinner | null>(null)
   const [targetWinnerSlot, setTargetWinnerSlot] = useState<LuckyPassSlot | null>(null)
   
-  // Refs to prevent race conditions
+  // Ref to prevent double-trigger
   const isDrawingRef = useRef(false)
-  const spinStartTimeRef = useRef<number>(0)
 
   // Calculate current prize number based on existing winners
   const currentPrize = (drawStatus?.winnersCount ?? 0) + 1
@@ -62,22 +63,17 @@ export function StreamingPage() {
       
       // Step 2: Start spinning animation and execute draw in parallel
       setCurrentStep(DRAW_STEP.SPINNING)
-      spinStartTimeRef.current = Date.now()
       
-      // Execute draw in background while animation runs
+      // Execute draw in background while the wheel free-spins
       const drawPromise = executeDraw()
       
-      // Wait minimum spin duration
+      // Ensure the wheel free-spins for at least MIN_SPIN_DURATION before easing
       const minSpinPromise = new Promise(resolve => setTimeout(resolve, MIN_SPIN_DURATION))
       
-      // Get result and wait for minimum animation time
+      // Get result and wait for minimum free-spin time
       const [result] = await Promise.all([drawPromise, minSpinPromise])
       
-      // Calculate remaining animation time for smooth deceleration
-      const elapsed = Date.now() - spinStartTimeRef.current
-      const remainingTime = Math.max(SPIN_EASING_DURATION - (elapsed - MIN_SPIN_DURATION), 500)
-      
-      // Find the winning slot
+      // Find the winning slot and hand it to the canvas (triggers easing phase)
       const winnerSlot = luckyPassSlots.find(slot => 
         slot.passId === result.winners[0]?.luckyPassId
       ) || null
@@ -89,8 +85,8 @@ export function StreamingPage() {
         setAllWinners(prev => [...prev, newWinner])
       }
       
-      // Allow animation to complete deceleration
-      await new Promise(resolve => setTimeout(resolve, remainingTime))
+      // Wait for the easing animation to reach the winning slot
+      await new Promise(resolve => setTimeout(resolve, EASING_DURATION))
       
       // Show winner
       setCurrentStep(DRAW_STEP.WINNER)
@@ -132,7 +128,10 @@ export function StreamingPage() {
     }
   }
 
-  if (isLoadingRaffle || isLoadingDrawStatus) {
+  // Only show full-page loading during the VERY FIRST load (raffle not yet available).
+  // Mid-session refreshes (e.g. refreshDrawStatus after a draw) must NOT trigger this guard
+  // because it would unmount the canvas / roulette animation.
+  if (!raffle && (isLoadingRaffle || isLoadingDrawStatus)) {
     return (
       <div className="min-h-screen bg-bg-dark flex items-center justify-center">
         <div className="text-white">Cargando...</div>

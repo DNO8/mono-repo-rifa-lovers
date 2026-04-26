@@ -10,17 +10,20 @@ interface RuletaCanvasProps {
 }
 
 const BRAND_COLORS = [
-  '#7B3FE4', // Primary purple
-  '#FF4DA6', // Secondary pink
-  '#FF8A3D', // Tertiary orange
-  '#00C9A7', // Teal
-  '#6366F1', // Indigo
-  '#EC4899', // Pink
-  '#8B5CF6', // Violet
-  '#14B8A6', // Emerald
-  '#F59E0B', // Amber
-  '#3B82F6', // Blue
+  '#7B3FE4',
+  '#FF4DA6',
+  '#FF8A3D',
+  '#00C9A7',
+  '#6366F1',
+  '#EC4899',
+  '#8B5CF6',
+  '#14B8A6',
+  '#F59E0B',
+  '#3B82F6',
 ]
+
+// Constant angular velocity for the free-spin phase (radians per frame at 60fps)
+const FREE_SPIN_SPEED = 0.12
 
 function getFontSize(slotCount: number, baseSize: number) {
   if (slotCount <= 5) return baseSize * 0.9
@@ -45,24 +48,31 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
   const rafRef = useRef<number | null>(null)
   const [canvasSize, setCanvasSize] = useState(400)
 
-  // All animation state lives in refs — no React state for rotation
+  // ── Animation state (all in refs, no React state) ───────────────────────────
   const rotationRef = useRef(0)
+  // Phase control: 'free' = constant speed, 'easing' = decelerating to target
+  const spinPhaseRef = useRef<'free' | 'easing'>('free')
   const targetRotationRef = useRef(0)
   const winningIndexRef = useRef(-1)
+  // Flag: target has been calculated once — prevents recalculation mid-easing
+  const targetCalculatedRef = useRef(false)
+
+  // ── Prop mirrors (updated after every render via useLayoutEffect) ────────────
   const currentStepRef = useRef(currentStep)
   const winnerRef = useRef(winner)
   const slotsRef = useRef(slots)
+  const targetSlotRef = useRef(targetSlot)
   const canvasSizeRef = useRef(canvasSize)
 
-  // Keep refs in sync with latest props (useLayoutEffect: safe, runs after render, before paint)
   useLayoutEffect(() => {
     currentStepRef.current = currentStep
     winnerRef.current = winner
     slotsRef.current = slots
+    targetSlotRef.current = targetSlot
     canvasSizeRef.current = canvasSize
   })
 
-  // Responsive canvas size
+  // ── Responsive canvas size ───────────────────────────────────────────────────
   useEffect(() => {
     const updateSize = () => {
       const width = window.innerWidth
@@ -75,52 +85,34 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
     return () => window.removeEventListener('resize', updateSize)
   }, [])
 
-  // Configure spin target when SPINNING begins
-  useEffect(() => {
-    if (currentStep !== DRAW_STEP.SPINNING || slots.length === 0) return
-
-    const anglePerSlot = (2 * Math.PI) / slots.length
-    const spins = 6 + Math.random() * 4 // 6-10 full rotations
-
-    let finalAngle: number
-
-    if (targetSlot) {
-      const slotIndex = slots.findIndex(s => s.passId === targetSlot.passId)
-      if (slotIndex >= 0) {
-        winningIndexRef.current = slotIndex
-        // Center of slot[slotIndex] must align with the top pointer at -π/2.
-        // Slice center in canvas coords = rotation + slotIndex*step + step/2 - π/2
-        // Setting that equal to -π/2 gives: rotation = -(slotIndex + 0.5)*step
-        // finalAngle is the rotation value modulo 2π (positive)
-        const slotCenter = anglePerSlot * (slotIndex + 0.5)
-        finalAngle = ((-slotCenter) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)
-      } else {
-        finalAngle = Math.random() * 2 * Math.PI
-      }
-    } else {
-      winningIndexRef.current = -1
-      finalAngle = Math.random() * 2 * Math.PI
-    }
-
-    // Reset rotation so the spin is always long regardless of history
-    rotationRef.current = 0
-    targetRotationRef.current = spins * 2 * Math.PI + finalAngle
-  }, [currentStep, slots, targetSlot])
-
-  // Reset winningIndex when returning to idle (new draw cycle)
+  // ── Reset animation state when IDLE (new draw cycle) ────────────────────────
   useEffect(() => {
     if (currentStep === DRAW_STEP.IDLE) {
-      winningIndexRef.current = -1
       rotationRef.current = 0
+      spinPhaseRef.current = 'free'
       targetRotationRef.current = 0
+      winningIndexRef.current = -1
+      targetCalculatedRef.current = false
     }
   }, [currentStep])
 
-  // Single RAF loop — reads from refs, never causes re-renders
+  // ── Transition to free-spin when SPINNING starts ────────────────────────────
+  // NOTE: we do NOT calculate the target here. The RAF loop checks for targetSlot
+  // on every frame and transitions to 'easing' phase when it first appears.
+  // This avoids the double-fire bug (useEffect re-running when targetSlot arrives).
+  useEffect(() => {
+    if (currentStep === DRAW_STEP.SPINNING) {
+      spinPhaseRef.current = 'free'
+      targetCalculatedRef.current = false
+      winningIndexRef.current = -1
+      // Do NOT reset rotation here — keep any current rotation so the wheel looks live
+    }
+  }, [currentStep])
+
+  // ── Single persistent RAF loop ───────────────────────────────────────────────
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -129,31 +121,68 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
       const theSlots = slotsRef.current
       const theWinner = winnerRef.current
       const size = canvasSizeRef.current
+      const theTargetSlot = targetSlotRef.current
 
-      // Resize canvas if needed
-      if (canvas.width !== size) {
+      // Resize canvas backing store if needed
+      if (canvas.width !== size || canvas.height !== size) {
         canvas.width = size
         canvas.height = size
       }
 
       const w = canvas.width
-      const h = canvas.height
       const centerX = w / 2
-      const centerY = h / 2
-      const outerRadius = size * 0.48
+      const centerY = w / 2
+      const outerRadius = size * 0.46
       const innerRadius = size * 0.12
 
-      // Advance spin easing
+      // ── Advance rotation ─────────────────────────────────────────────────────
       if (step === DRAW_STEP.SPINNING) {
-        const diff = targetRotationRef.current - rotationRef.current
-        rotationRef.current += diff * 0.04
+        if (spinPhaseRef.current === 'free') {
+          // Phase 1: constant velocity — keep spinning until target arrives
+          rotationRef.current += FREE_SPIN_SPEED
+
+          // Transition to easing phase the moment a targetSlot is available
+          if (theTargetSlot && !targetCalculatedRef.current && theSlots.length > 0) {
+            targetCalculatedRef.current = true
+            const slotIndex = theSlots.findIndex(s => s.passId === theTargetSlot.passId)
+            if (slotIndex >= 0) {
+              winningIndexRef.current = slotIndex
+              const anglePerSlot = (2 * Math.PI) / theSlots.length
+              // Desired final rotation: center of winning slice is under the top pointer
+              // Slice center at rotation R = R + slotIndex*step + step/2 - π/2 (canvas draw offset)
+              // We want that to equal -π/2 (top), so R = -(slotIndex + 0.5)*step  (mod 2π, positive)
+              const slotCenter = anglePerSlot * (slotIndex + 0.5)
+              const baseAngle = ((-slotCenter) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)
+
+              // From current rotation, add 3 extra full rotations so deceleration is visible
+              const currentNorm = ((rotationRef.current % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
+              // Extra arc to ensure we pass target by at least 3 full turns
+              let extraArc = baseAngle - currentNorm
+              if (extraArc <= 0) extraArc += 2 * Math.PI
+              targetRotationRef.current = rotationRef.current + extraArc + 3 * 2 * Math.PI
+            } else {
+              // Slot not found — just coast 3 more turns and stop
+              targetRotationRef.current = rotationRef.current + 3 * 2 * Math.PI
+            }
+            spinPhaseRef.current = 'easing'
+          }
+        } else {
+          // Phase 2: easing deceleration toward target
+          const diff = targetRotationRef.current - rotationRef.current
+          if (diff <= 0.002) {
+            // Snap to exact target so the slice is perfectly aligned
+            rotationRef.current = targetRotationRef.current
+          } else {
+            rotationRef.current += diff * 0.035
+          }
+        }
       }
 
       const rotation = rotationRef.current
 
-      ctx.clearRect(0, 0, w, h)
+      ctx.clearRect(0, 0, w, w)
 
-      // Outer ring
+      // ── Outer ring ───────────────────────────────────────────────────────────
       ctx.beginPath()
       ctx.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI)
       ctx.fillStyle = '#1a1a1a'
@@ -162,7 +191,7 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
       ctx.lineWidth = 4
       ctx.stroke()
 
-      // Empty state
+      // ── Empty state ──────────────────────────────────────────────────────────
       if (theSlots.length === 0) {
         ctx.fillStyle = '#666'
         ctx.font = `bold ${size * 0.045}px sans-serif`
@@ -174,21 +203,22 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
         return
       }
 
-      // Idle / Loading static screens
+      // ── IDLE screen ──────────────────────────────────────────────────────────
       if (step === DRAW_STEP.IDLE) {
         drawCenterHole(ctx, centerX, centerY, innerRadius)
         ctx.fillStyle = '#fff'
-        ctx.font = `bold ${size * 0.06}px sans-serif`
+        ctx.font = `bold ${size * 0.055}px sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText('Presiona', centerX, centerY - 15)
-        ctx.font = `bold ${size * 0.045}px sans-serif`
+        ctx.fillText('Presiona', centerX, centerY - 14)
+        ctx.font = `bold ${size * 0.04}px sans-serif`
         ctx.fillStyle = '#FF4DA6'
-        ctx.fillText('"Iniciar Sorteo"', centerX, centerY + 15)
+        ctx.fillText('"Iniciar Sorteo"', centerX, centerY + 14)
         rafRef.current = requestAnimationFrame(renderFrame)
         return
       }
 
+      // ── LOADING screen ───────────────────────────────────────────────────────
       if (step === DRAW_STEP.LOADING) {
         drawCenterHole(ctx, centerX, centerY, innerRadius)
         ctx.fillStyle = '#FF4DA6'
@@ -200,12 +230,12 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
         return
       }
 
-      // Winning index
+      // ── Winning index (only highlight in WINNER/FINISHED) ───────────────────
       const winningIndex = (step === DRAW_STEP.WINNER || step === DRAW_STEP.FINISHED)
         ? winningIndexRef.current
         : -1
 
-      // Draw slices
+      // ── Draw pizza slices ────────────────────────────────────────────────────
       const angleStep = (2 * Math.PI) / theSlots.length
       const fontSize = getFontSize(theSlots.length, size * 0.06)
 
@@ -225,16 +255,15 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
           ctx.fillStyle = '#FFD700'
           ctx.shadowColor = '#FFD700'
           ctx.shadowBlur = 20
-        } else if (index === winningIndex && step !== DRAW_STEP.SPINNING) {
-          ctx.fillStyle = '#4a4a4a'
+        } else if (index === winningIndex) {
+          ctx.fillStyle = '#3a3a3a'
           ctx.shadowBlur = 0
         } else {
-          ctx.fillStyle = baseColor + '40'
+          ctx.fillStyle = baseColor + '55'
           ctx.shadowBlur = 0
         }
         ctx.fill()
         ctx.shadowBlur = 0
-
         ctx.strokeStyle = isWinnerSlot ? '#FFA500' : '#7B3FE4'
         ctx.lineWidth = isWinnerSlot ? 3 : 1
         ctx.stroke()
@@ -246,9 +275,7 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
         ctx.save()
         ctx.translate(textX, textY)
         let textRotation = midAngle
-        if (midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2) {
-          textRotation += Math.PI
-        }
+        if (midAngle > Math.PI / 2 && midAngle < 3 * Math.PI / 2) textRotation += Math.PI
         ctx.rotate(textRotation)
         ctx.fillStyle = isWinnerSlot ? '#000' : '#fff'
         ctx.font = `bold ${fontSize}px sans-serif`
@@ -258,21 +285,22 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
         ctx.restore()
       })
 
+      // ── Center hole ──────────────────────────────────────────────────────────
       drawCenterHole(ctx, centerX, centerY, innerRadius)
 
-      // Center overlay text
+      // ── Center overlay text ──────────────────────────────────────────────────
       if (step === DRAW_STEP.SPINNING) {
+        // During free-spin phase show "..." waiting for backend
+        // During easing phase show "SORTEANDO"
+        const label = spinPhaseRef.current === 'easing' ? 'SORTEANDO' : '...'
         ctx.fillStyle = '#FF4DA6'
-        ctx.font = `bold ${size * 0.08}px sans-serif`
+        ctx.font = `bold ${size * 0.075}px sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.shadowColor = '#FF4DA6'
         ctx.shadowBlur = 15
-        ctx.fillText('SORTEANDO', centerX, centerY - 10)
+        ctx.fillText(label, centerX, centerY)
         ctx.shadowBlur = 0
-        ctx.font = `bold ${size * 0.05}px sans-serif`
-        ctx.fillStyle = '#fff'
-        ctx.fillText('...', centerX, centerY + 20)
       } else if (step === DRAW_STEP.WATER) {
         ctx.fillStyle = '#00BFFF'
         ctx.font = `bold ${size * 0.07}px sans-serif`
@@ -284,28 +312,16 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
         ctx.shadowBlur = 0
       } else if ((step === DRAW_STEP.WINNER || step === DRAW_STEP.FINISHED) && theWinner) {
         ctx.fillStyle = '#FFD700'
-        ctx.font = `bold ${size * 0.05}px sans-serif`
+        ctx.font = `bold ${size * 0.055}px sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.shadowColor = '#FFD700'
         ctx.shadowBlur = 20
-        ctx.fillText('¡GANADOR!', centerX, centerY - 15)
+        ctx.fillText('¡GANADOR!', centerX, centerY - 16)
         ctx.shadowBlur = 0
-        ctx.font = `bold ${size * 0.04}px sans-serif`
+        ctx.font = `bold ${size * 0.045}px sans-serif`
         ctx.fillStyle = '#fff'
         ctx.fillText(`#${theWinner.passNumber}`, centerX, centerY + 20)
-
-        ctx.beginPath()
-        const indicatorY = centerY - outerRadius - 15
-        ctx.moveTo(centerX, indicatorY - 25)
-        ctx.lineTo(centerX - 15, indicatorY + 5)
-        ctx.lineTo(centerX + 15, indicatorY + 5)
-        ctx.closePath()
-        ctx.fillStyle = '#FF4444'
-        ctx.fill()
-        ctx.strokeStyle = '#FFD700'
-        ctx.lineWidth = 2
-        ctx.stroke()
       }
 
       rafRef.current = requestAnimationFrame(renderFrame)
@@ -318,28 +334,49 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     }
-    // Only restart the loop when canvas size changes (everything else reads from refs)
   }, [canvasSize])
+
+  const isSpinningOrDone =
+    currentStep === DRAW_STEP.SPINNING ||
+    currentStep === DRAW_STEP.WINNER ||
+    currentStep === DRAW_STEP.FINISHED
 
   return (
     <div className="flex flex-col items-center space-y-4 w-full">
-      <div className="relative isolate">
+      {/* Wheel + fixed TV-style pointer rendered in HTML above canvas */}
+      <div className="relative flex items-center justify-center" style={{ width: canvasSize, maxWidth: '100%' }}>
+        {/* Fixed top pointer — always visible when wheel is active */}
+        {isSpinningOrDone && (
+          <div
+            className="absolute z-10 left-1/2 -translate-x-1/2"
+            style={{ top: -4 }}
+          >
+            {/* Triangle pointing downward */}
+            <div
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: '14px solid transparent',
+                borderRight: '14px solid transparent',
+                borderTop: '22px solid #FF4444',
+                filter: 'drop-shadow(0 0 6px #FFD700)',
+              }}
+            />
+          </div>
+        )}
         <canvas
           ref={canvasRef}
-          className="border-4 border-primary rounded-full shadow-2xl shadow-primary/20 max-w-full"
+          className="border-4 border-primary rounded-full shadow-2xl shadow-primary/20"
           style={{
             background: 'radial-gradient(circle, #1a1a1a 0%, #0a0a0a 100%)',
             maxWidth: '100%',
             height: 'auto',
+            display: 'block',
           }}
         />
-        {(currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && winner && (
-          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse z-10">
-            GANADOR
-          </div>
-        )}
       </div>
 
+      {/* Congrats card */}
       {(currentStep === DRAW_STEP.WINNER || currentStep === DRAW_STEP.FINISHED) && winner && (
         <div className="text-center bg-linear-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded-xl p-6 shadow-lg w-full max-w-sm">
           <div className="text-3xl font-bold text-yellow-400 mb-2">
@@ -358,8 +395,8 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
       )}
 
       {currentStep === DRAW_STEP.FINISHED && (
-        <div className="text-center mt-4 bg-green-500/10 border border-green-500/30 rounded-xl p-4 w-full max-w-sm">
-          <div className="text-2xl font-bold text-green-400 mb-2">
+        <div className="text-center mt-2 bg-green-500/10 border border-green-500/30 rounded-xl p-4 w-full max-w-sm">
+          <div className="text-2xl font-bold text-green-400 mb-1">
             ✅ Sorteo Completado
           </div>
           <div className="text-sm text-text-secondary">

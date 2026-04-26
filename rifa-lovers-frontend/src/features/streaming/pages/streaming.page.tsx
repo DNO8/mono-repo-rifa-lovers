@@ -18,8 +18,8 @@ type DrawWinner = CustomerDrawResult['winners'][number]
 const LOADING_DURATION = 1500
 // How long the wheel free-spins while the API call is in-flight
 const MIN_SPIN_DURATION = 4000
-// Fixed time to let the easing animation complete after target is known
-const EASING_DURATION = 4500
+// Must match EASING_ANIM_MS in ruleta-canvas.tsx (5000ms) + small margin
+const EASING_DURATION = 5300
 
 export function StreamingPage() {
   const { raffleId } = useParams<{ raffleId: string }>()
@@ -73,25 +73,27 @@ export function StreamingPage() {
       // Get result and wait for minimum free-spin time
       const [result] = await Promise.all([drawPromise, minSpinPromise])
       
-      // Find the winning slot and hand it to the canvas (triggers easing phase)
+      // Find the winning slot and hand it to the canvas (triggers easing phase).
+      // ONLY setTargetWinnerSlot here — do NOT update winner state yet.
+      // The aside and congrats card must stay hidden until the wheel stops.
       const winnerSlot = luckyPassSlots.find(slot => 
         slot.passId === result.winners[0]?.luckyPassId
       ) || null
-      
-      setTargetWinnerSlot(winnerSlot)
       const newWinner = result.winners[0] ?? null
+
+      setTargetWinnerSlot(winnerSlot)
+
+      // Wait for the easing animation to fully complete (wheel stopped on winner slot)
+      await new Promise(resolve => setTimeout(resolve, EASING_DURATION))
+
+      // NOW reveal winner — wheel is stopped, slice is highlighted
       setLastWinner(newWinner)
       if (newWinner) {
         setAllWinners(prev => [...prev, newWinner])
       }
-      
-      // Wait for the easing animation to reach the winning slot
-      await new Promise(resolve => setTimeout(resolve, EASING_DURATION))
-      
-      // Show winner
       setCurrentStep(DRAW_STEP.WINNER)
       
-      // Refresh draw status to get updated counts
+      // Refresh draw status to get updated counts (safe: loading guard won't unmount)
       await refreshDrawStatus()
       
     } catch (error) {

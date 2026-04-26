@@ -24,6 +24,13 @@ const BRAND_COLORS = [
 
 // Constant angular velocity for the free-spin phase (radians per frame at 60fps)
 const FREE_SPIN_SPEED = 0.12
+// Duration of the easing deceleration phase in milliseconds
+const EASING_ANIM_MS = 5000
+
+// easeOutQuart: fast start, long smooth tail — ideal for roulette deceleration
+function easeOutQuart(t: number): number {
+  return 1 - Math.pow(1 - t, 4)
+}
 
 function getFontSize(slotCount: number, baseSize: number) {
   if (slotCount <= 5) return baseSize * 0.9
@@ -56,6 +63,10 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
   const winningIndexRef = useRef(-1)
   // Flag: target has been calculated once — prevents recalculation mid-easing
   const targetCalculatedRef = useRef(false)
+  // Time-based easing tracking
+  const easingStartTimeRef = useRef(0)
+  const easingStartRotationRef = useRef(0)
+  const easingTotalDistanceRef = useRef(0)
 
   // ── Prop mirrors (updated after every render via useLayoutEffect) ────────────
   const currentStepRef = useRef(currentStep)
@@ -93,6 +104,9 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
       targetRotationRef.current = 0
       winningIndexRef.current = -1
       targetCalculatedRef.current = false
+      easingStartTimeRef.current = 0
+      easingStartRotationRef.current = 0
+      easingTotalDistanceRef.current = 0
     }
   }, [currentStep])
 
@@ -154,26 +168,28 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
               const slotCenter = anglePerSlot * (slotIndex + 0.5)
               const baseAngle = ((-slotCenter) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)
 
-              // From current rotation, add 3 extra full rotations so deceleration is visible
+              // From current rotation, add 4 extra full rotations so deceleration is clearly visible
               const currentNorm = ((rotationRef.current % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-              // Extra arc to ensure we pass target by at least 3 full turns
               let extraArc = baseAngle - currentNorm
               if (extraArc <= 0) extraArc += 2 * Math.PI
-              targetRotationRef.current = rotationRef.current + extraArc + 3 * 2 * Math.PI
+              targetRotationRef.current = rotationRef.current + extraArc + 4 * 2 * Math.PI
             } else {
-              // Slot not found — just coast 3 more turns and stop
-              targetRotationRef.current = rotationRef.current + 3 * 2 * Math.PI
+              targetRotationRef.current = rotationRef.current + 4 * 2 * Math.PI
             }
+            // Snapshot the easing start state for time-based interpolation
+            easingStartTimeRef.current = performance.now()
+            easingStartRotationRef.current = rotationRef.current
+            easingTotalDistanceRef.current = targetRotationRef.current - rotationRef.current
             spinPhaseRef.current = 'easing'
           }
         } else {
-          // Phase 2: easing deceleration toward target
-          const diff = targetRotationRef.current - rotationRef.current
-          if (diff <= 0.002) {
-            // Snap to exact target so the slice is perfectly aligned
+          // Phase 2: time-based easeOutQuart deceleration
+          const elapsed = performance.now() - easingStartTimeRef.current
+          const t = Math.min(elapsed / EASING_ANIM_MS, 1)
+          rotationRef.current = easingStartRotationRef.current + easingTotalDistanceRef.current * easeOutQuart(t)
+          // Snap to exact target when animation is complete
+          if (t >= 1) {
             rotationRef.current = targetRotationRef.current
-          } else {
-            rotationRef.current += diff * 0.035
           }
         }
       }

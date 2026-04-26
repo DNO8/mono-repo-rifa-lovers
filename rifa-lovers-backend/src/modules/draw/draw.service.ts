@@ -265,12 +265,12 @@ export class DrawService {
         },
       },
       include: {
-        prize: true,
+        prize: { include: { milestone: true } },
         luckyPass: true,
         user: true,
       },
       orderBy: {
-        createdAt: 'asc',
+        prize: { milestone: { sortOrder: 'asc' } },
       },
     })
 

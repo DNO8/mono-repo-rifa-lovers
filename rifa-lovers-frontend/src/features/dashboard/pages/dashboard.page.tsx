@@ -8,8 +8,9 @@ import type { RaffleCardData } from '../components/raffle-hero-card'
 import { TicketHistory } from '../components/ticket-history'
 import type { HistoryItem } from '../components/ticket-history'
 import { SocialImpactBanner } from '../components/social-impact-banner'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { LogOut } from 'lucide-react'
+import { LogOut, Eye, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { usePurchases } from '@/hooks/use-purchases'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
@@ -116,6 +117,7 @@ export default function DashboardPage() {
     useShallow((s) => ({ user: s.user, logout: s.logout }))
   )
   const navigate = useNavigate()
+  const [viewMode, setViewMode] = useState<'operator' | 'customer'>('operator')
 
   const { purchases, isLoading: isLoadingPurchases } = usePurchases()
   const { passes, summary: luckyPassSummary, isLoading: isLoadingPasses } = useLuckyPasses()
@@ -157,13 +159,36 @@ export default function DashboardPage() {
   return (
     <div className="px-4 md:px-8 py-8 md:py-12">
       <div className="mx-auto max-w-[1200px]">
-        {/* Header con logout */}
+        {/* Header con logout + toggle modo cliente */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-text-primary">Mi Dashboard</h1>
-          <Button variant="outline-primary" size="sm" onClick={handleLogout}>
-            <LogOut className="size-4 mr-2" />
-            Cerrar sesión
-          </Button>
+          <h1 className="text-2xl font-bold text-text-primary">
+            {viewMode === 'customer' ? 'Mi Dashboard' : 'Mi Dashboard'}
+          </h1>
+          <div className="flex items-center gap-2">
+            {isOperatorOrAdmin && (
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={() => setViewMode(viewMode === 'operator' ? 'customer' : 'operator')}
+              >
+                {viewMode === 'operator' ? (
+                  <>
+                    <Eye className="size-4 mr-2" />
+                    Modo Cliente
+                  </>
+                ) : (
+                  <>
+                    <LayoutDashboard className="size-4 mr-2" />
+                    Modo Operador
+                  </>
+                )}
+              </Button>
+            )}
+            <Button variant="outline-primary" size="sm" onClick={handleLogout}>
+              <LogOut className="size-4 mr-2" />
+              Cerrar sesión
+            </Button>
+          </div>
         </div>
 
         {/* Greeting */}
@@ -179,8 +204,8 @@ export default function DashboardPage() {
               points={points}
             />
 
-            {/* Operator/Admin Panel */}
-            {isOperatorOrAdmin && (
+            {/* Operator/Admin Panel (only in operator mode) */}
+            {isOperatorOrAdmin && viewMode === 'operator' && (
               <div className="mb-8">
                 <OperatorPanel raffles={allRaffles} />
               </div>

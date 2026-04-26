@@ -77,7 +77,7 @@ export function StreamingPage() {
       // ONLY setTargetWinnerSlot here — do NOT update winner state yet.
       // The aside and congrats card must stay hidden until the wheel stops.
       const winnerSlot = luckyPassSlots.find(slot => 
-        slot.passId === result.winners[0]?.luckyPassId
+        slot.passNumber === result.winners[0]?.passNumber
       ) || null
       const newWinner = result.winners[0] ?? null
 

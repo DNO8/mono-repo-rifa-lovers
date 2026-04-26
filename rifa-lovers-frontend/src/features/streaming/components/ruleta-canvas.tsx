@@ -158,7 +158,7 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
           // Transition to easing phase the moment a targetSlot is available
           if (theTargetSlot && !targetCalculatedRef.current && theSlots.length > 0) {
             targetCalculatedRef.current = true
-            const slotIndex = theSlots.findIndex(s => s.passId === theTargetSlot.passId)
+            const slotIndex = theSlots.findIndex(s => s.passNumber === theTargetSlot.passNumber)
             if (slotIndex >= 0) {
               winningIndexRef.current = slotIndex
               const anglePerSlot = (2 * Math.PI) / theSlots.length
@@ -259,7 +259,7 @@ export function RuletaCanvas({ slots, currentStep, winner, targetSlot }: RuletaC
         const startAngle = angleStep * index + rotation - Math.PI / 2
         const endAngle = startAngle + angleStep
         const midAngle = startAngle + angleStep / 2
-        const isWinnerSlot = index === winningIndex && theWinner?.luckyPassId === slot.passId
+        const isWinnerSlot = index === winningIndex && theWinner?.passNumber === slot.passNumber
         const baseColor = BRAND_COLORS[index % BRAND_COLORS.length]
 
         ctx.beginPath()

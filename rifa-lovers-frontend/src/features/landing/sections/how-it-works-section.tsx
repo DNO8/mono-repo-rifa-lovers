@@ -1,100 +1,9 @@
 import { useRef, useEffect } from 'react'
-import {
-  UserPlus, ShoppingBag, CreditCard, Radio, Gift,
-  Shield, Hash, Leaf,
-} from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Badge } from '@/components/ui/badge'
 import { SplitText } from '@/components/shared/split-text'
-
-/* ══════════════════════════════════════════════════════
-   BLOCK A — User flow timeline
-   ══════════════════════════════════════════════════════ */
-
-const FLOW_STEPS = [
-  {
-    id: 'register',
-    icon: UserPlus,
-    color: '#7B3FE4',
-    bg: '#7B3FE415',
-    step: '01',
-    title: 'Créate una cuenta gratis',
-    detail: 'Solo necesitas tu email. En menos de un minuto tienes acceso a tu perfil, historial de compras y seguimiento de tus LuckyPass activos.',
-  },
-  {
-    id: 'pack',
-    icon: ShoppingBag,
-    color: '#FF4DA6',
-    bg: '#FF4DA615',
-    step: '02',
-    title: 'Elige cuántos LuckyPass quieres',
-    detail: 'Selecciona un pack según tu presupuesto. Cada LuckyPass te da un número único e irrepetible dentro de la rifa activa. Más LuckyPass = más chances.',
-  },
-  {
-    id: 'pay',
-    icon: CreditCard,
-    color: '#FF8A3D',
-    bg: '#FF8A3D15',
-    step: '03',
-    title: 'Paga de forma 100% segura',
-    detail: 'Procesamos tu pago con Flow, la plataforma de pagos más confiable de Chile. Acepta tarjetas de crédito, débito y transferencias. Tu información siempre protegida.',
-  },
-  {
-    id: 'draw',
-    icon: Radio,
-    color: '#EF4444',
-    bg: '#EF444415',
-    step: '04',
-    title: 'Sorteo en vivo cada viernes',
-    detail: 'Todos los viernes a las 9PM GMT-4 realizamos el sorteo en stream público. Cualquier persona puede verlo. El ganador se selecciona de forma aleatoria y verificable en tiempo real.',
-  },
-  {
-    id: 'prize',
-    icon: Gift,
-    color: '#10B981',
-    bg: '#10B98115',
-    step: '05',
-    title: 'Recibe tu premio en casa',
-    detail: 'Si eres el ganador, te contactamos directamente para coordinar la entrega. Enviamos a todo Chile sin costo adicional. El proceso completo toma máximo 5 días hábiles.',
-  },
-]
-
-/* ══════════════════════════════════════════════════════
-   BLOCK B — Trust cards
-   ══════════════════════════════════════════════════════ */
-
-const TRUST_ITEMS = [
-  {
-    id: 'verified',
-    icon: Shield,
-    color: '#7B3FE4',
-    bg: '#7B3FE420',
-    title: 'Sorteo verificable',
-    stat: '100%',
-    statLabel: 'transparente',
-    description: 'Cada sorteo se transmite en vivo. Cualquier persona puede ver el proceso en tiempo real. No hay trampa posible: el número ganador se genera frente a todos.',
-  },
-  {
-    id: 'unique',
-    icon: Hash,
-    color: '#FF4DA6',
-    bg: '#FF4DA620',
-    title: 'LuckyPass único',
-    stat: '1:1',
-    statLabel: 'por participante',
-    description: 'Cada LuckyPass corresponde a un número irrepetible dentro de la rifa. Tu número es exclusivamente tuyo hasta que se realice el sorteo.',
-  },
-  {
-    id: 'impact',
-    icon: Leaf,
-    color: '#10B981',
-    bg: '#10B98120',
-    title: 'Impacto social real',
-    stat: '10%',
-    statLabel: 'de cada compra',
-    description: 'Un porcentaje de cada LuckyPass vendido se destina a causas benéficas seleccionadas por nuestra comunidad. Participar aquí significa también ayudar a otros.',
-  },
-]
+import { FLOW_STEPS, TRUST_ITEMS } from '@/lib/content/how-it-works.content'
 
 /* ══════════════════════════════════════════════════════
    Components
@@ -129,15 +38,30 @@ function FlowStep({
             className="text-[10px] font-black tracking-widest uppercase"
             style={{ color: step.color }}
           >
-            Paso {step.step}
+            PASO {step.step}
           </span>
         </div>
-        <h3 className="text-base md:text-lg font-bold text-text-primary mb-2 leading-snug">
+        <h3 className="text-base md:text-lg font-bold text-text-primary mb-1 leading-snug">
           {step.title}
         </h3>
-        <p className="text-sm text-text-secondary leading-relaxed max-w-xs">
-          {step.detail}
+        <p className="text-sm text-text-secondary leading-relaxed max-w-sm mb-3">
+          {step.subtitle}
         </p>
+        <ul className={`space-y-1.5 ${isEven ? 'md:ml-auto' : ''} max-w-sm`}>
+          {step.bullets.map((bullet, i) => (
+            <li
+              key={i}
+              className={`flex items-start gap-2 text-sm text-text-secondary ${isEven ? 'md:flex-row-reverse md:text-right' : ''}`}
+            >
+              <span className="inline-flex items-center justify-center size-4 rounded-full shrink-0 mt-0.5"
+                style={{ backgroundColor: step.color }}
+              >
+                <CheckCircle2 className="size-3 text-white" />
+              </span>
+              <span className="leading-snug">{bullet}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* Center spine */}
@@ -158,8 +82,15 @@ function FlowStep({
         )}
       </div>
 
-      {/* Spacer for alternating layout */}
-      <div className="flex-1 hidden md:block" />
+      {/* Badge card — opposite side */}
+      <div className="flex-1 hidden md:flex items-start justify-center pt-2">
+        <div
+          className="rounded-xl px-4 py-3 text-xs font-medium leading-snug max-w-[200px]"
+          style={{ backgroundColor: step.bg, color: step.color }}
+        >
+          {step.badge}
+        </div>
+      </div>
     </div>
   )
 }

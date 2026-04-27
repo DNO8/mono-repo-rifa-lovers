@@ -16,7 +16,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-2">
               <img src="/images/logos/logo-v2.webp" alt="RifaLovers" className="h-6 w-auto" />
-              <span className="text-base gradient-text leading-none" style={{ fontFamily: 'Montserrat, sans-serif' }}><span className="font-bold">Rifa</span><span className="font-semibold"> Lovers</span></span>
+              <span className="text-base gradient-text leading-none" style={{ fontFamily: 'Montserrat, sans-serif' }}><span className="font-bold">Rifa</span><span className="font-semibold">Lovers</span></span>
             </Link>
             <p className="text-xs text-text-secondary max-w-[220px]" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400 }}>
               Tu suerte crea impacto real. Participa, gana y transforma vidas.
@@ -69,7 +69,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-5 pt-4 border-t border-border-light flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           <p className="text-[11px] text-text-tertiary">
-            © {new Date().getFullYear()} Rifa Lovers SpA · Marca registrada ®. Todos los derechos reservados.
+            © {new Date().getFullYear()} RifaLovers SpA · Marca registrada ®. Todos los derechos reservados.
           </p>
           <p className="text-[10px] text-text-tertiary/70">
             Respaldo legal: KRIM Consultores · Tecnología: Innovaxchain

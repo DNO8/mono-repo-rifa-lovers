@@ -194,6 +194,7 @@ export interface Step {
   color: string
   bgColor: string
   isHighlighted?: boolean
+  badgeLabel?: string
 }
 
 export interface Testimonial {

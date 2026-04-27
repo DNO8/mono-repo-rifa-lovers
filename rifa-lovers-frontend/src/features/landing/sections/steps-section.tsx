@@ -133,6 +133,15 @@ function StepCard({
             CLAVE
           </Badge>
         )}
+        {step.badgeLabel && (
+          <Badge
+            variant="subtle"
+            className="text-[10px] px-2 py-0.5"
+            style={{ color: step.color, backgroundColor: step.bgColor }}
+          >
+            {step.badgeLabel}
+          </Badge>
+        )}
       </div>
 
       <h3 className="text-text-primary text-base md:text-lg mb-1.5 leading-snug">
@@ -261,7 +270,7 @@ export function StepsSection() {
             stagger={0.05}
             duration={0.6}
           >
-            La comunidad decide cuántos premios se sortean
+            Tú decides cuántos premios se desbloquean
           </SplitText>
           <p className="text-text-secondary max-w-lg mx-auto">
             Mientras más personas participan, más hitos se desbloquean y más premios entran al sorteo.

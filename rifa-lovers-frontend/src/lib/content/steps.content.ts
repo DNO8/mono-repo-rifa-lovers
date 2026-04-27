@@ -4,11 +4,12 @@ export const STEPS: Step[] = [
   {
     id: 'prize-1',
     number: '01',
-    title: 'La comunidad desbloquea premios',
-    description: 'Cada pack vendido acerca a la comunidad al siguiente hito. Mientras más personas participan, más premios se desbloquean para todos.',
+    title: 'Tú decides cuántos premios se desbloquean',
+    description: 'Mientras más personas participan, más premios se activan.',
     icon: 'ClipboardList',
     color: '#7B3FE4',
     bgColor: 'rgba(123, 63, 228, 0.1)',
+    badgeLabel: 'Primer hito Garantizado',
   },
   {
     id: 'prize-2',

@@ -48,12 +48,16 @@ function Dot() {
 export function CountdownSection() {
   const { raffle, isLoading } = useActiveRaffle()
   const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [isClosed, setIsClosed] = useState(false)
 
   const targetMs = raffle?.endDate ? new Date(raffle.endDate).getTime() : null
 
   useEffect(() => {
     if (targetMs === null) return
-    const tick = () => setTime(calcTimeLeft(targetMs))
+    const tick = () => {
+      setTime(calcTimeLeft(targetMs))
+      setIsClosed(targetMs <= Date.now())
+    }
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
@@ -64,19 +68,27 @@ export function CountdownSection() {
       <div className="mx-auto max-w-[900px]">
         <p className="text-center text-sm text-text-secondary mb-5">
           <Timer className="size-3.5 inline mr-1 -mt-0.5" />
-          Faltan para el próximo sorteo en vivo
+          {isClosed ? 'El sorteo ha finalizado' : 'Faltan para el próximo sorteo en vivo'}
         </p>
 
-        {/* Timer blocks */}
-        <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-8 mb-5">
-          <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.days)} label="Días" />
-          <Dot />
-          <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.hours)} label="Horas" />
-          <Dot />
-          <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.minutes)} label="Minutos" />
-          <Dot />
-          <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.seconds)} label="Segundos" />
-        </div>
+        {/* Timer blocks — hidden when raffle is closed */}
+        {isClosed ? (
+          <div className="flex items-center justify-center mb-5">
+            <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
+              Rifa Cerrada
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-8 mb-5">
+            <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.days)} label="Días" />
+            <Dot />
+            <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.hours)} label="Horas" />
+            <Dot />
+            <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.minutes)} label="Minutos" />
+            <Dot />
+            <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.seconds)} label="Segundos" />
+          </div>
+        )}
 
         {/* Bottom row */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

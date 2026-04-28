@@ -143,6 +143,53 @@ export class RafflesRepository {
     })
   }
 
+  async findPublicRaffles(): Promise<Raffle[]> {
+    const activeRaffles = await this.prisma.raffle.findMany({
+      where: { status: 'active' },
+      include: {
+        progress: true,
+        milestones: {
+          include: {
+            prizes: true,
+          },
+        },
+        _count: {
+          select: {
+            purchases: true,
+            luckyPasses: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const lastClosed = await this.prisma.raffle.findFirst({
+      where: {
+        status: { in: ['sold_out', 'closed', 'drawn'] },
+      },
+      include: {
+        progress: true,
+        milestones: {
+          include: {
+            prizes: true,
+          },
+        },
+        _count: {
+          select: {
+            purchases: true,
+            luckyPasses: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    if (lastClosed) {
+      return [...activeRaffles, lastClosed]
+    }
+    return activeRaffles
+  }
+
   async findActiveExpiredRaffles(): Promise<Array<{
     id: string
     title: string | null

@@ -28,6 +28,9 @@ let RafflesController = class RafflesController {
         }
         return raffle;
     }
+    async getPublic() {
+        return this.rafflesService.getPublicRaffles();
+    }
     async getActiveProgress() {
         return this.rafflesService.getActiveProgress();
     }
@@ -45,6 +48,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], RafflesController.prototype, "getActive", null);
+__decorate([
+    (0, common_1.Get)('public'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], RafflesController.prototype, "getPublic", null);
 __decorate([
     (0, common_1.Get)('active/progress'),
     __metadata("design:type", Function),

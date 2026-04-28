@@ -150,6 +150,36 @@ export class RafflesService {
     }))
   }
 
+  async getPublicRaffles(): Promise<RaffleResponseDto[]> {
+    this.logger.debug('Obteniendo rifas públicas (activas + última cerrada)')
+
+    const raffles = await this.rafflesRepository.findPublicRaffles()
+
+    return raffles.map((raffle: Raffle & { progress: RaffleProgress | null; milestones: (Milestone & { prizes: Prize[] })[] }) => ({
+      id: raffle.id,
+      title: raffle.title,
+      description: raffle.description,
+      goalPacks: raffle.goalPacks,
+      maxTicketNumber: raffle.maxTicketNumber,
+      status: raffle.status,
+      createdAt: raffle.createdAt.toISOString(),
+      endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+      milestones: raffle.milestones?.map(m => ({
+        id: m.id,
+        name: m.name,
+        requiredPacks: m.requiredPacks,
+        sortOrder: m.sortOrder,
+        isUnlocked: (raffle.progress?.packsSold ?? 0) >= m.requiredPacks,
+        prizes: m.prizes?.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          type: p.type,
+        })) || [],
+      })) || [],
+    }))
+  }
+
   async getUserRaffles(): Promise<RaffleResponseDto[]> {
     this.logger.debug('Buscando rifas del usuario actual')
 

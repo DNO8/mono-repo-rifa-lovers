@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
-import { Timer, Users } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Timer, Users, ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { useActiveRaffle } from '@/hooks/use-raffles'
+import { usePublicRaffles } from '@/hooks/use-raffles'
 
 interface TimeLeft {
   days: number
@@ -46,11 +46,25 @@ function Dot() {
 }
 
 export function CountdownSection() {
-  const { raffle, isLoading } = useActiveRaffle()
+  const { raffles, isLoading } = usePublicRaffles()
+  const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null)
   const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClosed, setIsClosed] = useState(false)
 
-  const targetMs = raffle?.endDate ? new Date(raffle.endDate).getTime() : null
+  const activeRaffles = useMemo(() => raffles.filter(r => r.status === 'active'), [raffles])
+  const closedRaffles = useMemo(() => raffles.filter(r => ['sold_out', 'closed', 'drawn'].includes(r.status)), [raffles])
+
+  // Auto-select first active raffle or fallback to first closed; reset if selected no longer exists
+  const selectedRaffle = useMemo(() => {
+    if (selectedRaffleId) {
+      const found = raffles.find(r => r.id === selectedRaffleId)
+      if (found) return found
+    }
+    return activeRaffles[0] ?? closedRaffles[0] ?? null
+  }, [raffles, activeRaffles, closedRaffles, selectedRaffleId])
+
+  const targetMs = selectedRaffle?.endDate ? new Date(selectedRaffle.endDate).getTime() : null
+  const showClosed = !isLoading && (selectedRaffle ? ['sold_out', 'closed', 'drawn'].includes(selectedRaffle.status) : false)
 
   useEffect(() => {
     if (targetMs === null) return
@@ -63,30 +77,76 @@ export function CountdownSection() {
     return () => clearInterval(id)
   }, [targetMs])
 
+  const hasMultiple = activeRaffles.length > 1
+
   return (
     <section className="py-8 md:py-12 px-4 md:px-8 border-y border-border-light bg-bg-white/60">
       <div className="mx-auto max-w-[900px]">
-        <p className="text-center text-sm text-text-secondary mb-5">
-          <Timer className="size-3.5 inline mr-1 -mt-0.5" />
-          {isClosed ? 'El sorteo ha finalizado' : 'Faltan para el próximo sorteo en vivo'}
-        </p>
+        {/* Header row: label + selector */}
+        <div className="text-center mb-5">
+          <p className="text-sm text-text-secondary mb-2">
+            <Timer className="size-3.5 inline mr-1 -mt-0.5" />
+            {showClosed ? 'El sorteo ha finalizado' : activeRaffles.length === 0 ? 'Próximamente' : 'Faltan para el sorteo en vivo'}
+          </p>
 
-        {/* Timer blocks — hidden when raffle is closed */}
-        {isClosed ? (
+          {hasMultiple && (
+            <div className="inline-block relative">
+              <select
+                value={selectedRaffleId ?? activeRaffles[0]?.id ?? ''}
+                onChange={e => setSelectedRaffleId(e.target.value)}
+                className="appearance-none bg-bg-white border border-border-light rounded-lg px-3 py-1.5 pr-8 text-sm text-text-primary cursor-pointer hover:border-text-tertiary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {activeRaffles.map(r => (
+                  <option key={r.id} value={r.id}>
+                    {r.title ?? 'Rifa sin título'}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-text-tertiary pointer-events-none" />
+            </div>
+          )}
+        </div>
+
+        {/* Countdown / Closed / Upcoming */}
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-8 mb-5">
+            <TimeBlock value="--" label="Días" /><Dot />
+            <TimeBlock value="--" label="Horas" /><Dot />
+            <TimeBlock value="--" label="Minutos" /><Dot />
+            <TimeBlock value="--" label="Segundos" />
+          </div>
+        ) : showClosed || isClosed ? (
           <div className="flex items-center justify-center mb-5">
             <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
               Rifa Cerrada
             </span>
+            {selectedRaffle?.title && (
+              <span className="block text-sm text-text-secondary mt-2">
+                {selectedRaffle.title}
+              </span>
+            )}
+          </div>
+        ) : activeRaffles.length === 0 ? (
+          <div className="flex items-center justify-center mb-5">
+            <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
+              Próximamente
+            </span>
+          </div>
+        ) : targetMs !== null ? (
+          <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-8 mb-5">
+            <TimeBlock value={pad(time.days)} label="Días" />
+            <Dot />
+            <TimeBlock value={pad(time.hours)} label="Horas" />
+            <Dot />
+            <TimeBlock value={pad(time.minutes)} label="Minutos" />
+            <Dot />
+            <TimeBlock value={pad(time.seconds)} label="Segundos" />
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-8 mb-5">
-            <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.days)} label="Días" />
-            <Dot />
-            <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.hours)} label="Horas" />
-            <Dot />
-            <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.minutes)} label="Minutos" />
-            <Dot />
-            <TimeBlock value={isLoading || targetMs === null ? '--' : pad(time.seconds)} label="Segundos" />
+          <div className="flex items-center justify-center mb-5">
+            <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
+              Próximamente
+            </span>
           </div>
         )}
 

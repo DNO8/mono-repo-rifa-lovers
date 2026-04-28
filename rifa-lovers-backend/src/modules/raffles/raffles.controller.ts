@@ -17,6 +17,11 @@ export class RafflesController {
     return raffle
   }
 
+  @Get('public')
+  async getPublic(): Promise<RaffleResponseDto[]> {
+    return this.rafflesService.getPublicRaffles()
+  }
+
   @Get('active/progress')
   async getActiveProgress(): Promise<RaffleProgressDto | null> {
     return this.rafflesService.getActiveProgress()

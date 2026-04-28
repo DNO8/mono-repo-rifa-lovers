@@ -15,6 +15,7 @@ export declare class RafflesRepository {
     updateStatus(id: string, status: RaffleStatus): Promise<Raffle>;
     findWithPrizes(id: string): Promise<Raffle | null>;
     findUserRaffles(): Promise<Raffle[]>;
+    findPublicRaffles(): Promise<Raffle[]>;
     findActiveExpiredRaffles(): Promise<Array<{
         id: string;
         title: string | null;

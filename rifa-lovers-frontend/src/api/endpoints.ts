@@ -28,6 +28,7 @@ export const ENDPOINTS = {
 
   raffles: {
     active: '/raffles/active',
+    public: '/raffles/public',
     activeProgress: '/raffles/active/progress',
     detail: (id: string) => `/raffles/${id}`,
     draw: {

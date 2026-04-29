@@ -27,9 +27,11 @@ const admin_module_1 = require("./modules/admin/admin.module");
 const jobs_module_1 = require("./modules/jobs/jobs.module");
 const ticket_reservations_module_1 = require("./modules/ticket-reservations/ticket-reservations.module");
 const contact_module_1 = require("./modules/contact/contact.module");
+const newsletter_module_1 = require("./modules/newsletter/newsletter.module");
 const tasks_module_1 = require("./modules/tasks/tasks.module");
 const all_exceptions_filter_1 = require("./common/filters/all-exceptions.filter");
 const throttler_config_1 = require("./config/throttler.config");
+const recaptcha_service_1 = require("./common/services/recaptcha.service");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -57,11 +59,13 @@ exports.AppModule = AppModule = __decorate([
             jobs_module_1.JobsModule,
             ticket_reservations_module_1.TicketReservationsModule,
             contact_module_1.ContactModule,
+            newsletter_module_1.NewsletterModule,
             tasks_module_1.TasksModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
             app_service_1.AppService,
+            recaptcha_service_1.RecaptchaService,
             {
                 provide: core_1.APP_FILTER,
                 useClass: all_exceptions_filter_1.AllExceptionsFilter,

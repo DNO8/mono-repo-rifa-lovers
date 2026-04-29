@@ -94,15 +94,12 @@ let RafflesRepository = class RafflesRepository {
             },
         });
     }
-    async findUserRaffles() {
+    async findUserRaffles(userId) {
         return this.prisma.raffle.findMany({
             where: {
-                OR: [
-                    { status: 'active' },
-                    { status: 'drawn' },
-                ],
-                purchases: {
-                    some: {},
+                status: { in: ['active', 'sold_out', 'closed', 'drawn'] },
+                luckyPasses: {
+                    some: { userId },
                 },
             },
             include: {

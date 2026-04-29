@@ -14,7 +14,7 @@ export class RegisterDto {
 
   @IsNumberString({}, { message: 'El teléfono debe contener solo números, sin el signo +' })
   @Matches(/^[0-9]+$/, { message: 'El teléfono solo puede contener dígitos del 0-9, no se permite el signo +' })
-  @Transform(({ value }) => value?.toString().replace(/[^0-9]/g, ''))
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' || typeof value === 'number') ? value.toString().replace(/[^0-9]/g, '') : value)
   @IsNotEmpty({ message: 'El teléfono es requerido' })
   phone: string;
 
@@ -35,4 +35,11 @@ export class RegisterDto {
   @MinLength(10, { message: 'La dirección debe tener al menos 10 caracteres' })
   @MaxLength(200, { message: 'La dirección no puede exceder 200 caracteres' })
   address?: string;
+
+  @IsString({ message: 'El token reCAPTCHA debe ser un string' })
+  @IsNotEmpty({ message: 'El token reCAPTCHA es requerido' })
+  recaptchaToken: string;
+
+  @IsNotEmpty({ message: 'Debes aceptar los Términos y Condiciones' })
+  acceptTerms: boolean;
 }

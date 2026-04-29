@@ -66,6 +66,14 @@ export const ENDPOINTS = {
 
   contact: '/contact',
 
+  newsletter: {
+    subscribe: '/newsletter/subscribe',
+    unsubscribe: '/newsletter/unsubscribe',
+    subscribers: '/newsletter/subscribers',
+    campaigns: '/newsletter/campaigns',
+    send: '/newsletter/send',
+  },
+
   ticketReservations: {
     reserve: '/ticket-reservations',
     mine: '/ticket-reservations/mine',

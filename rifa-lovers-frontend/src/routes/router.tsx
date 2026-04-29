@@ -28,7 +28,7 @@ const LazyDashboardPage = lazy(() => import('@/features/dashboard/pages/dashboar
 const LazyCheckoutPage = lazy(() => import('@/features/checkout/pages/checkout.page'))
 const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffle-detail.page'))
 const LazyPaymentReturnPage = lazy(() => import('@/features/checkout/pages/payment-return.page'))
-const LazyEmprendedorPage = lazy(() => import('@/features/emprendedor/pages/emprendedor.page'))
+const LazyPackMomPage = lazy(() => import('@/features/pack-mom/pages/pack-mom.page'))
 const LazyAdminDashboardPage = lazy(() => import('@/features/admin/pages/admin-dashboard.page').then(m => ({ default: m.AdminDashboardPage })))
 const LazyNotFoundPage = lazy(() => import('@/features/errors/pages/not-found.page'))
 const LazyWinnersPage = lazy(() => import('@/features/raffles/pages/winners.page'))
@@ -158,10 +158,28 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
   },
   {
-    path: '/emprendedor',
+    path: '/terminos',
+    element: (
+      <PageWithSuspense fallback={null}>
+        <LazyBasesLegalesPage />
+      </PageWithSuspense>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/privacidad',
+    element: (
+      <PageWithSuspense fallback={null}>
+        <LazyBasesLegalesPage />
+      </PageWithSuspense>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/pack-mom',
     element: (
       <PageWithSuspense fallback={<LandingPageSkeleton />}>
-        <LazyEmprendedorPage />
+        <LazyPackMomPage />
       </PageWithSuspense>
     ),
     errorElement: <RouteErrorBoundary />,

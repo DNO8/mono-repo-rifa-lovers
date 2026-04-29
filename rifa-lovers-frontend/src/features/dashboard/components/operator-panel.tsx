@@ -75,13 +75,17 @@ export function OperatorPanel({ raffles }: OperatorPanelProps) {
                   <Badge variant={statusLabels[raffle.status]?.variant || 'subtle'}>
                     {statusLabels[raffle.status]?.label || raffle.status}
                   </Badge>
-                  <Link to={`/stream/${raffle.id}`}>
+                  <a
+                    href="https://www.facebook.com/profile.php?id=61572258592880"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <Button size="sm" variant="primary" className="gap-1.5">
                       <Radio className="size-3.5" />
                       Ir al Sorteo
                       <ChevronRight className="size-3.5" />
                     </Button>
-                  </Link>
+                  </a>
                 </div>
               </div>
             </Card>

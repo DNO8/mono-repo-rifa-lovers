@@ -6,6 +6,6 @@ export declare class RafflesController {
     getActive(): Promise<RaffleResponseDto>;
     getPublic(): Promise<RaffleResponseDto[]>;
     getActiveProgress(): Promise<RaffleProgressDto | null>;
-    getUserRaffles(): Promise<RaffleResponseDto[]>;
+    getUserRaffles(userId: string): Promise<RaffleResponseDto[]>;
     getCustomerRaffle(id: string): Promise<RaffleResponseDto>;
 }

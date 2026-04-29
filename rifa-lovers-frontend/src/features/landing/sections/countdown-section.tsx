@@ -116,15 +116,15 @@ export function CountdownSection() {
             <TimeBlock value="--" label="Segundos" />
           </div>
         ) : showClosed || isClosed ? (
-          <div className="flex items-center justify-center mb-5">
-            <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
-              Rifa Cerrada
-            </span>
+          <div className="flex flex-col items-center justify-center mb-5">
             {selectedRaffle?.title && (
-              <span className="block text-sm text-text-secondary mt-2">
+              <span className="text-sm text-text-secondary mb-2">
                 {selectedRaffle.title}
               </span>
             )}
+            <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
+              Rifa Cerrada
+            </span>
           </div>
         ) : activeRaffles.length === 0 ? (
           <div className="flex items-center justify-center mb-5">
@@ -150,24 +150,26 @@ export function CountdownSection() {
           </div>
         )}
 
-        {/* Bottom row */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-1.5">
-              <span className="text-base">🧑🏻</span>
-              <span className="text-base">👩🏽</span>
-              <span className="text-base">🧑🏼</span>
-              <span className="text-base">👩🏻</span>
+        {/* Bottom row — only shown when an active raffle is running */}
+        {!showClosed && activeRaffles.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-1.5">
+                <span className="text-base">🧑🏻</span>
+                <span className="text-base">👩🏽</span>
+                <span className="text-base">🧑🏼</span>
+                <span className="text-base">👩🏻</span>
+              </div>
+              <span className="text-xs text-text-tertiary">
+                <Users className="size-3 inline mr-0.5" />
+                Miles de personas ya participando en tiempo real
+              </span>
             </div>
-            <span className="text-xs text-text-tertiary">
-              <Users className="size-3 inline mr-0.5" />
-              Miles de personas ya participando en tiempo real
-            </span>
+            <Badge variant="gradient" className="text-xs px-3 py-1 gap-1 shrink-0">
+              Últimos LuckyPass disponibles
+            </Badge>
           </div>
-          <Badge variant="gradient" className="text-xs px-3 py-1 gap-1 shrink-0">
-            Últimos LuckyPass disponibles
-          </Badge>
-        </div>
+        )}
       </div>
     </section>
   )

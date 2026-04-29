@@ -11,6 +11,12 @@ export interface ContactFormData {
     email: string;
     message: string;
 }
+export interface NewsletterEmailData {
+    toEmail: string;
+    toName?: string;
+    subject: string;
+    bodyHtml: string;
+}
 export interface PurchaseConfirmationData {
     toEmail: string;
     toName: string;
@@ -36,4 +42,6 @@ export declare class ResendService {
     private buildWinnerEmailTemplate;
     private buildContactFormTemplate;
     private buildContactConfirmationTemplate;
+    sendNewsletterEmail(data: NewsletterEmailData): Promise<void>;
+    private buildNewsletterEmailTemplate;
 }

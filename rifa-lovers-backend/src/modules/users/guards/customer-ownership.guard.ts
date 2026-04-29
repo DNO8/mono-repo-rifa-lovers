@@ -15,8 +15,8 @@ export class CustomerOwnershipGuard implements CanActivate {
       throw new ForbiddenException('Usuario no autenticado')
     }
 
-    if (user.role !== 'customer') {
-      throw new ForbiddenException('Acceso denegado: solo customers pueden acceder')
+    if (!['customer', 'operator', 'admin'].includes(user.role)) {
+      throw new ForbiddenException('Acceso denegado: solo customers, operators y admins pueden acceder')
     }
 
     if (!raffleId) {

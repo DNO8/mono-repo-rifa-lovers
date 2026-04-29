@@ -5,4 +5,6 @@ export declare class RegisterDto {
     firstName: string;
     lastName: string;
     address?: string;
+    recaptchaToken: string;
+    acceptTerms: boolean;
 }

@@ -24,8 +24,8 @@ let CustomerOwnershipGuard = class CustomerOwnershipGuard {
         if (!user) {
             throw new common_1.ForbiddenException('Usuario no autenticado');
         }
-        if (user.role !== 'customer') {
-            throw new common_1.ForbiddenException('Acceso denegado: solo customers pueden acceder');
+        if (!['customer', 'operator', 'admin'].includes(user.role)) {
+            throw new common_1.ForbiddenException('Acceso denegado: solo customers, operators y admins pueden acceder');
         }
         if (!raffleId) {
             return true;

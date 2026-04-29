@@ -20,14 +20,23 @@ const auth_service_1 = require("./auth.service");
 const dto_1 = require("./dto");
 const supabase_service_1 = require("../../config/supabase.service");
 const config_1 = require("@nestjs/config");
+const recaptcha_service_1 = require("../../common/services/recaptcha.service");
 let AuthController = AuthController_1 = class AuthController {
-    constructor(authService, supabaseService, config) {
+    constructor(authService, supabaseService, config, recaptchaService) {
         this.authService = authService;
         this.supabaseService = supabaseService;
         this.config = config;
+        this.recaptchaService = recaptchaService;
         this.logger = new common_1.Logger(AuthController_1.name);
     }
     async register(registerDto) {
+        if (!registerDto.acceptTerms) {
+            throw new common_1.BadRequestException('Debes aceptar los Términos y Condiciones para registrarte.');
+        }
+        const isHuman = await this.recaptchaService.verify(registerDto.recaptchaToken);
+        if (!isHuman) {
+            throw new common_1.BadRequestException('Verificación reCAPTCHA fallida. Intenta de nuevo.');
+        }
         return this.authService.register(registerDto);
     }
     async login(loginDto) {
@@ -159,6 +168,7 @@ exports.AuthController = AuthController = AuthController_1 = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService,
         supabase_service_1.SupabaseService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        recaptcha_service_1.RecaptchaService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

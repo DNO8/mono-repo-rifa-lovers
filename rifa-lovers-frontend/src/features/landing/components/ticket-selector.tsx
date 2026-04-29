@@ -10,8 +10,8 @@ import type { RaffleMilestone } from '@/types/domain.types'
 /* ── Flash Campaign Config (will come from backend) ── */
 const FLASH_CAMPAIGN = {
   isActive: true,
-  message: 'Sorteos express de Giftcards en días especiales',
-  detail: 'Síguenos en Instagram para enterarte primero',
+  message: 'Aprovecha el sorteo express de Giftcards durante este dia',
+  detail: 'Síguenos en Instagram para enterarte de los detalles!',
 }
 
 interface DisplayMilestone {
@@ -106,7 +106,13 @@ function FlashCampaignBanner() {
   if (!FLASH_CAMPAIGN.isActive) return null
 
   return (
-    <div data-ms-banner className="relative mt-4 rounded-xl overflow-hidden cursor-pointer group">
+    <a
+      href="https://www.instagram.com/rifalovers_cl/"
+      target="_blank"
+      rel="noopener noreferrer"
+      data-ms-banner
+      className="relative mt-4 rounded-xl overflow-hidden cursor-pointer group block"
+    >
       {/* Shimmer border effect */}
       <div
         className="absolute inset-0 rounded-xl"
@@ -153,7 +159,7 @@ function FlashCampaignBanner() {
           Flash
         </Badge>
       </div>
-    </div>
+    </a>
   )
 }
 

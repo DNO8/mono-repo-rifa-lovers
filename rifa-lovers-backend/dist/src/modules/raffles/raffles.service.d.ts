@@ -10,5 +10,5 @@ export declare class RafflesService {
     findById(id: string): Promise<RaffleResponseDto>;
     findByStatus(status: RaffleStatus): Promise<RaffleResponseDto[]>;
     getPublicRaffles(): Promise<RaffleResponseDto[]>;
-    getUserRaffles(): Promise<RaffleResponseDto[]>;
+    getUserRaffles(userId: string): Promise<RaffleResponseDto[]>;
 }

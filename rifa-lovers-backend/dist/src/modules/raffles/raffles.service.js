@@ -154,9 +154,9 @@ let RafflesService = RafflesService_1 = class RafflesService {
             })) || [],
         }));
     }
-    async getUserRaffles() {
-        this.logger.debug('Buscando rifas del usuario actual');
-        const raffles = await this.rafflesRepository.findUserRaffles();
+    async getUserRaffles(userId) {
+        this.logger.debug(`Buscando rifas del usuario ${userId}`);
+        const raffles = await this.rafflesRepository.findUserRaffles(userId);
         return raffles.map((raffle) => ({
             id: raffle.id,
             title: raffle.title,

@@ -18,6 +18,8 @@ import { useActiveRaffle } from '@/hooks/use-raffles'
 import { useUserRaffles } from '@/hooks/use-user-raffles'
 import { Spinner } from '@/components/ui/spinner'
 import { OperatorPanel } from '../components/operator-panel'
+import { NewsletterPanel } from '../components/newsletter-panel'
+import { NewsletterDashboardCard } from '../components/newsletter-dashboard-card'
 import { getAllRaffles } from '@/api/admin.api'
 import type { Raffle, RaffleProgress, Purchase, LuckyPass } from '@/types/domain.types'
 import { useAsyncData } from '@/hooks/use-async-data'
@@ -101,14 +103,37 @@ const transformPurchasesToHistory = (purchases: Purchase[], passes: LuckyPass[])
 // Helper to transform raffle to card data
 const transformRaffleToCardData = (raffle: Raffle | null, userLuckyPassTotal: number): RaffleCardData | null => {
   if (!raffle) return null
+
+  const closedStatuses = ['sold_out', 'closed', 'drawn']
+  const isClosed = closedStatuses.includes(raffle.status)
+
+  let drawLabel: string
+  let drawTime: string
+  let drawDate: string
+
+  if (isClosed) {
+    drawLabel = 'Rifa Cerrada'
+    drawTime = ''
+    drawDate = raffle.endDate ?? new Date().toISOString()
+  } else if (raffle.endDate) {
+    const end = new Date(raffle.endDate)
+    drawDate = end.toISOString()
+    drawLabel = 'Próximo sorteo'
+    drawTime = end.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false })
+  } else {
+    drawLabel = 'Próximamente'
+    drawTime = ''
+    drawDate = new Date().toISOString()
+  }
+
   return {
     id: raffle.id,
     prize: raffle.title || 'Premio por confirmar',
     ticketCount: userLuckyPassTotal,
     uniqueId: `RL-${raffle.id.slice(-4).toUpperCase()}`,
-    drawLabel: 'Próximo sorteo',
-    drawTime: '20:00',
-    drawDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    drawLabel,
+    drawTime,
+    drawDate,
   }
 }
 
@@ -206,9 +231,14 @@ export default function DashboardPage() {
 
             {/* Operator/Admin Panel (only in operator mode) */}
             {isOperatorOrAdmin && viewMode === 'operator' && (
-              <div className="mb-8">
-                <OperatorPanel raffles={allRaffles} />
-              </div>
+              <>
+                <div className="mb-8">
+                  <OperatorPanel raffles={allRaffles} />
+                </div>
+                <div className="mb-8">
+                  <NewsletterPanel />
+                </div>
+              </>
             )}
 
             {/* Main layout: sidebar left + main right */}
@@ -217,6 +247,12 @@ export default function DashboardPage() {
               <aside className="order-2 lg:order-1 space-y-5">
                 <TicketHistory items={historyItems.length > 0 ? historyItems : []} />
                 <SocialImpactBanner />
+                {user?.email && (
+                  <NewsletterDashboardCard
+                    email={user.email}
+                    name={user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : undefined}
+                  />
+                )}
               </aside>
 
               {/* Main content */}

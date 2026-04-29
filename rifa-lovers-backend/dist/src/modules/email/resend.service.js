@@ -319,6 +319,69 @@ let ResendService = ResendService_1 = class ResendService {
 </body>
 </html>`;
     }
+    async sendNewsletterEmail(data) {
+        if (!this.resend) {
+            this.logger.warn(`[EMAIL SKIP] Newsletter a ${data.toEmail}: ${data.subject}`);
+            return;
+        }
+        const from = this.getFromEmail('noreply');
+        const html = this.buildNewsletterEmailTemplate({
+            subject: data.subject,
+            bodyHtml: data.bodyHtml,
+            toName: data.toName,
+            frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+        });
+        try {
+            const { error } = await this.resend.emails.send({
+                from: `RifaLovers <${from}>`,
+                to: data.toEmail,
+                subject: data.subject,
+                html,
+            });
+            if (error) {
+                this.logger.error(`Error enviando newsletter a ${data.toEmail}: ${error.message}`);
+                throw new Error(error.message);
+            }
+            this.logger.log(`Newsletter enviado a ${data.toEmail}`);
+        }
+        catch (err) {
+            this.logger.error(`Error enviando newsletter a ${data.toEmail}: ${err}`);
+            throw err;
+        }
+    }
+    buildNewsletterEmailTemplate(params) {
+        return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">${params.subject}</title></head>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f9f5ff;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#f9f5ff;">
+    <tr>
+      <td align="center" style="padding:40px 20px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560" style="max-width:560px;background-color:#ffffff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);border:1px solid #e5e7eb;">
+          <tr>
+            <td align="center" style="padding:40px 32px 24px;border-bottom:1px solid #f3f4f6;">
+              <img src="${params.frontendUrl}/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              ${params.toName ? `<p style="margin:0 0 16px;font-size:16px;color:#374151;">Hola ${params.toName},</p>` : ''}
+              ${params.bodyHtml}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+              <p style="margin:0 0 8px;font-size:12px;color:#9ca3af;"><strong style="color:#111827;">RifaLovers</strong> · Chile</p>
+              <p style="margin:0;font-size:11px;color:#9ca3af;"><a href="${params.frontendUrl}/newsletter/unsubscribe" style="color:#7c3aed;text-decoration:none;">Darme de baja</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+    }
 };
 exports.ResendService = ResendService;
 exports.ResendService = ResendService = ResendService_1 = __decorate([

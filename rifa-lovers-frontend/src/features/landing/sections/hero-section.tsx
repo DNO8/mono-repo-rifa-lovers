@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import { ArrowRight, Radio, Hand, CalendarClock } from 'lucide-react'
+import { ArrowRight, Hand, CalendarClock } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -133,7 +133,7 @@ export function HeroSection() {
             data-gsap
             className="text-sm md:text-base text-text-secondary max-w-xl mb-4 leading-relaxed"
           >
-            <span className="font-semibold text-primary">5 smartphones y 5 tablets</span>, además
+            <span className="font-semibold text-primary">3 smartphones y 3 tablets</span>, además
             participas en la escala de desbloqueo de fabulosos premios.
           </p>
 
@@ -151,10 +151,18 @@ export function HeroSection() {
               Participar Ahora
               <ArrowRight className="size-4" />
             </Button>
-            <Button variant="secondary" size="lg">
-              <Radio className="size-4" />
+            <a
+              href="https://www.facebook.com/profile.php?id=61572258592880"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-white/15 border border-white/25 rounded-full text-text-primary text-sm font-semibold backdrop-blur-sm hover:bg-white/25 transition-all duration-200 cursor-pointer group"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
               Ver sorteo en vivo
-            </Button>
+            </a>
           </div>
         </div>
 

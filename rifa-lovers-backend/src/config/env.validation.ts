@@ -31,6 +31,9 @@ const envSchema = z.object({
   EMAIL_FROM_CONTACT: z.string().default('contacto@rifalovers.cl'),
   EMAIL_TO_CONTACT: z.string().default('contacto@rifalovers.cl'),
 
+  // reCAPTCHA (opcional en dev, requerido en prod)
+  RECAPTCHA_SECRET_KEY: z.string().optional(),
+
   // Legacy SMTP (deprecated - solo para compatibilidad temporal)
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().default('587'),

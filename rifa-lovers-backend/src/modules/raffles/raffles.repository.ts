@@ -114,15 +114,12 @@ export class RafflesRepository {
     })
   }
 
-  async findUserRaffles(): Promise<Raffle[]> {
+  async findUserRaffles(userId: string): Promise<Raffle[]> {
     return this.prisma.raffle.findMany({
       where: {
-        OR: [
-          { status: 'active' },
-          { status: 'drawn' },
-        ],
-        purchases: {
-          some: {}, // User has at least one purchase in these raffles
+        status: { in: ['active', 'sold_out', 'closed', 'drawn'] },
+        luckyPasses: {
+          some: { userId },
         },
       },
       include: {

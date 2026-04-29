@@ -180,10 +180,10 @@ export class RafflesService {
     }))
   }
 
-  async getUserRaffles(): Promise<RaffleResponseDto[]> {
-    this.logger.debug('Buscando rifas del usuario actual')
+  async getUserRaffles(userId: string): Promise<RaffleResponseDto[]> {
+    this.logger.debug(`Buscando rifas del usuario ${userId}`)
 
-    const raffles = await this.rafflesRepository.findUserRaffles()
+    const raffles = await this.rafflesRepository.findUserRaffles(userId)
 
     return raffles.map((raffle: Raffle) => ({
       id: raffle.id,

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { UserPlus, ShoppingBag, CreditCard, Radio, Gift, Shield, Hash, Leaf } from 'lucide-react'
+import { UserPlus, ShoppingBag, CreditCard, Radio, Gift, Shield, Hash, HeartHandshake } from 'lucide-react'
 
 export interface FlowStep {
   id: string
@@ -25,9 +25,9 @@ export const FLOW_STEPS: FlowStep[] = [
     bullets: [
       'Registrate con tu correo o Google.',
       'Es rápido, fácil y sin costo.',
-      'Únete a miles de personas que ya están participando.',
+      'Únete a la comunidad que ya está participando.',
     ],
-    badge: 'Más de 10.000 personas ya forman parte de nuestra comunidad',
+    badge: 'Te mantenemos al tanto de las novedades y ganadores con tu cuenta',
   },
   {
     id: 'pack',
@@ -42,7 +42,7 @@ export const FLOW_STEPS: FlowStep[] = [
       'Cada LuckyPass es una oportunidad real.',
       'Mientras más participas, más chances tienes.',
     ],
-    badge: '¡Aprovecha nuestros packs y gana más por menos!',
+    badge: '¡Aprovecha nuestros packs y aumenta tus posibilidades!',
   },
   {
     id: 'pay',
@@ -111,7 +111,7 @@ export const TRUST_ITEMS: TrustItem[] = [
     title: 'Sorteo verificable',
     stat: '100%',
     statLabel: 'transparente',
-    description: 'Cada sorteo se transmite en vivo. Cualquier persona puede ver el proceso en tiempo real. No hay trampa posible: el número ganador se genera frente a todos.',
+    description: 'Cada sorteo se transmite en vivo. Cualquier persona puede ver el proceso en tiempo real. No hay trampa posible: el LuckyPass ganador se sortea frente a todos.',
   },
   {
     id: 'unique',
@@ -125,11 +125,11 @@ export const TRUST_ITEMS: TrustItem[] = [
   },
   {
     id: 'impact',
-    icon: Leaf,
+    icon: HeartHandshake,
     color: '#10B981',
     bg: '#10B98120',
-    title: 'Impacto social real',
-    stat: '10%',
+    title: 'Genera impacto\nJuntos ayudamos a otros',
+    stat: '%',
     statLabel: 'de cada compra',
     description: 'Un porcentaje de cada LuckyPass vendido se destina a causas benéficas seleccionadas por nuestra comunidad. Participar aquí significa también ayudar a otros.',
   },

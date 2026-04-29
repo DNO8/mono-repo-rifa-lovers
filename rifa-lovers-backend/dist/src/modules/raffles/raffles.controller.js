@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const raffles_service_1 = require("./raffles.service");
 const customer_ownership_guard_1 = require("../users/guards/customer-ownership.guard");
 const passport_1 = require("@nestjs/passport");
+const decorators_1 = require("../../common/decorators");
 let RafflesController = class RafflesController {
     constructor(rafflesService) {
         this.rafflesService = rafflesService;
@@ -34,8 +35,8 @@ let RafflesController = class RafflesController {
     async getActiveProgress() {
         return this.rafflesService.getActiveProgress();
     }
-    async getUserRaffles() {
-        return await this.rafflesService.getUserRaffles();
+    async getUserRaffles(userId) {
+        return await this.rafflesService.getUserRaffles(userId);
     }
     async getCustomerRaffle(id) {
         return await this.rafflesService.findById(id);
@@ -63,8 +64,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('user'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), customer_ownership_guard_1.CustomerOwnershipGuard),
+    __param(0, (0, decorators_1.CurrentUser)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], RafflesController.prototype, "getUserRaffles", null);
 __decorate([

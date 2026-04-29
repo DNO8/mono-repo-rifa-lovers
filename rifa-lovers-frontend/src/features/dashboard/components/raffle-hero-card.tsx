@@ -86,14 +86,16 @@ export function RaffleHeroCard({ raffle }: { raffle: RaffleCardData }) {
         {/* Right: countdown card */}
         <div className="glass-light rounded-xl p-5 text-center shrink-0 min-w-[160px] border border-border-light">
           <span className="block text-[10px] font-bold uppercase tracking-wider text-text-tertiary mb-1">
-            Próximo sorteo
+            {raffle.drawTime ? 'Próximo sorteo' : 'Estado'}
           </span>
           <p className="text-lg font-extrabold text-text-primary">
             {raffle.drawLabel}
           </p>
-          <p className="text-sm font-semibold text-primary">
-            {raffle.drawTime}
-          </p>
+          {raffle.drawTime && (
+            <p className="text-sm font-semibold text-primary">
+              {raffle.drawTime}
+            </p>
+          )}
         </div>
       </div>
     </div>

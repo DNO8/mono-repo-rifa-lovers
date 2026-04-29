@@ -3,6 +3,7 @@ import { RafflesService } from './raffles.service'
 import { RaffleResponseDto, RaffleProgressDto } from './dto'
 import { CustomerOwnershipGuard } from '../users/guards/customer-ownership.guard'
 import { AuthGuard } from '@nestjs/passport'
+import { CurrentUser } from '../../common/decorators'
 
 @Controller('raffles')
 export class RafflesController {
@@ -29,8 +30,8 @@ export class RafflesController {
 
   @Get('user')
   @UseGuards(AuthGuard('jwt'), CustomerOwnershipGuard)
-  async getUserRaffles(): Promise<RaffleResponseDto[]> {
-    return await this.rafflesService.getUserRaffles()
+  async getUserRaffles(@CurrentUser('id') userId: string): Promise<RaffleResponseDto[]> {
+    return await this.rafflesService.getUserRaffles(userId)
   }
 
   @Get(':id')

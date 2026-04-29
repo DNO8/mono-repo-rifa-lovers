@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'react-toastify'
-import { UserPlus, Eye, EyeOff } from 'lucide-react'
+import { UserPlus, Eye, EyeOff, Mail, Check, ShieldCheck } from 'lucide-react'
+import ReCAPTCHA from 'react-google-recaptcha'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
+import { subscribeToNewsletter } from '@/api/newsletter.api'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -18,6 +20,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [subscribeNewsletter, setSubscribeNewsletter] = useState(true)
+  const [acceptTerms, setAcceptTerms] = useState(false)
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null)
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -43,8 +49,28 @@ export default function RegisterPage() {
       return
     }
 
+    if (!acceptTerms) {
+      toast.error('Debes aceptar los Términos y Condiciones para registrarte')
+      return
+    }
+
+    if (!recaptchaToken) {
+      toast.error('Por favor completa la verificación de seguridad (reCAPTCHA)')
+      return
+    }
+
     try {
-      await register(name, lastName, phone, email, password, address || undefined)
+      await register(name, lastName, phone, email, password, address || undefined, recaptchaToken)
+
+      // Auto-subscribe to newsletter if opted in
+      if (subscribeNewsletter) {
+        try {
+          await subscribeToNewsletter(email.trim(), `${name} ${lastName}`.trim())
+        } catch {
+          // Silently ignore newsletter errors — registration is what matters
+        }
+      }
+
       // Redirect to email verification page - user must confirm email before accessing dashboard
       navigate(`/verificar-correo?email=${encodeURIComponent(email)}`)
     } catch {
@@ -185,6 +211,57 @@ export default function RegisterPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repite tu contraseña"
               className="w-full h-10 px-4 rounded-md border border-border bg-white text-text-primary text-sm placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            />
+          </div>
+
+          {/* Terms & Conditions */}
+          <label className="flex items-start gap-2.5 cursor-pointer group">
+            <div className="relative flex items-center">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="peer sr-only"
+              />
+              <div className="size-4.5 rounded border border-border bg-white peer-checked:bg-primary peer-checked:border-primary flex items-center justify-center transition-colors">
+                <ShieldCheck className={`size-3 text-white transition-transform ${acceptTerms ? 'scale-100' : 'scale-0'}`} />
+              </div>
+            </div>
+            <div className="flex-1">
+              <span className="text-xs text-text-secondary flex items-center gap-1">
+                <ShieldCheck className="size-3 text-text-tertiary" />
+                Acepto los <Link to="/terminos" target="_blank" className="text-primary hover:underline">Términos y Condiciones</Link> y la <Link to="/privacidad" target="_blank" className="text-primary hover:underline">Política de Privacidad</Link>.
+              </span>
+            </div>
+          </label>
+
+          {/* Newsletter opt-in */}
+          <label className="flex items-start gap-2.5 cursor-pointer group">
+            <div className="relative flex items-center">
+              <input
+                type="checkbox"
+                checked={subscribeNewsletter}
+                onChange={(e) => setSubscribeNewsletter(e.target.checked)}
+                className="peer sr-only"
+              />
+              <div className="size-4.5 rounded border border-border bg-white peer-checked:bg-primary peer-checked:border-primary flex items-center justify-center transition-colors">
+                <Check className={`size-3 text-white transition-transform ${subscribeNewsletter ? 'scale-100' : 'scale-0'}`} />
+              </div>
+            </div>
+            <div className="flex-1">
+              <span className="text-xs text-text-secondary flex items-center gap-1">
+                <Mail className="size-3 text-text-tertiary" />
+                Suscribirme al newsletter para recibir noticias de ganadores, nuevas rifas y avisos importantes.
+              </span>
+            </div>
+          </label>
+
+          {/* reCAPTCHA */}
+          <div className="flex justify-center">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || ''}
+              onChange={(token) => setRecaptchaToken(token)}
             />
           </div>
 

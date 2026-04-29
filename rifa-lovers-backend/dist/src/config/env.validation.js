@@ -18,6 +18,7 @@ const envSchema = zod_1.z.object({
     EMAIL_FROM_NOREPLY: zod_1.z.string().default('noreply@rifalovers.cl'),
     EMAIL_FROM_CONTACT: zod_1.z.string().default('contacto@rifalovers.cl'),
     EMAIL_TO_CONTACT: zod_1.z.string().default('contacto@rifalovers.cl'),
+    RECAPTCHA_SECRET_KEY: zod_1.z.string().optional(),
     SMTP_HOST: zod_1.z.string().optional(),
     SMTP_PORT: zod_1.z.string().default('587'),
     SMTP_USER: zod_1.z.string().optional(),

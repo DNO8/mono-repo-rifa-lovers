@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Query, HttpCode, HttpStatus, Res, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, HttpCode, HttpStatus, Res, Logger, BadRequestException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, AuthResponseDto } from './dto';
 import { SupabaseService } from '../../config/supabase.service';
 import { ConfigService } from '@nestjs/config';
+import { RecaptchaService } from '../../common/services/recaptcha.service';
 import type { Response } from 'express';
 
 @Controller('auth')
@@ -14,12 +15,24 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly supabaseService: SupabaseService,
     private readonly config: ConfigService,
+    private readonly recaptchaService: RecaptchaService,
   ) {}
 
   @Post('register')
   @Throttle({ auth: { limit: 5, ttl: 900000 } })
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
+    // Validate terms acceptance
+    if (!registerDto.acceptTerms) {
+      throw new BadRequestException('Debes aceptar los Términos y Condiciones para registrarte.');
+    }
+
+    // Validate reCAPTCHA
+    const isHuman = await this.recaptchaService.verify(registerDto.recaptchaToken);
+    if (!isHuman) {
+      throw new BadRequestException('Verificación reCAPTCHA fallida. Intenta de nuevo.');
+    }
+
     return this.authService.register(registerDto);
   }
 

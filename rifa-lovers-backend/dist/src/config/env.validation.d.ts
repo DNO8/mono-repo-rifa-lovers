@@ -19,6 +19,7 @@ declare const envSchema: z.ZodObject<{
     EMAIL_FROM_NOREPLY: z.ZodDefault<z.ZodString>;
     EMAIL_FROM_CONTACT: z.ZodDefault<z.ZodString>;
     EMAIL_TO_CONTACT: z.ZodDefault<z.ZodString>;
+    RECAPTCHA_SECRET_KEY: z.ZodOptional<z.ZodString>;
     SMTP_HOST: z.ZodOptional<z.ZodString>;
     SMTP_PORT: z.ZodDefault<z.ZodString>;
     SMTP_USER: z.ZodOptional<z.ZodString>;

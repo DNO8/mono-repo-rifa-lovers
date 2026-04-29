@@ -1,0 +1,52 @@
+import { NewsletterService } from './newsletter.service';
+import { SubscribeDto, SendCampaignDto } from './dto';
+export declare class NewsletterController {
+    private readonly newsletterService;
+    private readonly logger;
+    constructor(newsletterService: NewsletterService);
+    subscribe(dto: SubscribeDto): Promise<{
+        id: string;
+        name: string | null;
+        email: string;
+        isActive: boolean;
+        subscribedAt: Date;
+        unsubscribedAt: Date | null;
+    }>;
+    unsubscribe(email: string): Promise<{
+        message: string;
+    }>;
+    getSubscribers(): Promise<{
+        subscribers: {
+            id: string;
+            name: string | null;
+            email: string;
+            isActive: boolean;
+            subscribedAt: Date;
+            unsubscribedAt: Date | null;
+        }[];
+        activeCount: number;
+        totalCount: number;
+    }>;
+    getCampaigns(): Promise<{
+        id: string;
+        createdAt: Date;
+        subject: string;
+        body: string;
+        sentBy: string | null;
+        sentAt: Date | null;
+        recipientCount: number;
+    }[]>;
+    sendCampaign(dto: SendCampaignDto, adminId: string): Promise<{
+        message: string;
+        recipientCount: number;
+        campaignId?: undefined;
+        totalSubscribers?: undefined;
+        errors?: undefined;
+    } | {
+        campaignId: string;
+        recipientCount: number;
+        totalSubscribers: number;
+        errors: string[] | undefined;
+        message?: undefined;
+    }>;
+}

@@ -30,7 +30,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsNumberString)({}, { message: 'El teléfono debe contener solo números, sin el signo +' }),
     (0, class_validator_1.Matches)(/^[0-9]+$/, { message: 'El teléfono solo puede contener dígitos del 0-9, no se permite el signo +' }),
-    (0, class_transformer_1.Transform)(({ value }) => value?.toString().replace(/[^0-9]/g, '')),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' || typeof value === 'number') ? value.toString().replace(/[^0-9]/g, '') : value),
     (0, class_validator_1.IsNotEmpty)({ message: 'El teléfono es requerido' }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "phone", void 0);
@@ -55,4 +55,13 @@ __decorate([
     (0, class_validator_1.MaxLength)(200, { message: 'La dirección no puede exceder 200 caracteres' }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsString)({ message: 'El token reCAPTCHA debe ser un string' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'El token reCAPTCHA es requerido' }),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "recaptchaToken", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)({ message: 'Debes aceptar los Términos y Condiciones' }),
+    __metadata("design:type", Boolean)
+], RegisterDto.prototype, "acceptTerms", void 0);
 //# sourceMappingURL=register.dto.js.map

@@ -1,11 +1,44 @@
 import { Link } from 'react-router'
 import { NAV_ITEMS } from '@/lib/constants'
+import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa'
 
 const LEGAL_LINKS = [
   { label: 'Bases Legales', href: '/bases-legales' },
   { label: 'Términos y Condiciones', href: '/terminos' },
   { label: 'Política de Privacidad', href: '/privacidad' },
 ]
+
+const SOCIAL_LINKS = [
+  { label: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61572258592880', icon: FaFacebook, color: '#1877F2' },
+  { label: 'Instagram', href: 'https://www.instagram.com/rifalovers_cl/', icon: FaInstagram, color: '#E4405F' },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@rifalovers_cl', icon: FaTiktok, color: '#000000' },
+]
+
+function SocialLinks() {
+  return (
+    <div>
+      <h4 className="font-semibold text-text-primary text-xs uppercase tracking-wide mb-2">Comunidad</h4>
+      <p className="text-xs text-text-secondary mb-2.5">
+        Síguenos y únete a nuestra comunidad en redes sociales.
+      </p>
+      <ul className="space-y-1.5">
+        {SOCIAL_LINKS.map((item) => (
+          <li key={item.label}>
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-primary transition-colors"
+            >
+              <item.icon className="size-3.5" style={{ color: item.color }} />
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 export function Footer() {
   return (
@@ -58,12 +91,7 @@ export function Footer() {
           </div>
 
           {/* Community */}
-          <div>
-            <h4 className="font-semibold text-text-primary text-xs uppercase tracking-wide mb-2">Comunidad</h4>
-            <p className="text-xs text-text-secondary">
-              Únete a nuestra comunidad y sé parte del cambio.
-            </p>
-          </div>
+          <SocialLinks />
         </div>
 
         {/* Bottom */}

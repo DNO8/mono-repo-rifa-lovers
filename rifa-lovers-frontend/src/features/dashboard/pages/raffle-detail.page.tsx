@@ -28,16 +28,19 @@ export default function RaffleDetailPage() {
 
   const isLoading = isLoadingRaffle || isLoadingPasses
 
-  const userTickets: UserTicket[] = passes.map((lp) => ({
-    id: lp.id,
-    number: lp.ticketNumber,
-    purchasedAt: lp.createdAt,
-    isWinner: lp.isWinner,
-  }))
-
-  const activeTicket = selectedTicket ?? userTickets[0] ?? null
   const raffleId = id ?? raffle?.id
   const raffleTitle = raffle?.title ?? 'Premio por confirmar'
+
+  const userTickets: UserTicket[] = passes
+    .filter((lp) => lp.raffleId === raffleId)
+    .map((lp) => ({
+      id: lp.id,
+      number: lp.ticketNumber,
+      purchasedAt: lp.createdAt,
+      isWinner: lp.isWinner,
+    }))
+
+  const activeTicket = selectedTicket ?? userTickets[0] ?? null
   const maxTicketNumber = raffle?.maxTicketNumber ?? 30000
 
   if (isLoading) {

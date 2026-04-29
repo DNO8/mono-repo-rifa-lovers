@@ -87,7 +87,7 @@ export const FLOW_STEPS: FlowStep[] = [
       'Enviamos tu premio a la puerta de tu casa.',
       'Rápido, seguro y sin complicaciones.',
     ],
-    badge: 'Miles de ganadores felices ¡Tú puedes ser el próximo!',
+    badge: '¡Tú puedes ser el próximo!',
   },
 ]
 

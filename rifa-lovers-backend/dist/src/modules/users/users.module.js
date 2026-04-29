@@ -9,12 +9,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersModule = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
-const auth_service_1 = require("./auth.service");
+const users_controller_1 = require("./users.controller");
 const auth_controller_1 = require("./auth.controller");
 const users_service_1 = require("./users.service");
-const users_controller_1 = require("./users.controller");
-const jwt_strategy_1 = require("./strategies/jwt.strategy");
+const auth_service_1 = require("./auth.service");
 const supabase_module_1 = require("../../config/supabase.module");
+const jwt_strategy_1 = require("./strategies/jwt.strategy");
+const recaptcha_service_1 = require("../../common/services/recaptcha.service");
 let UsersModule = class UsersModule {
 };
 exports.UsersModule = UsersModule;
@@ -24,9 +25,9 @@ exports.UsersModule = UsersModule = __decorate([
             passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             supabase_module_1.SupabaseModule,
         ],
-        controllers: [auth_controller_1.AuthController, users_controller_1.UsersController],
-        providers: [auth_service_1.AuthService, users_service_1.UsersService, jwt_strategy_1.JwtStrategy],
-        exports: [auth_service_1.AuthService, users_service_1.UsersService, jwt_strategy_1.JwtStrategy, passport_1.PassportModule],
+        controllers: [users_controller_1.UsersController, auth_controller_1.AuthController],
+        providers: [users_service_1.UsersService, auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, recaptcha_service_1.RecaptchaService],
+        exports: [users_service_1.UsersService, auth_service_1.AuthService],
     })
 ], UsersModule);
 //# sourceMappingURL=users.module.js.map

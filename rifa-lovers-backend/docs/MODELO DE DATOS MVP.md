@@ -27,6 +27,26 @@ CREATE TABLE public.milestones (
   CONSTRAINT milestones_pkey PRIMARY KEY (id),
   CONSTRAINT milestones_raffle_id_fkey FOREIGN KEY (raffle_id) REFERENCES public.raffles(id)
 );
+CREATE TABLE public.newsletter_campaigns (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  subject character varying NOT NULL,
+  body text NOT NULL,
+  sent_by uuid,
+  sent_at timestamp with time zone,
+  recipient_count integer NOT NULL DEFAULT 0,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT newsletter_campaigns_pkey PRIMARY KEY (id),
+  CONSTRAINT newsletter_campaigns_sent_by_fkey FOREIGN KEY (sent_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.newsletter_subscribers (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  email character varying NOT NULL UNIQUE,
+  name character varying,
+  is_active boolean NOT NULL DEFAULT true,
+  subscribed_at timestamp with time zone NOT NULL DEFAULT now(),
+  unsubscribed_at timestamp with time zone,
+  CONSTRAINT newsletter_subscribers_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.organizations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name character varying NOT NULL,

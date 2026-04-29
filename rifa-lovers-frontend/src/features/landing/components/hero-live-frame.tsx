@@ -17,7 +17,7 @@ export function HeroLiveFrame({ children }: { children: React.ReactNode }) {
         {/* Top bar — live overlay */}
         <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-end px-3 py-2 bg-linear-to-b from-black/60 to-transparent">
           <Badge variant="gradient" className="text-[10px] px-2 py-0.5 gap-1 cursor-pointer">
-            Descubre el premio final!
+            Interactúa con el premio final!
           </Badge>
         </div>
 

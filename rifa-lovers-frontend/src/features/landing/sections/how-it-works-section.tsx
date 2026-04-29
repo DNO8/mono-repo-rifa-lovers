@@ -265,8 +265,8 @@ export function HowItWorksSection() {
 
   return (
     <section
+      id="como-funciona"
       ref={sectionRef}
-      id="como-participar"
       className="px-4 md:px-8 py-16 md:py-24 overflow-hidden"
     >
       <div className="mx-auto max-w-[900px]">

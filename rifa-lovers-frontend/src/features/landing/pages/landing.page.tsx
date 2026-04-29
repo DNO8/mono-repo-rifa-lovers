@@ -11,6 +11,7 @@ import { TestimonialsSection } from '../sections/testimonials-section'
 import { PricingSection } from '../sections/pricing-section'
 import { BackingSection } from '../sections/backing-section'
 import { MilestoneTimeline } from '../components/ticket-selector'
+import { CTASection } from '../sections/cta-section'
 
 
 export default function LandingPage() {
@@ -32,12 +33,12 @@ export default function LandingPage() {
       <SectionDivider />
       <HowItWorksSection />
       <SectionDivider />
-      <SectionDivider />
       <BackingSection />
       <SectionDivider />
       <WinnersSection />
       <SectionDivider />
       <TestimonialsSection />
+      <CTASection />
     </>
   )
 }

@@ -10,6 +10,8 @@ import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
 import { cn } from '@/lib/utils'
 
+const SHOW_PACK_MOM = false
+
 export function PricingSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.15 })
   const navigate = useNavigate()
@@ -136,8 +138,8 @@ export function PricingSection() {
         </div>
         )}
 
-        {/* Pack Mom Section */}
-        {!isLoading && !error && (
+        {/* Pack Mom Section — controlled by SHOW_PACK_MOM feature flag */}
+        {SHOW_PACK_MOM && !isLoading && !error && (
           <div className="mt-16 md:mt-20">
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight mb-2">

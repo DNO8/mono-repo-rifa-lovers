@@ -60,7 +60,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(name, lastName, phone, email, password, address || undefined, recaptchaToken)
+      await register(name, lastName, phone, email, password, address || undefined, recaptchaToken, acceptTerms)
 
       // Auto-subscribe to newsletter if opted in
       if (subscribeNewsletter) {

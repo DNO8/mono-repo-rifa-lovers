@@ -1,8 +1,21 @@
-import { Link } from 'react-router'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { SplitText } from '@/components/shared/split-text'
+
+function scrollToPricing() {
+  const el = document.getElementById('pricing')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
+}
+
+function scrollToImpacto() {
+  const el = document.getElementById('impacto')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
+}
 
 export function CTASection() {
   const sectionRef = useGsapScroll<HTMLElement>()
@@ -34,17 +47,13 @@ export function CTASection() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/#pricing">
-            <Button variant="primary" size="lg">
-              Participar Ahora
-              <ArrowRight className="size-4" />
-            </Button>
-          </Link>
-          <Link to="/">
-            <Button variant="ghost" size="lg">
-              Ver sorteos activos
-            </Button>
-          </Link>
+          <Button variant="primary" size="lg" onClick={scrollToPricing}>
+            Participar Ahora
+            <ArrowRight className="size-4" />
+          </Button>
+          <Button variant="ghost" size="lg" onClick={scrollToImpacto}>
+            Ver sorteos activos
+          </Button>
         </div>
       </div>
     </section>

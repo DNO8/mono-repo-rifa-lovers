@@ -14,7 +14,7 @@ interface AuthState {
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, lastName: string, phone: string, email: string, password: string, address?: string, recaptchaToken?: string) => Promise<void>
+  register: (name: string, lastName: string, phone: string, email: string, password: string, address?: string, recaptchaToken?: string, acceptTerms?: boolean) => Promise<void>
   logout: () => void
   setToken: (token: string) => void
   clearError: () => void
@@ -44,10 +44,10 @@ export const useAuthStore = create<AuthState>()(
       }
     },
 
-    register: async (name: string, lastName: string, phone: string, email: string, password: string, address?: string, recaptchaToken?: string) => {
+    register: async (name: string, lastName: string, phone: string, email: string, password: string, address?: string, recaptchaToken?: string, acceptTerms?: boolean) => {
       set({ isLoading: true, error: null })
       try {
-        await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password, address, recaptchaToken })
+        await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password, address, recaptchaToken, acceptTerms })
         // Don't authenticate automatically - user must confirm email first
         set({ isLoading: false })
         toast.success('¡Registro exitoso! Revisa tu correo para confirmar tu cuenta.')

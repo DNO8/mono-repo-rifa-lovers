@@ -10,6 +10,13 @@ import { useActiveRaffle } from '@/hooks/use-raffles'
 import { ConfettiCanvas, type ConfettiRef } from '@/components/shared/confetti-canvas'
 import type { Milestone, ImpactMetric } from '@/types/domain.types'
 
+function scrollToPricing() {
+  const el = document.getElementById('pricing')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
+}
+
 function buildMilestones(raffle: ReturnType<typeof useActiveRaffle>['raffle']): Milestone[] {
   const milestones = raffle?.milestones ?? []
   const sorted = [...milestones].sort((a, b) => a.sortOrder - b.sortOrder)
@@ -132,7 +139,7 @@ export function ImpactSection() {
 
         {/* CTA */}
         <div className="text-center">
-          <Button variant="primary" size="lg">
+          <Button variant="primary" size="lg" onClick={scrollToPricing}>
             Participar ahora
             <ArrowRight className="size-4" />
           </Button>

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Mail, CheckCircle2, XCircle, Bell, BellOff } from 'lucide-react'
-import { subscribeToNewsletter, unsubscribeFromNewsletter } from '@/api/newsletter.api'
+import { subscribeToNewsletter, unsubscribeFromNewsletter, checkSubscriptionStatus } from '@/api/newsletter.api'
 
 interface NewsletterDashboardCardProps {
   email: string
@@ -11,6 +11,22 @@ interface NewsletterDashboardCardProps {
 export function NewsletterDashboardCard({ email, name }: NewsletterDashboardCardProps) {
   const [status, setStatus] = useState<'idle' | 'subscribing' | 'unsubscribing' | 'subscribed' | 'unsubscribed'>('idle')
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    checkSubscriptionStatus(email)
+      .then(({ subscribed }) => {
+        if (cancelled) return
+        if (subscribed) {
+          setStatus('subscribed')
+          setMessage('Ya estás suscrito al newsletter.')
+        }
+      })
+      .catch(() => {
+        // ignore silently — failed check is not user-facing
+      })
+    return () => { cancelled = true }
+  }, [email])
 
   const handleSubscribe = async () => {
     if (status === 'subscribing') return

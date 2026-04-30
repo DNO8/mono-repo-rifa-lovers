@@ -7,6 +7,9 @@ export declare class NewsletterService {
     private readonly resendService;
     private readonly logger;
     constructor(newsletterRepository: NewsletterRepository, resendService: ResendService);
+    checkSubscription(email: string): Promise<{
+        subscribed: boolean;
+    }>;
     subscribe(dto: SubscribeDto): Promise<{
         id: string;
         name: string | null;

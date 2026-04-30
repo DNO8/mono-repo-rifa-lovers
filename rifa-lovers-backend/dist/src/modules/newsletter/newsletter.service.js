@@ -20,6 +20,10 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
         this.resendService = resendService;
         this.logger = new common_1.Logger(NewsletterService_1.name);
     }
+    async checkSubscription(email) {
+        const subscriber = await this.newsletterRepository.findSubscriberByEmail(email);
+        return { subscribed: subscriber ? subscriber.isActive : false };
+    }
     async subscribe(dto) {
         const existing = await this.newsletterRepository.findSubscriberByEmail(dto.email);
         if (existing && existing.isActive) {

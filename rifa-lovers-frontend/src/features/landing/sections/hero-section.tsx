@@ -173,7 +173,7 @@ export function HeroSection() {
         >
           <div className="w-full max-w-[700px]">
             <LazyHeroModelViewer />
-            <p className="flex items-center justify-center gap-1.5 text-xs text-text-tertiary mt-3 opacity-60">
+            <p className="flex items-center justify-center gap-1.5 text-xs text-text-primary mt-3 opacity-60">
               <Hand className="size-3.5" />
               Arrastra para rotar · toca los <span className="font-semibold">números</span> para explorar specs
             </p>

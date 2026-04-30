@@ -26,6 +26,10 @@ let NewsletterController = NewsletterController_1 = class NewsletterController {
         this.newsletterService = newsletterService;
         this.logger = new common_1.Logger(NewsletterController_1.name);
     }
+    async checkSubscription(email) {
+        this.logger.log(`GET /newsletter/check — ${email}`);
+        return this.newsletterService.checkSubscription(email);
+    }
     async subscribe(dto) {
         this.logger.log(`POST /newsletter/subscribe — ${dto.email}`);
         return this.newsletterService.subscribe(dto);
@@ -48,6 +52,13 @@ let NewsletterController = NewsletterController_1 = class NewsletterController {
     }
 };
 exports.NewsletterController = NewsletterController;
+__decorate([
+    (0, common_1.Get)('check'),
+    __param(0, (0, common_1.Query)('email')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], NewsletterController.prototype, "checkSubscription", null);
 __decorate([
     (0, common_1.Post)('subscribe'),
     __param(0, (0, common_1.Body)()),

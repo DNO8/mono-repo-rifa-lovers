@@ -69,6 +69,7 @@ export const ENDPOINTS = {
   newsletter: {
     subscribe: '/newsletter/subscribe',
     unsubscribe: '/newsletter/unsubscribe',
+    check: '/newsletter/check',
     subscribers: '/newsletter/subscribers',
     campaigns: '/newsletter/campaigns',
     send: '/newsletter/send',

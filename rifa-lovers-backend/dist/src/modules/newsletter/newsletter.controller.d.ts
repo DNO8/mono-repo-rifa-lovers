@@ -4,6 +4,9 @@ export declare class NewsletterController {
     private readonly newsletterService;
     private readonly logger;
     constructor(newsletterService: NewsletterService);
+    checkSubscription(email: string): Promise<{
+        subscribed: boolean;
+    }>;
     subscribe(dto: SubscribeDto): Promise<{
         id: string;
         name: string | null;

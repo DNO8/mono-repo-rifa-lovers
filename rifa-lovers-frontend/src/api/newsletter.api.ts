@@ -43,6 +43,10 @@ export interface SendCampaignResponse {
   errors?: string[]
 }
 
+export async function checkSubscriptionStatus(email: string): Promise<{ subscribed: boolean }> {
+  return apiClient.get<{ subscribed: boolean }>(`${ENDPOINTS.newsletter.check}?email=${encodeURIComponent(email)}`)
+}
+
 export async function subscribeToNewsletter(email: string, name?: string): Promise<NewsletterSubscriber> {
   return apiClient.post<NewsletterSubscriber>(ENDPOINTS.newsletter.subscribe, { email, name })
 }

@@ -10,13 +10,6 @@ function scrollToPricing() {
   }
 }
 
-function scrollToImpacto() {
-  const el = document.getElementById('impacto')
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
-  }
-}
-
 export function CTASection() {
   const sectionRef = useGsapScroll<HTMLElement>()
 
@@ -50,9 +43,6 @@ export function CTASection() {
           <Button variant="primary" size="lg" onClick={scrollToPricing}>
             Participar Ahora
             <ArrowRight className="size-4" />
-          </Button>
-          <Button variant="ghost" size="lg" onClick={scrollToImpacto}>
-            Ver sorteos activos
           </Button>
         </div>
       </div>

@@ -14,6 +14,12 @@ export class NewsletterController {
 
   // ==================== PUBLIC ====================
 
+  @Get('check')
+  async checkSubscription(@Query('email') email: string) {
+    this.logger.log(`GET /newsletter/check — ${email}`)
+    return this.newsletterService.checkSubscription(email)
+  }
+
   @Post('subscribe')
   async subscribe(@Body() dto: SubscribeDto) {
     this.logger.log(`POST /newsletter/subscribe — ${dto.email}`)

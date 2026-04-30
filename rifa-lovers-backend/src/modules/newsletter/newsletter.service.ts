@@ -13,6 +13,11 @@ export class NewsletterService {
     private readonly resendService: ResendService,
   ) {}
 
+  async checkSubscription(email: string) {
+    const subscriber = await this.newsletterRepository.findSubscriberByEmail(email)
+    return { subscribed: subscriber ? subscriber.isActive : false }
+  }
+
   async subscribe(dto: SubscribeDto) {
     const existing = await this.newsletterRepository.findSubscriberByEmail(dto.email)
 

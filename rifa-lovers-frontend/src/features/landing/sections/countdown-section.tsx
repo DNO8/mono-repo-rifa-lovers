@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Timer, Users, ChevronDown } from 'lucide-react'
+import { gsap } from '@/lib/gsap'
 import { Badge } from '@/components/ui/badge'
 import { usePublicRaffles } from '@/hooks/use-raffles'
 
@@ -46,10 +47,38 @@ function Dot() {
 }
 
 export function CountdownSection() {
+  const sectionRef = useRef<HTMLElement>(null)
   const { raffles, isLoading } = usePublicRaffles()
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null)
   const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClosed, setIsClosed] = useState(false)
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion) return
+
+    const blocks = el.querySelectorAll<HTMLElement>('.countdown-block')
+    gsap.set(blocks, { y: 30, opacity: 0, scale: 0.9 })
+
+    const tween = gsap.to(blocks, {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      duration: 0.6,
+      stagger: 0.1,
+      ease: 'back.out(1.5)',
+      scrollTrigger: {
+        trigger: el,
+        start: 'top 80%',
+        once: true,
+      },
+    })
+
+    return () => { tween.kill() }
+  }, [])
 
   const activeRaffles = useMemo(() => raffles.filter(r => r.status === 'active'), [raffles])
   const closedRaffles = useMemo(() => raffles.filter(r => ['sold_out', 'closed', 'drawn'].includes(r.status)), [raffles])
@@ -80,7 +109,7 @@ export function CountdownSection() {
   const hasMultiple = activeRaffles.length > 1
 
   return (
-    <section className="py-8 md:py-12 px-4 md:px-8 border-y border-border-light bg-bg-white/60">
+    <section ref={sectionRef} className="py-8 md:py-12 px-4 md:px-8 border-y border-border-light bg-bg-white/60">
       <div className="mx-auto max-w-[900px]">
         {/* Header row: label + selector */}
         <div className="text-center mb-5">
@@ -116,7 +145,7 @@ export function CountdownSection() {
             <TimeBlock value="--" label="Segundos" />
           </div>
         ) : showClosed || isClosed ? (
-          <div className="flex flex-col items-center justify-center mb-5">
+          <div className="flex flex-col items-center justify-center mb-5 countdown-block">
             {selectedRaffle?.title && (
               <span className="text-sm text-text-secondary mb-2">
                 {selectedRaffle.title}
@@ -127,23 +156,23 @@ export function CountdownSection() {
             </span>
           </div>
         ) : activeRaffles.length === 0 ? (
-          <div className="flex items-center justify-center mb-5">
+          <div className="flex items-center justify-center mb-5 countdown-block">
             <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
               Próximamente
             </span>
           </div>
         ) : targetMs !== null ? (
           <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-8 mb-5">
-            <TimeBlock value={pad(time.days)} label="Días" />
-            <Dot />
-            <TimeBlock value={pad(time.hours)} label="Horas" />
-            <Dot />
-            <TimeBlock value={pad(time.minutes)} label="Minutos" />
-            <Dot />
-            <TimeBlock value={pad(time.seconds)} label="Segundos" />
+            <div className="countdown-block"><TimeBlock value={pad(time.days)} label="Días" /></div>
+            <div className="countdown-block"><Dot /></div>
+            <div className="countdown-block"><TimeBlock value={pad(time.hours)} label="Horas" /></div>
+            <div className="countdown-block"><Dot /></div>
+            <div className="countdown-block"><TimeBlock value={pad(time.minutes)} label="Minutos" /></div>
+            <div className="countdown-block"><Dot /></div>
+            <div className="countdown-block"><TimeBlock value={pad(time.seconds)} label="Segundos" /></div>
           </div>
         ) : (
-          <div className="flex items-center justify-center mb-5">
+          <div className="flex items-center justify-center mb-5 countdown-block">
             <span className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
               Próximamente
             </span>

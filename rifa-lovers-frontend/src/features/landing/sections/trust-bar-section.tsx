@@ -1,4 +1,6 @@
+import { useRef, useEffect } from 'react'
 import { Link } from 'react-router'
+import { gsap } from '@/lib/gsap'
 import {
   CreditCard,
   Building2,
@@ -52,8 +54,37 @@ const TRUST_ITEMS = [
 ]
 
 export function TrustBarSection() {
+  const sectionRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion) return
+
+    const items = el.querySelectorAll<HTMLElement>(':scope > div > div > *')
+    gsap.set(items, { y: -20, opacity: 0 })
+
+    const tween = gsap.to(items, {
+      y: 0,
+      opacity: 1,
+      duration: 0.5,
+      stagger: 0.08,
+      ease: 'back.out(1.5)',
+      delay: 0.2,
+      scrollTrigger: {
+        trigger: el,
+        start: 'top 90%',
+        once: true,
+      },
+    })
+
+    return () => { tween.kill() }
+  }, [])
+
   return (
-    <section className="py-5 md:py-6 px-4 md:px-8 border-y border-border-light bg-bg-muted/40">
+    <section ref={sectionRef} className="py-5 md:py-6 px-4 md:px-8 border-y border-border-light bg-bg-muted/40">
       <div className="mx-auto max-w-[1200px]">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:gap-x-10">
           {TRUST_ITEMS.map((item) => {

@@ -9,6 +9,7 @@ const INITIAL: LuckyPassesData = { passes: [], summary: null }
 
 export function useLuckyPasses() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const userId = useAuthStore((s) => s.user?.id)
 
   const { data, isLoading, error, refresh } = useAsyncData<LuckyPassesData>(
     async () => {
@@ -20,7 +21,7 @@ export function useLuckyPasses() {
       return { passes, summary }
     },
     INITIAL,
-    [isAuthenticated],
+    [isAuthenticated, userId],
   )
 
   return { passes: data.passes, summary: data.summary, isLoading, error, refresh }

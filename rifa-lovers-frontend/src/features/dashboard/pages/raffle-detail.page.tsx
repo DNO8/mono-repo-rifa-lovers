@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, ShoppingCart, Hand, Calendar, Hash, Trophy, Star, Eye } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Hand, Calendar, Hash,Trophy, Star, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
@@ -99,7 +99,9 @@ export default function RaffleDetailPage() {
               </span>
               <span className="flex items-center gap-1">
                 <Hash className="size-3.5" />
-                {maxTicketNumber.toLocaleString('es-CL')} números disponibles
+                {raffle?.status === RAFFLE_STATUS.DRAWN
+                  ? 'No hay números disponibles'
+                  : `${maxTicketNumber.toLocaleString('es-CL')} números disponibles`}
               </span>
             </div>
           </div>
@@ -232,9 +234,6 @@ export default function RaffleDetailPage() {
           <div className="mt-6 rounded-2xl overflow-hidden border border-yellow-200 bg-yellow-50/60">
             {/* Header */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-yellow-200 bg-yellow-50">
-              <div className="size-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Trophy className="size-5 text-yellow-500" />
-              </div>
               <div>
                 <p className="font-bold text-yellow-800 text-lg leading-tight">¡Felicitaciones, ganaste!</p>
                 <p className="text-xs text-yellow-600 mt-0.5">Tu LuckyPass #{String(activeTicket.number).padStart(5, '0')} fue seleccionado en el sorteo</p>

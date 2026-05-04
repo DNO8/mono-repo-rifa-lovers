@@ -5,11 +5,12 @@ import { useAsyncData } from './use-async-data'
 
 export function usePurchases() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const userId = useAuthStore((s) => s.user?.id)
 
   const { data: purchases, isLoading, error } = useAsyncData<Purchase[]>(
     () => isAuthenticated ? getMyPurchases() : Promise.resolve([]),
     [],
-    [isAuthenticated],
+    [isAuthenticated, userId],
   )
 
   return { purchases, isLoading, error }

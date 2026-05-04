@@ -10,7 +10,7 @@ import type { HistoryItem } from '../components/ticket-history'
 import { SocialImpactBanner } from '../components/social-impact-banner'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { LogOut, Eye, LayoutDashboard } from 'lucide-react'
+import { LogOut, Eye, LayoutDashboard, UserCog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { usePurchases } from '@/hooks/use-purchases'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
@@ -209,6 +209,14 @@ export default function DashboardPage() {
                 )}
               </Button>
             )}
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={() => navigate('/perfil')}
+            >
+              <UserCog className="size-4 mr-2" />
+              Perfil
+            </Button>
             <Button variant="outline-primary" size="sm" onClick={handleLogout}>
               <LogOut className="size-4 mr-2" />
               Cerrar sesión

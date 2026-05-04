@@ -10,6 +10,7 @@ export const ENDPOINTS = {
 
   users: {
     me: '/users/me',
+    update: '/users/me',
   },
 
   purchases: {

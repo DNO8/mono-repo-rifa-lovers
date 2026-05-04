@@ -13,6 +13,8 @@ import { DashboardPageSkeleton } from '@/components/skeletons/dashboard-skeleton
 import { CheckoutPageSkeleton } from '@/components/skeletons/checkout-skeleton'
 import { RaffleDetailPageSkeleton } from '@/components/skeletons/raffle-detail-skeleton'
 import { StreamingPageSkeleton } from '@/components/skeletons/streaming-skeleton'
+import { LegalPageSkeleton } from '@/components/skeletons/legal-skeleton'
+import { WinnersPageSkeleton } from '@/components/skeletons/winners-skeleton'
 
 const LazyLandingPage = lazy(() => import('@/features/landing/pages/landing.page'))
 const LazyImpactPage = lazy(() => import('@/features/impact/pages/impact.page'))
@@ -25,6 +27,7 @@ const LazyResetPasswordPage = lazy(() => import('@/features/auth/pages/reset-pas
 const LazyConfirmPage = lazy(() => import('@/features/auth/pages/confirm.page'))
 const LazyVerifyEmailPage = lazy(() => import('@/features/auth/pages/verify-email.page'))
 const LazyDashboardPage = lazy(() => import('@/features/dashboard/pages/dashboard.page'))
+const LazyProfilePage = lazy(() => import('@/features/profile/pages/profile.page'))
 const LazyCheckoutPage = lazy(() => import('@/features/checkout/pages/checkout.page'))
 const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffle-detail.page'))
 const LazyPaymentReturnPage = lazy(() => import('@/features/checkout/pages/payment-return.page'))
@@ -138,6 +141,17 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
   },
   {
+    path: '/perfil',
+    element: (
+      <PageWithSuspense fallback={<DashboardPageSkeleton />}>
+        <ProtectedRoute>
+          <LazyProfilePage />
+        </ProtectedRoute>
+      </PageWithSuspense>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
     path: '/checkout',
     element: (
       <PageWithSuspense fallback={<CheckoutPageSkeleton />}>
@@ -151,7 +165,7 @@ export const router = createBrowserRouter([
   {
     path: '/bases-legales',
     element: (
-      <PageWithSuspense fallback={null}>
+      <PageWithSuspense fallback={<LegalPageSkeleton />}>
         <LazyBasesLegalesPage />
       </PageWithSuspense>
     ),
@@ -160,7 +174,7 @@ export const router = createBrowserRouter([
   {
     path: '/terminos',
     element: (
-      <PageWithSuspense fallback={null}>
+      <PageWithSuspense fallback={<LegalPageSkeleton />}>
         <LazyBasesLegalesPage />
       </PageWithSuspense>
     ),
@@ -169,7 +183,7 @@ export const router = createBrowserRouter([
   {
     path: '/privacidad',
     element: (
-      <PageWithSuspense fallback={null}>
+      <PageWithSuspense fallback={<LegalPageSkeleton />}>
         <LazyBasesLegalesPage />
       </PageWithSuspense>
     ),
@@ -218,7 +232,7 @@ export const router = createBrowserRouter([
   {
     path: '/raffle/:id/winners',
     element: (
-      <PageWithSuspense fallback={null}>
+      <PageWithSuspense fallback={<WinnersPageSkeleton />}>
         <LazyWinnersPage />
       </PageWithSuspense>
     ),

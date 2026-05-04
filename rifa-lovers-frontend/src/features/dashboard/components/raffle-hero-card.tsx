@@ -91,8 +91,13 @@ export function RaffleHeroCard({ raffle }: { raffle: RaffleCardData }) {
           <p className="text-lg font-extrabold text-text-primary">
             {raffle.drawLabel}
           </p>
-          {raffle.drawTime && (
+          {raffle.drawDate && (
             <p className="text-sm font-semibold text-primary">
+              {new Date(raffle.drawDate).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </p>
+          )}
+          {raffle.drawTime && (
+            <p className="text-sm font-semibold text-secondary">
               {raffle.drawTime}
             </p>
           )}

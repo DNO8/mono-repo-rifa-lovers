@@ -1,8 +1,8 @@
-import { Link } from 'react-router'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Radio, Trophy, Users, ChevronRight } from 'lucide-react'
+import { WinnersDropdown } from '@/features/admin/components/winners-dropdown'
 import type { Raffle } from '@/types/domain.types'
 
 interface OperatorPanelProps {
@@ -110,12 +110,12 @@ export function OperatorPanel({ raffles }: OperatorPanelProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant="outline-primary">Sorteada</Badge>
-                  <Link to={`/raffle/${raffle.id}/winners`}>
+                  <WinnersDropdown raffleId={raffle.id}>
                     <Button size="sm" variant="outline-primary" className="gap-1.5">
                       Ver Ganadores
                       <ChevronRight className="size-3.5" />
                     </Button>
-                  </Link>
+                  </WinnersDropdown>
                 </div>
               </div>
             </Card>

@@ -40,7 +40,6 @@ export function ContactForm() {
     
     try {
       const payload = { name, email, message }
-      console.log('[ContactForm] Sending payload:', payload)
       await apiClient.post(ENDPOINTS.contact, payload)
       toast.success('¡Mensaje enviado! Te responderemos pronto.')
       setSubmitted(true)

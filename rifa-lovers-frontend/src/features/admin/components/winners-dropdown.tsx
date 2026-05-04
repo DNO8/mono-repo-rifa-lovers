@@ -31,14 +31,16 @@ export function WinnersDropdown({ raffleId, children }: WinnersDropdownProps) {
 
   return (
     <div ref={ref} className="relative inline-block">
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setOpen((v) => !v)}
-        className="p-1.5 rounded hover:bg-yellow-50 text-yellow-600"
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpen((v) => !v) }}
+        className="inline-block p-1.5 rounded hover:bg-yellow-50 text-yellow-600 cursor-pointer"
         title="Ver ganadores"
       >
         {children}
-      </button>
+      </div>
 
       {open && (
         <div className="absolute right-0 mt-2 w-[420px] max-w-[90vw] bg-white border border-border-light rounded-xl shadow-xl z-50 overflow-hidden">

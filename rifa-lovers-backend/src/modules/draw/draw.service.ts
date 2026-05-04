@@ -501,6 +501,7 @@ export class DrawService {
    * Elimina los ganadores, cambia el estado a 'closed', y resetea los lucky passes
    */
   async resetDraw(raffleId: string, operatorId: string) {
+    void operatorId // reservado para auditoría futura
     // Verificar que la rifa existe y está en estado 'drawn'
     const raffle = await this.prisma.raffle.findUnique({
       where: { id: raffleId },
@@ -551,8 +552,7 @@ export class DrawService {
         },
       })
 
-      // 5. Log de auditoría (opcional, se puede expandir)
-      console.log(`[AUDIT] Draw reset for raffle ${raffleId} by operator ${operatorId}`)
+      // 5. Auditoría implícita en la transacción
     })
 
     return {

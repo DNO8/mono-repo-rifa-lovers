@@ -42,10 +42,6 @@ function buildMetrics(
   const goalPacks = raffle?.goalPacks ?? 1
   const pct = Math.min((packsSold / goalPacks) * 100, 100)
   
-  // Debug temporal
-  console.log('Debug milestones:', raffle?.milestones)
-  console.log('Debug packsSold:', packsSold, 'goalPacks:', goalPacks)
-
   return [
     {
       id: 'metric-packs',

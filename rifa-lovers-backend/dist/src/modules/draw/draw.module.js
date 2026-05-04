@@ -14,12 +14,13 @@ const customer_draw_controller_1 = require("./customer-draw.controller");
 const customer_draw_service_1 = require("./customer-draw.service");
 const notifications_module_1 = require("../notifications/notifications.module");
 const raffles_module_1 = require("../raffles/raffles.module");
+const lucky_pass_module_1 = require("../lucky-pass/lucky-pass.module");
 let DrawModule = class DrawModule {
 };
 exports.DrawModule = DrawModule;
 exports.DrawModule = DrawModule = __decorate([
     (0, common_1.Module)({
-        imports: [notifications_module_1.NotificationsModule, raffles_module_1.RafflesModule],
+        imports: [notifications_module_1.NotificationsModule, raffles_module_1.RafflesModule, lucky_pass_module_1.LuckyPassModule],
         controllers: [draw_controller_1.DrawController, customer_draw_controller_1.CustomerDrawController],
         providers: [draw_service_1.DrawService, customer_draw_service_1.CustomerDrawService],
         exports: [draw_service_1.DrawService, customer_draw_service_1.CustomerDrawService],

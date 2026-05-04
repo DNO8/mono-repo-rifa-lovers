@@ -12,9 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomerOwnershipGuard = void 0;
 const common_1 = require("@nestjs/common");
 const raffles_repository_1 = require("../../raffles/raffles.repository");
+const lucky_pass_repository_1 = require("../../lucky-pass/lucky-pass.repository");
 let CustomerOwnershipGuard = class CustomerOwnershipGuard {
-    constructor(rafflesRepository) {
+    constructor(rafflesRepository, luckyPassRepository) {
         this.rafflesRepository = rafflesRepository;
+        this.luckyPassRepository = luckyPassRepository;
     }
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
@@ -35,12 +37,28 @@ let CustomerOwnershipGuard = class CustomerOwnershipGuard {
         if (!typedRaffle) {
             throw new common_1.NotFoundException('Rifa no encontrada');
         }
-        const userDetails = await this.rafflesRepository.getUserById(user.id);
-        if (!userDetails) {
-            throw new common_1.NotFoundException('Usuario no encontrado');
+        if (user.role === 'admin') {
+            return true;
         }
-        if (userDetails.organizationId !== typedRaffle.organizationId) {
-            throw new common_1.ForbiddenException('No puedes acceder a rifas que no pertenecen a tu organización');
+        if (user.role === 'operator') {
+            const userDetails = await this.rafflesRepository.getUserById(user.id);
+            if (!userDetails) {
+                throw new common_1.NotFoundException('Usuario no encontrado');
+            }
+            if (userDetails.organizationId !== typedRaffle.organizationId) {
+                throw new common_1.ForbiddenException('No puedes acceder a rifas que no pertenecen a tu organización');
+            }
+            return true;
+        }
+        if (user.role === 'customer') {
+            const luckyPassCount = await this.luckyPassRepository.count({
+                userId: user.id,
+                raffleId,
+            });
+            if (luckyPassCount === 0) {
+                throw new common_1.ForbiddenException('No has participado en esta rifa');
+            }
+            return true;
         }
         return true;
     }
@@ -48,6 +66,7 @@ let CustomerOwnershipGuard = class CustomerOwnershipGuard {
 exports.CustomerOwnershipGuard = CustomerOwnershipGuard;
 exports.CustomerOwnershipGuard = CustomerOwnershipGuard = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [raffles_repository_1.RafflesRepository])
+    __metadata("design:paramtypes", [raffles_repository_1.RafflesRepository,
+        lucky_pass_repository_1.LuckyPassRepository])
 ], CustomerOwnershipGuard);
 //# sourceMappingURL=customer-ownership.guard.js.map

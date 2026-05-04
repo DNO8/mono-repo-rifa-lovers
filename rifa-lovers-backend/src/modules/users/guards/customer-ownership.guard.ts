@@ -1,9 +1,13 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common'
 import { RafflesRepository } from '../../raffles/raffles.repository'
+import { LuckyPassRepository } from '../../lucky-pass/lucky-pass.repository'
 
 @Injectable()
 export class CustomerOwnershipGuard implements CanActivate {
-  constructor(private readonly rafflesRepository: RafflesRepository) {}
+  constructor(
+    private readonly rafflesRepository: RafflesRepository,
+    private readonly luckyPassRepository: LuckyPassRepository,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest()
@@ -20,10 +24,10 @@ export class CustomerOwnershipGuard implements CanActivate {
     }
 
     if (!raffleId) {
-      return true // Si no hay raffleId, solo verificamos que sea customer
+      return true // Si no hay raffleId, solo verificamos autenticación
     }
 
-    // Verificar que la rifa existe y pertenece a la organización del customer
+    // Verificar que la rifa existe
     const raffle = await this.rafflesRepository.findUnique(
       { id: raffleId },
       { organization: true },
@@ -34,14 +38,37 @@ export class CustomerOwnershipGuard implements CanActivate {
       throw new NotFoundException('Rifa no encontrada')
     }
 
-    // Obtener detalles del usuario para verificar organizationId
-    const userDetails = await this.rafflesRepository.getUserById(user.id)
-    if (!userDetails) {
-      throw new NotFoundException('Usuario no encontrado')
+    // Admin: acceso libre a todas las rifas
+    if (user.role === 'admin') {
+      return true
     }
 
-    if (userDetails.organizationId !== typedRaffle.organizationId) {
-      throw new ForbiddenException('No puedes acceder a rifas que no pertenecen a tu organización')
+    // Operator: verificar que la rifa pertenezca a su organización
+    if (user.role === 'operator') {
+      const userDetails = await this.rafflesRepository.getUserById(user.id)
+      if (!userDetails) {
+        throw new NotFoundException('Usuario no encontrado')
+      }
+
+      if (userDetails.organizationId !== typedRaffle.organizationId) {
+        throw new ForbiddenException('No puedes acceder a rifas que no pertenecen a tu organización')
+      }
+
+      return true
+    }
+
+    // Customer: verificar que haya comprado tickets (tenga LuckyPasses) en esta rifa
+    if (user.role === 'customer') {
+      const luckyPassCount = await this.luckyPassRepository.count({
+        userId: user.id,
+        raffleId,
+      })
+
+      if (luckyPassCount === 0) {
+        throw new ForbiddenException('No has participado en esta rifa')
+      }
+
+      return true
     }
 
     return true

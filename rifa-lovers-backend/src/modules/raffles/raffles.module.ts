@@ -4,8 +4,10 @@ import { RafflesService } from './raffles.service'
 import { RafflesRepository } from './raffles.repository'
 import { RaffleSchedulerService } from './raffle-scheduler.service'
 import { CustomerOwnershipGuard } from '../users/guards/customer-ownership.guard'
+import { LuckyPassModule } from '../lucky-pass/lucky-pass.module'
 
 @Module({
+  imports: [LuckyPassModule],
   controllers: [RafflesController],
   providers: [RafflesService, RafflesRepository, RaffleSchedulerService, CustomerOwnershipGuard],
   exports: [RafflesService, RafflesRepository, RaffleSchedulerService, CustomerOwnershipGuard],

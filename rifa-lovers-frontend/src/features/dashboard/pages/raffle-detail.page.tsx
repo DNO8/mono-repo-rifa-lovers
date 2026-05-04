@@ -47,7 +47,7 @@ export default function RaffleDetailPage() {
       case RAFFLE_STATUS.CLOSED:
         return 'Sorteo pendiente'
       case RAFFLE_STATUS.DRAWN:
-        return 'Sorteo realizado'
+        return 'Rifa Finalizada'
       default:
         return 'Próximamente'
     }

@@ -63,7 +63,7 @@ export default function RaffleDetailPage() {
     }))
 
   const activeTicket = selectedTicket ?? userTickets[0] ?? null
-  const maxTicketNumber = raffle?.maxTicketNumber ?? 30000
+  const maxTicketNumber = raffle?.maxTicketNumber ?? 0
 
   if (isLoading) {
     return (

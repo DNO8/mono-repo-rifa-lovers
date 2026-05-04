@@ -15,7 +15,9 @@ describe('DrawService', () => {
     prizeWinner: {
       count: jest.fn(),
       create: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
+      deleteMany: jest.fn(),
     },
     prize: {
       findMany: jest.fn(),
@@ -23,7 +25,9 @@ describe('DrawService', () => {
     },
     luckyPass: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       count: jest.fn(),
     },
     $transaction: jest.fn((fn) => fn(mockPrisma)),
@@ -68,6 +72,8 @@ describe('DrawService', () => {
           milestone: { sortOrder: 1 },
         },
       ])
+      mockPrisma.prizeWinner.findMany.mockResolvedValue([])
+      mockPrisma.prize.count.mockResolvedValue(0)
       mockPrisma.luckyPass.findMany.mockResolvedValue([
         {
           id: 'pass-1',
@@ -77,6 +83,13 @@ describe('DrawService', () => {
           user: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
         },
       ])
+      mockPrisma.luckyPass.findUnique.mockResolvedValue({
+        id: 'pass-1',
+        ticketNumber: 123,
+        userId: 'user-1',
+        status: 'active',
+        user: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
+      })
 
       const result = await service.executeDraw(raffleId, adminId)
 
@@ -112,12 +125,13 @@ describe('DrawService', () => {
       )
     })
 
-    it('should throw if draw already executed', async () => {
+    it('should throw if no pending prizes to draw', async () => {
       mockPrisma.raffle.findUnique.mockResolvedValue({
         id: 'raffle-1',
         status: 'closed',
       })
-      mockPrisma.prizeWinner.count.mockResolvedValue(1)
+      mockPrisma.prizeWinner.findMany.mockResolvedValue([])
+      mockPrisma.prize.findMany.mockResolvedValue([])
 
       await expect(service.executeDraw('raffle-1', 'admin')).rejects.toThrow(
         BadRequestException,
@@ -143,6 +157,7 @@ describe('DrawService', () => {
         status: 'closed',
       })
       mockPrisma.prizeWinner.count.mockResolvedValue(0)
+      mockPrisma.prizeWinner.findMany.mockResolvedValue([])
       mockPrisma.prize.findMany.mockResolvedValue([
         { id: 'prize-1', name: 'Prize', milestone: { sortOrder: 1 } },
       ])
@@ -153,39 +168,42 @@ describe('DrawService', () => {
       )
     })
 
-    it('should assign multiple prizes to different participants', async () => {
+    it('should assign a single prize to a participant', async () => {
       const raffleId = 'raffle-1'
 
       mockPrisma.raffle.findUnique.mockResolvedValue({
         id: raffleId,
         status: 'closed',
-        title: 'Multi Prize Raffle',
+        title: 'Single Prize Raffle',
       })
       mockPrisma.prizeWinner.count.mockResolvedValue(0)
+      mockPrisma.prizeWinner.findMany.mockResolvedValue([])
       mockPrisma.prize.findMany.mockResolvedValue([
         { id: 'prize-1', name: 'First Prize', description: null, milestone: { sortOrder: 1 } },
-        { id: 'prize-2', name: 'Second Prize', description: null, milestone: { sortOrder: 2 } },
       ])
       mockPrisma.luckyPass.findMany.mockResolvedValue([
         { id: 'pass-1', ticketNumber: 10, userId: 'user-1', status: 'active', user: { firstName: 'Ana', lastName: 'B', email: 'ana@test.com' } },
         { id: 'pass-2', ticketNumber: 20, userId: 'user-2', status: 'active', user: { firstName: 'Carlos', lastName: 'D', email: 'carlos@test.com' } },
         { id: 'pass-3', ticketNumber: 30, userId: 'user-3', status: 'active', user: { firstName: 'Eve', lastName: 'F', email: 'eve@test.com' } },
       ])
+      mockPrisma.luckyPass.findUnique.mockResolvedValue({
+        id: 'pass-1',
+        ticketNumber: 10,
+        userId: 'user-1',
+        status: 'active',
+        user: { firstName: 'Ana', lastName: 'B', email: 'ana@test.com' },
+      })
 
       const result = await service.executeDraw(raffleId, 'admin-1')
 
-      expect(result.winners).toHaveLength(2)
+      expect(result.winners).toHaveLength(1)
       expect(result.raffleId).toBe(raffleId)
       expect(result.drawnAt).toBeInstanceOf(Date)
 
-      // Each winner should have a different luckyPassId
-      const passIds = result.winners.map((w) => w.luckyPassId)
-      expect(new Set(passIds).size).toBe(2)
-
-      // prizeWinner.create called once per prize
-      expect(mockPrisma.prizeWinner.create).toHaveBeenCalledTimes(2)
-      // luckyPass.update called once per winner
-      expect(mockPrisma.luckyPass.update).toHaveBeenCalledTimes(2)
+      // prizeWinner.create called once for the single prize
+      expect(mockPrisma.prizeWinner.create).toHaveBeenCalledTimes(1)
+      // luckyPass.update called once for the single winner
+      expect(mockPrisma.luckyPass.update).toHaveBeenCalledTimes(1)
     })
 
     it('should handle more prizes than participants gracefully', async () => {
@@ -195,6 +213,7 @@ describe('DrawService', () => {
         title: 'Test',
       })
       mockPrisma.prizeWinner.count.mockResolvedValue(0)
+      mockPrisma.prizeWinner.findMany.mockResolvedValue([])
       mockPrisma.prize.findMany.mockResolvedValue([
         { id: 'prize-1', name: 'Prize 1', description: null, milestone: { sortOrder: 1 } },
         { id: 'prize-2', name: 'Prize 2', description: null, milestone: { sortOrder: 2 } },
@@ -203,11 +222,59 @@ describe('DrawService', () => {
       mockPrisma.luckyPass.findMany.mockResolvedValue([
         { id: 'pass-1', ticketNumber: 1, userId: 'user-1', status: 'active', user: { firstName: 'Solo', lastName: 'Player', email: 'solo@test.com' } },
       ])
+      mockPrisma.luckyPass.findUnique.mockResolvedValue({
+        id: 'pass-1',
+        ticketNumber: 1,
+        userId: 'user-1',
+        status: 'active',
+        user: { firstName: 'Solo', lastName: 'Player', email: 'solo@test.com' },
+      })
 
       const result = await service.executeDraw('raffle-1', 'admin-1')
 
       // Only 1 winner assigned (not enough passes for all prizes)
       expect(result.winners).toHaveLength(1)
+    })
+
+    it('should mark remaining active lucky passes as used when draw completes', async () => {
+      const raffleId = 'raffle-1'
+      const adminId = 'admin-1'
+
+      mockPrisma.raffle.findUnique.mockResolvedValue({
+        id: raffleId,
+        status: 'closed',
+        title: 'Test Raffle',
+      })
+      mockPrisma.prizeWinner.count.mockResolvedValue(0)
+      mockPrisma.prizeWinner.findMany.mockResolvedValue([])
+      mockPrisma.prize.findMany.mockResolvedValue([
+        { id: 'prize-1', name: 'Prize 1', description: 'Desc', milestone: { sortOrder: 1 } },
+      ])
+      mockPrisma.prize.count.mockResolvedValue(0)
+      mockPrisma.luckyPass.findMany.mockResolvedValue([
+        { id: 'pass-1', ticketNumber: 10, userId: 'user-1', status: 'active', user: { firstName: 'A', lastName: 'B', email: 'a@test.com' } },
+        { id: 'pass-2', ticketNumber: 20, userId: 'user-2', status: 'active', user: { firstName: 'C', lastName: 'D', email: 'c@test.com' } },
+        { id: 'pass-3', ticketNumber: 30, userId: 'user-3', status: 'active', user: { firstName: 'E', lastName: 'F', email: 'e@test.com' } },
+      ])
+      mockPrisma.luckyPass.findUnique.mockResolvedValue({
+        id: 'pass-1',
+        ticketNumber: 10,
+        userId: 'user-1',
+        status: 'active',
+        user: { firstName: 'A', lastName: 'B', email: 'a@test.com' },
+      })
+
+      const result = await service.executeDraw(raffleId, adminId)
+
+      expect(result.isComplete).toBe(true)
+      expect(mockPrisma.luckyPass.updateMany).toHaveBeenCalledWith({
+        where: { raffleId: raffleId, status: 'active' },
+        data: { status: 'used' },
+      })
+      expect(mockPrisma.raffle.update).toHaveBeenCalledWith({
+        where: { id: raffleId },
+        data: { status: 'drawn' },
+      })
     })
   })
 
@@ -259,6 +326,67 @@ describe('DrawService', () => {
     })
   })
 
+  describe('resetDraw', () => {
+    it('should reset lucky passes to active and raffle to closed', async () => {
+      const raffleId = 'raffle-1'
+      const operatorId = 'operator-1'
+
+      mockPrisma.raffle.findUnique.mockResolvedValue({
+        id: raffleId,
+        status: 'drawn',
+        title: 'Test Raffle',
+      })
+      mockPrisma.prize.findMany.mockResolvedValue([
+        { id: 'prize-1' },
+        { id: 'prize-2' },
+      ])
+      mockPrisma.prizeWinner.deleteMany.mockResolvedValue({ count: 2 })
+      mockPrisma.luckyPass.updateMany.mockResolvedValue({ count: 5 })
+      mockPrisma.raffle.update.mockResolvedValue({
+        id: raffleId,
+        status: 'closed',
+      })
+
+      const result = await service.resetDraw(raffleId, operatorId)
+
+      expect(result.success).toBe(true)
+      expect(mockPrisma.prizeWinner.deleteMany).toHaveBeenCalledWith({
+        where: {
+          prizeId: {
+            in: ['prize-1', 'prize-2'],
+          },
+        },
+      })
+      expect(mockPrisma.luckyPass.updateMany).toHaveBeenCalledWith({
+        where: { raffleId: raffleId },
+        data: { status: 'active', isWinner: false },
+      })
+      expect(mockPrisma.raffle.update).toHaveBeenCalledWith({
+        where: { id: raffleId },
+        data: { status: 'closed' },
+      })
+    })
+
+    it('should throw if raffle not found', async () => {
+      mockPrisma.raffle.findUnique.mockResolvedValue(null)
+
+      await expect(service.resetDraw('invalid', 'op')).rejects.toThrow(
+        NotFoundException,
+      )
+    })
+
+    it('should throw if raffle not in drawn status', async () => {
+      mockPrisma.raffle.findUnique.mockResolvedValue({
+        id: 'raffle-1',
+        status: 'closed',
+      })
+
+      await expect(service.resetDraw('raffle-1', 'op')).rejects.toThrow(
+        BadRequestException,
+      )
+    })
+  })
+
   describe('canExecuteDraw', () => {
     it('should return canDraw=true when conditions met', async () => {
       mockPrisma.raffle.findUnique.mockResolvedValue({ id: 'raffle-1', status: 'closed' })
@@ -298,7 +426,7 @@ describe('DrawService', () => {
       const result = await service.canExecuteDraw('raffle-1')
 
       expect(result.canDraw).toBe(false)
-      expect(result.reason).toContain('ya ha sido ejecutado')
+      expect(result.reason).toContain('Todos los premios ya han sido asignados')
     })
 
     it('should return canDraw=false if no unlocked prizes', async () => {

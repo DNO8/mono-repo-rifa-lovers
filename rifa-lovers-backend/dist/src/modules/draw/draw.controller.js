@@ -33,6 +33,13 @@ let DrawController = DrawController_1 = class DrawController {
     async checkDrawAvailability(raffleId) {
         return this.drawService.canExecuteDraw(raffleId);
     }
+    async getAdminDrawResults(raffleId) {
+        const results = await this.drawService.getAdminDrawResults(raffleId);
+        if (!results) {
+            return { message: 'El sorteo aún no se ha ejecutado para esta rifa' };
+        }
+        return results;
+    }
     async getDrawResults(raffleId) {
         const results = await this.drawService.getDrawResults(raffleId);
         if (!results) {
@@ -64,6 +71,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DrawController.prototype, "checkDrawAvailability", null);
+__decorate([
+    (0, common_1.Get)('admin/raffles/:id/winners'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), new roles_guard_1.RolesGuard([client_1.UserRole.admin, client_1.UserRole.operator])),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], DrawController.prototype, "getAdminDrawResults", null);
 __decorate([
     (0, common_1.Get)('raffles/:id/winners'),
     __param(0, (0, common_1.Param)('id')),

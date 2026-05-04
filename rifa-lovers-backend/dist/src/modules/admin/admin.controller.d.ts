@@ -8,19 +8,7 @@ export declare class AdminController {
     private readonly jobsService;
     private readonly logger;
     constructor(adminService: AdminService, drawService: DrawService, jobsService: JobsService);
-    createRaffle(dto: CreateRaffleDto, adminId: string): Promise<{
-        id: string;
-        organizationId: string | null;
-        title: string | null;
-        description: string | null;
-        goalPacks: number;
-        maxTicketNumber: number;
-        status: import("@prisma/client").$Enums.RaffleStatus;
-        startDate: Date | null;
-        endDate: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
+    createRaffle(dto: CreateRaffleDto, adminId: string): Promise<RaffleWithStats>;
     getAllRaffles(): Promise<RaffleWithStats[]>;
     updateRaffle(raffleId: string, dto: UpdateRaffleDto): Promise<{
         id: string;

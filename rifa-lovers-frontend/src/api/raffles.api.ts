@@ -17,3 +17,7 @@ export async function getPublicRaffles(): Promise<Raffle[]> {
 export async function getUserRaffles(): Promise<Raffle[]> {
   return apiClient.get<Raffle[]>('/raffles/user')
 }
+
+export async function getRaffleById(raffleId: string): Promise<Raffle | null> {
+  return apiClient.get<Raffle>(ENDPOINTS.raffles.detail(raffleId))
+}

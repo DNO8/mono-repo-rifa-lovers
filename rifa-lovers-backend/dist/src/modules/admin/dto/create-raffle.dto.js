@@ -9,9 +9,23 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateRaffleDto = void 0;
+exports.CreateRaffleDto = exports.CreatePrizeDto = void 0;
 const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
+class CreatePrizeDto {
+}
+exports.CreatePrizeDto = CreatePrizeDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(255),
+    __metadata("design:type", String)
+], CreatePrizeDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreatePrizeDto.prototype, "description", void 0);
 class CreateRaffleDto {
 }
 exports.CreateRaffleDto = CreateRaffleDto;
@@ -31,6 +45,12 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateRaffleDto.prototype, "goalPacks", void 0);
 __decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateRaffleDto.prototype, "maxTicketNumber", void 0);
+__decorate([
     (0, class_validator_1.IsDateString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
@@ -45,4 +65,11 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateRaffleDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => CreatePrizeDto),
+    (0, class_validator_1.ArrayMinSize)(1, { message: 'Debe incluir al menos un premio' }),
+    __metadata("design:type", Array)
+], CreateRaffleDto.prototype, "prizes", void 0);
 //# sourceMappingURL=create-raffle.dto.js.map

@@ -22,6 +22,13 @@ export interface DrawResult {
     discarded: DrawDiscarded[];
     isComplete?: boolean;
 }
+export interface AdminDrawWinner extends DrawWinner {
+    userPhone: number | null;
+    userAddress: string | null;
+}
+export interface AdminDrawResult extends Omit<DrawResult, 'winners'> {
+    winners: AdminDrawWinner[];
+}
 export interface UserDetails {
     id: string;
     email: string | null;

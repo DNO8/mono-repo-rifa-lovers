@@ -1,6 +1,14 @@
-import { Link } from 'react-router'
+import { Link, useNavigate, useLocation } from 'react-router'
 import { NAV_ITEMS } from '@/lib/constants'
 import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa'
+
+function NavLink({ href, onClick, children }: { href: string; onClick?: (e: React.MouseEvent) => void; children: React.ReactNode }) {
+  return (
+    <Link to={href} onClick={onClick} className="text-xs text-text-secondary hover:text-primary transition-colors">
+      {children}
+    </Link>
+  )
+}
 
 const LEGAL_LINKS = [
   { label: 'Bases Legales', href: '/bases-legales' },
@@ -41,6 +49,30 @@ function SocialLinks() {
 }
 
 export function Footer() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    const hashIndex = href.indexOf('#')
+    if (hashIndex === -1) return
+
+    e.preventDefault()
+    const hash = href.slice(hashIndex + 1)
+    const basePath = href.slice(0, hashIndex) || '/'
+
+    const scrollTo = () => {
+      const el = document.getElementById(hash)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    if (location.pathname === basePath) {
+      scrollTo()
+    } else {
+      navigate(basePath)
+      setTimeout(scrollTo, 100)
+    }
+  }
+
   return (
     <footer className="bg-bg-muted border-t border-border-light">
       <div className="mx-auto max-w-[1200px] px-4 md:px-8 py-6 md:py-8">
@@ -62,12 +94,7 @@ export function Footer() {
             <ul className="space-y-1.5">
               {NAV_ITEMS.map((item) => (
                 <li key={item.href}>
-                  <Link
-                    to={item.href}
-                    className="text-xs text-text-secondary hover:text-primary transition-colors"
-                  >
-                    {item.label}
-                  </Link>
+                  <NavLink href={item.href} onClick={(e) => handleNavClick(e, item.href)}>{item.label}</NavLink>
                 </li>
               ))}
             </ul>

@@ -37,19 +37,7 @@ export declare class AdminService {
     private readonly prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
-    createRaffle(adminId: string, dto: CreateRaffleDto): Promise<{
-        id: string;
-        organizationId: string | null;
-        title: string | null;
-        description: string | null;
-        goalPacks: number;
-        maxTicketNumber: number;
-        status: import("@prisma/client").$Enums.RaffleStatus;
-        startDate: Date | null;
-        endDate: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
+    createRaffle(adminId: string, dto: CreateRaffleDto): Promise<RaffleWithStats>;
     updateRaffle(raffleId: string, dto: UpdateRaffleDto): Promise<{
         id: string;
         organizationId: string | null;

@@ -1,5 +1,16 @@
-import { IsString, IsNumber, IsOptional, IsDateString, IsEnum, Min, MaxLength } from 'class-validator'
+import { IsString, IsNumber, IsOptional, IsDateString, IsEnum, Min, MaxLength, ValidateNested, ArrayMinSize } from 'class-validator'
+import { Type } from 'class-transformer'
 import { RaffleStatus } from '@prisma/client'
+
+export class CreatePrizeDto {
+  @IsString()
+  @MaxLength(255)
+  name: string
+
+  @IsString()
+  @IsOptional()
+  description?: string
+}
 
 export class CreateRaffleDto {
   @IsString()
@@ -14,6 +25,11 @@ export class CreateRaffleDto {
   @Min(1)
   goalPacks: number
 
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  maxTicketNumber?: number
+
   @IsDateString()
   @IsOptional()
   startDate?: string
@@ -25,4 +41,10 @@ export class CreateRaffleDto {
   @IsEnum(RaffleStatus)
   @IsOptional()
   status?: RaffleStatus
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePrizeDto)
+  @ArrayMinSize(1, { message: 'Debe incluir al menos un premio' })
+  prizes?: CreatePrizeDto[]
 }

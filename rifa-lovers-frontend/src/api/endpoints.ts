@@ -33,6 +33,7 @@ export const ENDPOINTS = {
     detail: (id: string) => `/raffles/${id}`,
     draw: {
       results: (raffleId: string) => `/raffles/${raffleId}/winners`,
+      adminResults: (raffleId: string) => `/admin/raffles/${raffleId}/winners`,
       check: (raffleId: string) => `/admin/raffles/${raffleId}/draw/check`,
       execute: (raffleId: string) => `/admin/raffles/${raffleId}/draw`,
     },

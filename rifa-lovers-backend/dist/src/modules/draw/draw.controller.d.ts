@@ -1,4 +1,4 @@
-import { DrawService, DrawResult } from './draw.service';
+import { DrawService, DrawResult, AdminDrawResult } from './draw.service';
 export declare class DrawController {
     private readonly drawService;
     private readonly logger;
@@ -9,6 +9,9 @@ export declare class DrawController {
         reason?: string;
         prizesCount: number;
         activePassesCount: number;
+    }>;
+    getAdminDrawResults(raffleId: string): Promise<AdminDrawResult | {
+        message: string;
     }>;
     getDrawResults(raffleId: string): Promise<DrawResult | {
         message: string;

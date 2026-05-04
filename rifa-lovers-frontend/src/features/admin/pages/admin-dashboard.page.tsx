@@ -4,6 +4,7 @@ import { useAdminKPIs, useAdminRaffles, useAdminUsers } from '@/features/admin/h
 import { checkDrawAvailability, executeDraw } from '@/api/draw.api'
 import { toastError } from '@/lib/errors'
 import type { DrawCheckResponse, DrawResults } from '@/api/draw.api'
+import { WinnersDropdown } from '../components/winners-dropdown'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -127,11 +128,15 @@ function RaffleFormModal({
     title: initial?.title || '',
     description: initial?.description || '',
     goalPacks: initial?.goalPacks?.toString() || '',
+    maxTicketNumber: initial?.goalPacks ? '30000' : '30000',
     startDate: initialStart.date,
     startTime: initialStart.time || '00:00',
     endDate: initialEnd.date,
     endTime: initialEnd.time || '23:59',
   })
+  const [prizes, setPrizes] = useState<{ name: string; description: string }[]>([
+    { name: '', description: '' },
+  ])
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,12 +153,22 @@ function RaffleFormModal({
         return chileDate.toISOString()
       }
 
+      const filteredPrizes = prizes
+        .map(p => ({ name: p.name.trim(), description: p.description.trim() || undefined }))
+        .filter(p => p.name.length > 0)
+
+      if (filteredPrizes.length === 0) {
+        throw new Error('Debe incluir al menos un premio con nombre')
+      }
+
       await onSubmit({
         title: form.title,
         description: form.description || undefined,
         goalPacks: parseInt(form.goalPacks, 10),
+        maxTicketNumber: parseInt(form.maxTicketNumber, 10) || 30000,
         startDate: toUTC(form.startDate, form.startTime),
         endDate: toUTC(form.endDate, form.endTime),
+        prizes: filteredPrizes,
       })
       onClose()
     } catch (err: unknown) {
@@ -198,6 +213,57 @@ function RaffleFormModal({
               value={form.goalPacks}
               onChange={e => setForm(f => ({ ...f, goalPacks: e.target.value }))}
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Número máximo de tickets</label>
+            <input
+              type="number"
+              min={1}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={form.maxTicketNumber}
+              onChange={e => setForm(f => ({ ...f, maxTicketNumber: e.target.value }))}
+            />
+          </div>
+          {/* Premios */}
+          <div className="border rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700">Premios *</label>
+              <button
+                type="button"
+                className="text-xs text-primary font-medium hover:underline"
+                onClick={() => setPrizes(prev => [...prev, { name: '', description: '' }])}
+              >
+                + Agregar premio
+              </button>
+            </div>
+            {prizes.map((prize, idx) => (
+              <div key={idx} className="flex gap-2 items-start">
+                <div className="flex-1 space-y-2">
+                  <input
+                    required
+                    placeholder={`Nombre del premio ${idx + 1}`}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    value={prize.name}
+                    onChange={e => setPrizes(prev => prev.map((p, i) => i === idx ? { ...p, name: e.target.value } : p))}
+                  />
+                  <input
+                    placeholder="Descripción (opcional)"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    value={prize.description}
+                    onChange={e => setPrizes(prev => prev.map((p, i) => i === idx ? { ...p, description: e.target.value } : p))}
+                  />
+                </div>
+                {prizes.length > 1 && (
+                  <button
+                    type="button"
+                    className="text-red-500 hover:text-red-700 text-sm mt-2"
+                    onClick={() => setPrizes(prev => prev.filter((_, i) => i !== idx))}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
           {/* Start Date & Time */}
           <div>
@@ -598,6 +664,11 @@ export function AdminDashboardPage() {
                               <button className="p-1.5 rounded hover:bg-yellow-50 text-yellow-600" title="Ejecutar sorteo" onClick={() => setDrawRaffleId(raffle.id)}>
                                 <Play className="w-3.5 h-3.5" />
                               </button>
+                            )}
+                            {raffle.status === 'drawn' && (
+                              <WinnersDropdown raffleId={raffle.id}>
+                                <Trophy className="w-3.5 h-3.5" />
+                              </WinnersDropdown>
                             )}
                           </div>
                         </td>

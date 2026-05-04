@@ -10,7 +10,7 @@ const INITIAL: LuckyPassesData = { passes: [], summary: null }
 export function useLuckyPasses() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
-  const { data, isLoading, error } = useAsyncData<LuckyPassesData>(
+  const { data, isLoading, error, refresh } = useAsyncData<LuckyPassesData>(
     async () => {
       if (!isAuthenticated) return INITIAL
       const [passes, summary] = await Promise.all([
@@ -23,5 +23,5 @@ export function useLuckyPasses() {
     [isAuthenticated],
   )
 
-  return { passes: data.passes, summary: data.summary, isLoading, error }
+  return { passes: data.passes, summary: data.summary, isLoading, error, refresh }
 }

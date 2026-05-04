@@ -108,7 +108,7 @@ let DrawService = DrawService_1 = class DrawService {
             throw new common_1.BadRequestException('No hay LuckyPasses activos disponibles para el sorteo');
         }
         this.logger.log(`${activePasses.length} LuckyPasses activos participando`);
-        const winner = await this.prisma.$transaction(async (tx) => {
+        const { winner, isComplete } = await this.prisma.$transaction(async (tx) => {
             const winnerIndex = (0, crypto_1.randomInt)(0, activePasses.length);
             const winnerPassId = activePasses[winnerIndex].id;
             const winnerPassWithUser = await tx.luckyPass.findUnique({
@@ -135,41 +135,52 @@ let DrawService = DrawService_1 = class DrawService {
             });
             const userFullName = this.buildUserFullName(winnerPass.user);
             this.logger.log(`Ganador asignado: Prize=${prizeToDraw.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email ?? 'N/A'}`);
+            const pendingPrizes = await tx.prize.count({
+                where: {
+                    raffleId: raffleId,
+                    milestone: { isUnlocked: true },
+                    prizeWinners: { none: {} },
+                },
+            });
+            const drawIsComplete = pendingPrizes === 0;
+            if (drawIsComplete) {
+                await tx.luckyPass.updateMany({
+                    where: {
+                        raffleId: raffleId,
+                        status: 'active',
+                    },
+                    data: { status: 'used' },
+                });
+                await tx.raffle.update({
+                    where: { id: raffleId },
+                    data: { status: 'drawn' },
+                });
+                this.logger.log(`Sorteo completado para rifa ${raffleId}. Todos los premios asignados.`);
+            }
+            else {
+                this.logger.log(`Quedan ${pendingPrizes} premios pendientes para rifa ${raffleId}`);
+            }
             return {
-                prizeId: prizeToDraw.id,
-                prizeName: prizeToDraw.name || 'Premio sin nombre',
-                prizeDescription: prizeToDraw.description,
-                luckyPassId: winnerPass.id,
-                passNumber: winnerPass.ticketNumber ?? 0,
-                userId: winnerPass.userId ?? '',
-                winnerName: userFullName,
-                userName: userFullName,
-                userEmail: winnerPass.user?.email ?? null,
+                winner: {
+                    prizeId: prizeToDraw.id,
+                    prizeName: prizeToDraw.name || 'Premio sin nombre',
+                    prizeDescription: prizeToDraw.description,
+                    luckyPassId: winnerPass.id,
+                    passNumber: winnerPass.ticketNumber ?? 0,
+                    userId: winnerPass.userId ?? '',
+                    winnerName: userFullName,
+                    userName: userFullName,
+                    userEmail: winnerPass.user?.email ?? null,
+                },
+                isComplete: drawIsComplete,
             };
         });
-        const pendingPrizes = await this.prisma.prize.count({
-            where: {
-                raffleId: raffleId,
-                milestone: { isUnlocked: true },
-                prizeWinners: { none: {} },
-            },
-        });
-        if (pendingPrizes === 0) {
-            await this.prisma.raffle.update({
-                where: { id: raffleId },
-                data: { status: 'drawn' },
-            });
-            this.logger.log(`Sorteo completado para rifa ${raffleId}. Todos los premios asignados.`);
-        }
-        else {
-            this.logger.log(`Quedan ${pendingPrizes} premios pendientes para rifa ${raffleId}`);
-        }
         const result = {
             raffleId,
             drawnAt: new Date(),
             winners: [winner],
             discarded: [],
-            isComplete: pendingPrizes === 0,
+            isComplete,
         };
         if (winner.userEmail) {
             void this.notifications.sendWinnerEmail({
@@ -222,6 +233,53 @@ let DrawService = DrawService_1 = class DrawService {
                     winnerName: userFullName,
                     userName: userFullName,
                     userEmail: w.user?.email ?? null,
+                };
+            }),
+            discarded: [],
+        };
+    }
+    async getAdminDrawResults(raffleId) {
+        const raffle = await this.prisma.raffle.findUnique({
+            where: { id: raffleId },
+        });
+        if (!raffle) {
+            throw new common_1.NotFoundException(`Rifa con ID ${raffleId} no encontrada`);
+        }
+        if (raffle.status !== 'drawn') {
+            return null;
+        }
+        const winners = await this.prisma.prizeWinner.findMany({
+            where: {
+                prize: {
+                    raffleId: raffleId,
+                },
+            },
+            include: {
+                prize: { include: { milestone: true } },
+                luckyPass: true,
+                user: true,
+            },
+            orderBy: {
+                prize: { milestone: { sortOrder: 'asc' } },
+            },
+        });
+        return {
+            raffleId,
+            drawnAt: winners[0]?.createdAt || new Date(),
+            winners: winners.map((w) => {
+                const userFullName = this.buildUserFullName(w.user ?? null);
+                return {
+                    prizeId: w.prizeId || '',
+                    prizeName: w.prize?.name || 'Premio sin nombre',
+                    prizeDescription: w.prize?.description || null,
+                    luckyPassId: w.luckyPassId || '',
+                    passNumber: w.luckyPass?.ticketNumber ?? 0,
+                    userId: w.userId || '',
+                    winnerName: userFullName,
+                    userName: userFullName,
+                    userEmail: w.user?.email ?? null,
+                    userPhone: w.user?.phone ?? null,
+                    userAddress: w.user?.address ?? null,
                 };
             }),
             discarded: [],
@@ -344,6 +402,7 @@ let DrawService = DrawService_1 = class DrawService {
             await tx.luckyPass.updateMany({
                 where: { raffleId },
                 data: {
+                    status: 'active',
                     isWinner: false,
                 },
             });

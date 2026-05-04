@@ -2,13 +2,20 @@ import { apiClient } from './client'
 import { ENDPOINTS } from './endpoints'
 
 // Types
+export interface PrizeInput {
+  name: string
+  description?: string
+}
+
 export interface CreateRaffleRequest {
   title: string
   description?: string
   goalPacks: number
+  maxTicketNumber?: number
   startDate?: string
   endDate?: string
   status?: 'draft' | 'active' | 'sold_out' | 'closed' | 'drawn'
+  prizes?: PrizeInput[]
 }
 
 export interface UpdateRaffleRequest {

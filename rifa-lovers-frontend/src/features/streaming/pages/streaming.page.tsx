@@ -9,6 +9,8 @@ import { ParticipantesList } from '../components/participantes-list'
 import { GanadoresList } from '../components/ganadores-list'
 import { ResetConfirmModal } from '../components/reset-confirm-modal'
 import { useStreaming } from '@/hooks/use-streaming'
+import { useLuckyPasses } from '@/hooks/use-lucky-passes'
+import { WinnersDropdown } from '@/features/admin/components/winners-dropdown'
 import type { CustomerDrawResult, DrawStep, LuckyPassSlot } from '@/types/streaming.types'
 import { DRAW_STEP } from '@/types/streaming.types'
 
@@ -43,6 +45,8 @@ export function StreamingPage() {
   
   // Ref to prevent double-trigger
   const isDrawingRef = useRef(false)
+
+  const { refresh: refreshMyPasses } = useLuckyPasses()
 
   // Calculate current prize number based on existing winners
   const currentPrize = (drawStatus?.winnersCount ?? 0) + 1
@@ -96,6 +100,9 @@ export function StreamingPage() {
       // Refresh draw status to get updated counts (safe: loading guard won't unmount)
       await refreshDrawStatus()
       
+      // Refresh user lucky passes to reflect winner/used status changes
+      await refreshMyPasses()
+      
     } catch (error) {
       console.error('Error en sorteo:', error)
       setCurrentStep(DRAW_STEP.IDLE)
@@ -125,6 +132,9 @@ export function StreamingPage() {
       setAllWinners([])
       setLastWinner(null)
       setTargetWinnerSlot(null)
+      
+      // Refresh user lucky passes to reflect reverted active status
+      await refreshMyPasses()
     } catch (error) {
       console.error('Error reiniciando sorteo:', error)
     }
@@ -182,6 +192,13 @@ export function StreamingPage() {
                   <RotateCcw className="size-4" />
                   Reiniciar Sorteo
                 </Button>
+              )}
+
+              {/* View Winners Dropdown — always available when raffle is drawn */}
+              {raffle?.status === 'drawn' && (
+                <WinnersDropdown raffleId={raffle.id}>
+                  <Trophy className="size-4" />
+                </WinnersDropdown>
               )}
               
               {/* SPINNING = Disabled button */}

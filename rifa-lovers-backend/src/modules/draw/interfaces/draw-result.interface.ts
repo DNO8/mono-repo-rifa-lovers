@@ -27,6 +27,15 @@ export interface DrawResult {
   isComplete?: boolean; // Indica si todos los premios han sido sorteados
 }
 
+export interface AdminDrawWinner extends DrawWinner {
+  userPhone: number | null;
+  userAddress: string | null;
+}
+
+export interface AdminDrawResult extends Omit<DrawResult, 'winners'> {
+  winners: AdminDrawWinner[];
+}
+
 // Interface for user details from repository
 export interface UserDetails {
   id: string;

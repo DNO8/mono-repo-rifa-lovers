@@ -21,6 +21,13 @@ export interface DrawResult {
         userName: string | null;
         userEmail: string | null;
     }[];
+    isComplete?: boolean;
+}
+export interface AdminDrawResult extends DrawResult {
+    winners: (DrawResult['winners'][number] & {
+        userPhone: number | null;
+        userAddress: string | null;
+    })[];
 }
 export declare class DrawService {
     private readonly prisma;
@@ -30,6 +37,7 @@ export declare class DrawService {
     private buildUserFullName;
     executeDraw(raffleId: string, adminUserId: string, prizeId?: string): Promise<DrawResult>;
     getDrawResults(raffleId: string): Promise<DrawResult | null>;
+    getAdminDrawResults(raffleId: string): Promise<AdminDrawResult | null>;
     canExecuteDraw(raffleId: string): Promise<{
         canDraw: boolean;
         reason?: string;

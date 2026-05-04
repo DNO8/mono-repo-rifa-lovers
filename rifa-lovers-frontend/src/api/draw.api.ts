@@ -18,6 +18,17 @@ export interface DrawResults {
   winners: DrawWinner[]
 }
 
+export interface AdminDrawWinner extends DrawWinner {
+  userPhone: number | null
+  userAddress: string | null
+}
+
+export interface AdminDrawResults {
+  raffleId: string
+  drawnAt: string
+  winners: AdminDrawWinner[]
+}
+
 export interface DrawCheckResponse {
   canDraw: boolean
   reason?: string
@@ -30,6 +41,13 @@ export interface DrawCheckResponse {
  */
 export async function getDrawResults(raffleId: string): Promise<DrawResults | null> {
   return apiClient.get<DrawResults>(ENDPOINTS.raffles.draw.results(raffleId))
+}
+
+/**
+ * Obtener resultados del sorteo con datos completos (admin/operator)
+ */
+export async function getAdminDrawResults(raffleId: string): Promise<AdminDrawResults | null> {
+  return apiClient.get<AdminDrawResults>(ENDPOINTS.raffles.draw.adminResults(raffleId))
 }
 
 /**

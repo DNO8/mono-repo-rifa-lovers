@@ -27,8 +27,10 @@ export function ContactCommunitySection() {
               Discord
             </Button>
             <Button variant="secondary" size="lg" className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/40 hover:text-white">
-              <Instagram className="size-4" />
-              Instagram
+              <a href={"https://www.instagram.com/rifalovers_cl"} target="_blank">
+                <Instagram className="size-4" />
+                Instagram
+              </a>
             </Button>
           </div>
         </Card>

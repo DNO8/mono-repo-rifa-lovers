@@ -29,8 +29,14 @@ export function useAdminRaffles() {
 
   const create = async (data: CreateRaffleRequest) => {
     const newRaffle = await createRaffle(data)
-    setLocalRaffles(prev => [newRaffle, ...(prev ?? raffles)])
-    return newRaffle
+    const normalized: RaffleWithStats = {
+      ...newRaffle,
+      packsSold: newRaffle.packsSold ?? 0,
+      progressPercentage: newRaffle.progressPercentage ?? 0,
+      totalRevenue: newRaffle.totalRevenue ?? 0,
+    }
+    setLocalRaffles(prev => [normalized, ...(prev ?? raffles)])
+    return normalized
   }
 
   const update = async (raffleId: string, data: UpdateRaffleRequest) => {

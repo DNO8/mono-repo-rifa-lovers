@@ -2,7 +2,7 @@ import { Controller, Post, Get, Param, UseGuards, Logger, HttpCode } from '@nest
 import { Throttle } from '@nestjs/throttler'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
-import { DrawService, DrawResult } from './draw.service'
+import { DrawService, DrawResult, AdminDrawResult } from './draw.service'
 import { CurrentUser } from '../../common/decorators'
 import { RolesGuard } from '../users/guards/roles.guard'
 
@@ -43,6 +43,22 @@ export class DrawController {
     activePassesCount: number
   }> {
     return this.drawService.canExecuteDraw(raffleId)
+  }
+
+  /**
+   * Obtener resultados del sorteo con datos completos (admin/operator)
+   * GET /admin/raffles/:id/winners
+   */
+  @Get('admin/raffles/:id/winners')
+  @UseGuards(AuthGuard('jwt'), new RolesGuard([UserRole.admin, UserRole.operator]))
+  async getAdminDrawResults(@Param('id') raffleId: string): Promise<AdminDrawResult | { message: string }> {
+    const results = await this.drawService.getAdminDrawResults(raffleId)
+
+    if (!results) {
+      return { message: 'El sorteo aún no se ha ejecutado para esta rifa' }
+    }
+
+    return results
   }
 
   /**

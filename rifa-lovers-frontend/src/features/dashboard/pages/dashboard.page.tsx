@@ -73,7 +73,7 @@ const transformPurchasesToHistory = (purchases: Purchase[], passes: LuckyPass[])
   // Pre-calcular conteo REAL de LP por rifa
   const realCountByRaffle = new Map<string, number>()
   for (const pass of passes) {
-    if (pass.status !== 'active') continue
+    if (pass.status === 'cancelled') continue
     const current = realCountByRaffle.get(pass.raffleId) || 0
     realCountByRaffle.set(pass.raffleId, current + 1)
   }
@@ -264,7 +264,7 @@ export default function DashboardPage() {
                     <div className="space-y-4">
                       {userRaffles.map((userRaffle) => {
                         const raffleTickets = passes.filter(
-                          (p) => p.raffleId === userRaffle.id && p.status === 'active'
+                          (p) => p.raffleId === userRaffle.id && p.status !== 'cancelled'
                         ).length
                         const cardData = transformRaffleToCardData(userRaffle, raffleTickets)
                         return (

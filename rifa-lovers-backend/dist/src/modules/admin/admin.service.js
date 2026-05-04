@@ -21,18 +21,60 @@ let AdminService = AdminService_1 = class AdminService {
     }
     async createRaffle(adminId, dto) {
         this.logger.log(`Admin ${adminId} creando rifa: ${dto.title}`);
-        const raffle = await this.prisma.raffle.create({
-            data: {
-                title: dto.title,
-                description: dto.description,
-                goalPacks: dto.goalPacks,
-                startDate: dto.startDate ? new Date(dto.startDate) : null,
-                endDate: dto.endDate ? new Date(dto.endDate) : null,
-                status: dto.status || client_1.RaffleStatus.draft,
-            },
+        const prizes = dto.prizes ?? [];
+        const goalPacks = dto.goalPacks;
+        const segmentSize = Math.floor(goalPacks / prizes.length);
+        const result = await this.prisma.$transaction(async (tx) => {
+            const raffle = await tx.raffle.create({
+                data: {
+                    title: dto.title,
+                    description: dto.description,
+                    goalPacks,
+                    maxTicketNumber: dto.maxTicketNumber ?? 30000,
+                    startDate: dto.startDate ? new Date(dto.startDate) : null,
+                    endDate: dto.endDate ? new Date(dto.endDate) : null,
+                    status: dto.status || client_1.RaffleStatus.draft,
+                },
+            });
+            for (let i = 0; i < prizes.length; i++) {
+                const prizeDto = prizes[i];
+                const requiredPacks = i === prizes.length - 1 ? goalPacks : segmentSize * (i + 1);
+                const milestone = await tx.milestone.create({
+                    data: {
+                        raffleId: raffle.id,
+                        name: `Meta ${i + 1}`,
+                        requiredPacks,
+                        sortOrder: i + 1,
+                    },
+                });
+                await tx.prize.create({
+                    data: {
+                        raffleId: raffle.id,
+                        milestoneId: milestone.id,
+                        type: 'milestone',
+                        name: prizeDto.name,
+                        description: prizeDto.description ?? null,
+                        quantity: 1,
+                    },
+                });
+            }
+            return raffle;
         });
-        this.logger.log(`Rifa creada: ${raffle.id}`);
-        return raffle;
+        this.logger.log(`Rifa creada: ${result.id} con ${prizes.length} premio(s)`);
+        return {
+            id: result.id,
+            title: result.title,
+            description: result.description,
+            goalPacks: result.goalPacks,
+            status: result.status,
+            startDate: result.startDate,
+            endDate: result.endDate,
+            createdAt: result.createdAt,
+            updatedAt: result.updatedAt,
+            packsSold: 0,
+            progressPercentage: 0,
+            totalRevenue: 0,
+        };
     }
     async updateRaffle(raffleId, dto) {
         this.logger.log(`Actualizando rifa: ${raffleId}`);

@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, ShoppingCart, Hand, Calendar, Hash, Trophy, Star } from 'lucide-react'
+import { ArrowLeft, ShoppingCart, Hand, Calendar, Hash, Trophy, Star, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
 import { LazyTicketModelViewer } from '../components/lazy-ticket-model-viewer'
-import { useActiveRaffle } from '@/hooks/use-raffles'
+import { useRaffleById } from '@/hooks/use-raffle-by-id'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
 import { Spinner } from '@/components/ui/spinner'
 import { TestimonialForm } from '../components/testimonial-form'
+import { RAFFLE_STATUS } from '@/types/domain.types'
 
 interface UserTicket {
   id: string
@@ -20,7 +21,7 @@ interface UserTicket {
 export default function RaffleDetailPage() {
   const { id } = useParams<{ id: string }>()
   const user = useAuthStore((s) => s.user)
-  const { raffle, isLoading: isLoadingRaffle } = useActiveRaffle()
+  const { raffle, isLoading: isLoadingRaffle } = useRaffleById(id)
   const { passes, isLoading: isLoadingPasses } = useLuckyPasses()
   const [selectedTicket, setSelectedTicket] = useState<UserTicket | null>(null)
 
@@ -28,8 +29,29 @@ export default function RaffleDetailPage() {
 
   const isLoading = isLoadingRaffle || isLoadingPasses
 
-  const raffleId = id ?? raffle?.id
-  const raffleTitle = raffle?.title ?? 'Premio por confirmar'
+  const raffleId = id
+  const raffleTitle = raffle?.title ?? ''
+
+  const canPurchase = raffle?.status === RAFFLE_STATUS.ACTIVE || raffle?.status === RAFFLE_STATUS.SOLD_OUT
+
+  const drawLabel = (() => {
+    if (!raffle) return 'Próximamente'
+    switch (raffle.status) {
+      case RAFFLE_STATUS.DRAFT:
+        return 'Fecha por definir'
+      case RAFFLE_STATUS.ACTIVE:
+      case RAFFLE_STATUS.SOLD_OUT:
+        return raffle.endDate
+          ? new Date(raffle.endDate).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+          : 'Próximamente'
+      case RAFFLE_STATUS.CLOSED:
+        return 'Sorteo pendiente'
+      case RAFFLE_STATUS.DRAWN:
+        return 'Sorteo realizado'
+      default:
+        return 'Próximamente'
+    }
+  })()
 
   const userTickets: UserTicket[] = passes
     .filter((lp) => lp.raffleId === raffleId)
@@ -73,7 +95,7 @@ export default function RaffleDetailPage() {
             <div className="flex items-center gap-4 mt-2 text-sm text-text-secondary">
               <span className="flex items-center gap-1">
                 <Calendar className="size-3.5" />
-                Sorteo: Próximamente
+                Sorteo: {drawLabel}
               </span>
               <span className="flex items-center gap-1">
                 <Hash className="size-3.5" />
@@ -82,12 +104,22 @@ export default function RaffleDetailPage() {
             </div>
           </div>
 
-          <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
-            <Button variant="primary" size="lg">
-              <ShoppingCart className="size-4" />
-              Activar otro LuckyPass
-            </Button>
-          </Link>
+          {canPurchase && (
+            <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
+              <Button variant="primary" size="lg">
+                <ShoppingCart className="size-4" />
+                Activar otro LuckyPass
+              </Button>
+            </Link>
+          )}
+          {raffle?.status === RAFFLE_STATUS.DRAWN && (
+            <Link to={`/raffle/${raffleId}/winners`}>
+              <Button variant="secondary" size="lg">
+                <Eye className="size-4" />
+                Ver ganadores
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Main: 3D viewer + ticket list */}
@@ -113,12 +145,14 @@ export default function RaffleDetailPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <p className="text-text-secondary mb-4">Aún no tienes LuckyPass para esta rifa</p>
-                <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
-                  <Button variant="primary" size="lg">
-                    <ShoppingCart className="size-4" />
-                    Activar tu primer LuckyPass
-                  </Button>
-                </Link>
+                {canPurchase && (
+                  <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
+                    <Button variant="primary" size="lg">
+                      <ShoppingCart className="size-4" />
+                      Activar tu primer LuckyPass
+                    </Button>
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -180,14 +214,16 @@ export default function RaffleDetailPage() {
               </p>
             )}
 
-            <div className="mt-4 pt-4 border-t border-border-light">
-              <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
-                <Button variant="secondary" size="md" className="w-full">
-                  <ShoppingCart className="size-4" />
-                  Activar más LuckyPass
-                </Button>
-              </Link>
-            </div>
+            {canPurchase && (
+              <div className="mt-4 pt-4 border-t border-border-light">
+                <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
+                  <Button variant="secondary" size="md" className="w-full">
+                    <ShoppingCart className="size-4" />
+                    Activar más LuckyPass
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 

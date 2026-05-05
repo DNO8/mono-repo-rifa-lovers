@@ -198,6 +198,12 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
           data: { status: PurchaseStatus.failed },
         })
 
+        // Actualizar payment_transactions asociadas a 'rejected'
+        await this.prisma.paymentTransaction.updateMany({
+          where: { purchaseId: purchase.id },
+          data: { status: 'rejected' },
+        })
+
         this.logger.log(
           `[JOB] Purchase ${purchase.id} expirada (creada: ${purchase.createdAt.toISOString()})`
         )

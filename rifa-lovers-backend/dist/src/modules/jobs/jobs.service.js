@@ -179,6 +179,10 @@ let JobsService = JobsService_1 = class JobsService {
                     where: { id: purchase.id },
                     data: { status: client_1.PurchaseStatus.failed },
                 });
+                await this.prisma.paymentTransaction.updateMany({
+                    where: { purchaseId: purchase.id },
+                    data: { status: 'rejected' },
+                });
                 this.logger.log(`[JOB] Purchase ${purchase.id} expirada (creada: ${purchase.createdAt.toISOString()})`);
             }
             this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} purchases marcadas como failed`);

@@ -109,15 +109,32 @@ let AuthService = class AuthService {
                 throw new common_1.ConflictException('El email ya está en uso');
             }
         }
+        if (updateData.newPassword) {
+            if (!updateData.currentPassword) {
+                throw new common_1.UnauthorizedException('Debes ingresar tu contraseña actual para cambiarla');
+            }
+            if (!user.email) {
+                throw new common_1.UnauthorizedException('Usuario sin email registrado');
+            }
+            const { error: verifyError } = await this.supabaseService.signIn(user.email, updateData.currentPassword);
+            if (verifyError) {
+                throw new common_1.UnauthorizedException('La contraseña actual es incorrecta');
+            }
+        }
         const updateDataPrisma = {
             email: updateData.email?.toLowerCase() || user.email,
             firstName: updateData.firstName || user.firstName,
             lastName: updateData.lastName || user.lastName,
-            phone: updateData.phone ? parseFloat(updateData.phone) : user.phone,
+            phone: this.parsePhone(updateData.phone, user.phone),
         };
+        const supabaseUpdates = {};
         if (updateData.email) {
-            const supabaseUpdates = {};
             supabaseUpdates.email = updateData.email.toLowerCase();
+        }
+        if (updateData.newPassword) {
+            supabaseUpdates.password = updateData.newPassword;
+        }
+        if (supabaseUpdates.email || supabaseUpdates.password) {
             const { error: supabaseError } = await this.supabaseService.updateUser(userId, supabaseUpdates);
             if (supabaseError) {
                 throw new common_1.ConflictException('Error al actualizar en Supabase: ' + supabaseError.message);
@@ -128,6 +145,17 @@ let AuthService = class AuthService {
             data: updateDataPrisma,
         });
         return (0, user_mapper_1.mapUserToDto)(updatedUser);
+    }
+    parsePhone(phone, fallback = null) {
+        if (phone === undefined || phone === null || phone === '')
+            return fallback ?? undefined;
+        const cleaned = phone.replace(/[^\d]/g, '');
+        if (!cleaned)
+            return fallback ?? undefined;
+        const parsed = parseFloat(cleaned);
+        if (isNaN(parsed))
+            return fallback ?? undefined;
+        return parsed;
     }
     async refreshToken(refreshToken) {
         const { data, error } = await this.supabaseService.refreshToken(refreshToken);

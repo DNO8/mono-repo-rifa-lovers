@@ -375,6 +375,7 @@ let DrawService = DrawService_1 = class DrawService {
         });
     }
     async resetDraw(raffleId, operatorId) {
+        void operatorId;
         const raffle = await this.prisma.raffle.findUnique({
             where: { id: raffleId },
         });
@@ -412,7 +413,6 @@ let DrawService = DrawService_1 = class DrawService {
                     status: 'closed',
                 },
             });
-            console.log(`[AUDIT] Draw reset for raffle ${raffleId} by operator ${operatorId}`);
         });
         return {
             success: true,

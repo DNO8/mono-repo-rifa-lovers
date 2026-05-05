@@ -22,8 +22,12 @@ export class UpdateUserDto {
   phone?: string;
 
   @IsOptional()
+  @IsString({ message: 'La contraseña actual debe ser un string' })
+  currentPassword?: string;
+
+  @IsOptional()
   @IsString({ message: 'La nueva contraseña debe ser un string' })
-  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
+  @MinLength(9, { message: 'La contraseña debe tener al menos 9 caracteres' })
   @MaxLength(100, { message: 'La contraseña no puede exceder 100 caracteres' })
   newPassword?: string;
 }

@@ -134,20 +134,41 @@ export class AuthService {
       }
     }
 
+    // --- Verify current password before changing to new password ---
+    if (updateData.newPassword) {
+      if (!updateData.currentPassword) {
+        throw new UnauthorizedException('Debes ingresar tu contraseña actual para cambiarla');
+      }
+      if (!user.email) {
+        throw new UnauthorizedException('Usuario sin email registrado');
+      }
+      // Verify by attempting sign-in with current password
+      const { error: verifyError } = await this.supabaseService.signIn(
+        user.email,
+        updateData.currentPassword,
+      );
+      if (verifyError) {
+        throw new UnauthorizedException('La contraseña actual es incorrecta');
+      }
+    }
+
     const updateDataPrisma: Prisma.UserUpdateInput = {
       email: updateData.email?.toLowerCase() || user.email,
       firstName: updateData.firstName || user.firstName,
       lastName: updateData.lastName || user.lastName,
-      phone: updateData.phone ? parseFloat(updateData.phone) : user.phone,
+      phone: this.parsePhone(updateData.phone, user.phone),
     };
 
+    // --- Update Supabase ---
+    const supabaseUpdates: { email?: string; password?: string } = {};
     if (updateData.email) {
-      const supabaseUpdates: { email?: string } = {};
-      
       supabaseUpdates.email = updateData.email.toLowerCase();
-
+    }
+    if (updateData.newPassword) {
+      supabaseUpdates.password = updateData.newPassword;
+    }
+    if (supabaseUpdates.email || supabaseUpdates.password) {
       const { error: supabaseError } = await this.supabaseService.updateUser(userId, supabaseUpdates);
-
       if (supabaseError) {
         throw new ConflictException('Error al actualizar en Supabase: ' + supabaseError.message);
       }
@@ -159,6 +180,15 @@ export class AuthService {
     });
 
     return mapUserToDto(updatedUser);
+  }
+
+  private parsePhone(phone?: string, fallback: number | null = null): number | undefined {
+    if (phone === undefined || phone === null || phone === '') return fallback ?? undefined;
+    const cleaned = phone.replace(/[^\d]/g, '');
+    if (!cleaned) return fallback ?? undefined;
+    const parsed = parseFloat(cleaned);
+    if (isNaN(parsed)) return fallback ?? undefined;
+    return parsed;
   }
 
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {

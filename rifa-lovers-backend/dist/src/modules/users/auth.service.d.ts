@@ -11,6 +11,7 @@ export declare class AuthService {
     validateUser(userId: string): Promise<User | null>;
     getProfile(userId: string): Promise<UserResponseDto>;
     updateProfile(userId: string, updateData: UpdateUserDto): Promise<UserResponseDto>;
+    private parsePhone;
     refreshToken(refreshToken: string): Promise<{
         accessToken: string;
     }>;

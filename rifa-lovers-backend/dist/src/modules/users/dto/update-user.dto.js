@@ -40,8 +40,13 @@ __decorate([
 ], UpdateUserDto.prototype, "phone", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)({ message: 'La contraseña actual debe ser un string' }),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "currentPassword", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)({ message: 'La nueva contraseña debe ser un string' }),
-    (0, class_validator_1.MinLength)(8, { message: 'La contraseña debe tener al menos 8 caracteres' }),
+    (0, class_validator_1.MinLength)(9, { message: 'La contraseña debe tener al menos 9 caracteres' }),
     (0, class_validator_1.MaxLength)(100, { message: 'La contraseña no puede exceder 100 caracteres' }),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "newPassword", void 0);

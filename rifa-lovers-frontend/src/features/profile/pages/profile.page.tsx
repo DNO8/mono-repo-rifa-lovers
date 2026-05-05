@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'react-toastify'
 import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
-import { ArrowLeft, Save, User, Lock, Eye, EyeOff, Mail, Phone } from 'lucide-react'
-import { Card } from '@/components/ui/card'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
 import { updateProfile } from '@/api/users.api'
@@ -14,6 +13,9 @@ import {
   type ProfileFormData,
   type PasswordFormData,
 } from '../schemas/profile.schema'
+import { ProfilePersonalCard } from '../components/profile-personal-card'
+import { ProfilePasswordCard } from '../components/profile-password-card'
+import { ProfileFormActions } from '../components/profile-form-actions'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
@@ -21,16 +23,13 @@ export default function ProfilePage() {
   const refreshUser = useAuthStore((s) => s.refreshUser)
 
   const [isLoading, setIsLoading] = useState(false)
-  const [showCurrent, setShowCurrent] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState<{ field: string; message: string } | null>(null)
 
-  const [profile, setProfile] = useState<ProfileFormData>({
+  const [profile, setProfile] = useState<ProfileFormData>(() => ({
     firstName: user?.firstName ?? '',
     lastName: user?.lastName ?? '',
-    phone: user?.phone ?? '',
-  })
+    phone: (user?.phone ?? '').replace(/[^\d+]/g, ''),
+  }))
 
   const [password, setPassword] = useState<PasswordFormData>({
     currentPassword: '',
@@ -92,268 +91,48 @@ export default function ProfilePage() {
     }
   }
 
-  const inputBase = 'w-full rounded-lg border border-border-light bg-bg-white px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-text-tertiary transition-colors'
-  const errorClass = 'border-red-400 focus:border-red-400 focus:ring-red-200'
-
   return (
     <>
       <SEOHead title="Mi Perfil" noindex />
-    <div className="px-4 md:px-8 py-8 md:py-12">
-      <div className="mx-auto max-w-[600px]">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="self-start"
-          >
-            <ArrowLeft className="size-4 mr-1" />
-            Volver
-          </Button>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">
-            Mi Perfil
-          </h1>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Datos personales */}
-          <Card variant="glass" className="p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <User className="size-5 text-primary" />
-              </div>
-              <h2 className="text-lg font-bold text-text-primary">Datos personales</h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  value={profile.firstName}
-                  onChange={(e) => handleProfileChange('firstName', e.target.value)}
-                  className={
-                    error?.field === 'firstName'
-                      ? `${inputBase} ${errorClass}`
-                      : inputBase
-                  }
-                  placeholder="Tu nombre"
-                  maxLength={120}
-                />
-                {error?.field === 'firstName' && (
-                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  Apellido
-                </label>
-                <input
-                  type="text"
-                  value={profile.lastName}
-                  onChange={(e) => handleProfileChange('lastName', e.target.value)}
-                  className={
-                    error?.field === 'lastName'
-                      ? `${inputBase} ${errorClass}`
-                      : inputBase
-                  }
-                  placeholder="Tu apellido"
-                  maxLength={120}
-                />
-                {error?.field === 'lastName' && (
-                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
-                )}
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  Correo electrónico
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-tertiary" />
-                  <input
-                    type="email"
-                    value={user?.email ?? ''}
-                    disabled
-                    className={`${inputBase} pl-9 bg-bg-muted cursor-not-allowed`}
-                  />
-                </div>
-                <p className="text-xs text-text-tertiary mt-1">
-                  El correo no se puede modificar.
-                </p>
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  Teléfono
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-tertiary" />
-                  <input
-                    type="tel"
-                    value={profile.phone}
-                    onChange={(e) => handleProfileChange('phone', e.target.value)}
-                    className={
-                      error?.field === 'phone'
-                        ? `${inputBase} pl-9 ${errorClass}`
-                        : `${inputBase} pl-9`
-                    }
-                    placeholder="56912345678"
-                  />
-                </div>
-                {error?.field === 'phone' && (
-                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
-                )}
-              </div>
-            </div>
-          </Card>
-
-          {/* Cambiar contraseña */}
-          <Card variant="glass" className="p-6">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="p-2 rounded-lg bg-secondary/10">
-                <Lock className="size-5 text-secondary" />
-              </div>
-              <h2 className="text-lg font-bold text-text-primary">Cambiar contraseña</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  Contraseña actual
-                </label>
-                <div className="relative">
-                  <input
-                    type={showCurrent ? 'text' : 'password'}
-                    value={password.currentPassword}
-                    onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                    className={
-                      error?.field === 'currentPassword'
-                        ? `${inputBase} pr-10 ${errorClass}`
-                        : `${inputBase} pr-10`
-                    }
-                    placeholder="Ingresa tu contraseña actual"
-                    maxLength={100}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrent((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showCurrent ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                </div>
-                {error?.field === 'currentPassword' && (
-                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  Nueva contraseña
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password.newPassword}
-                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                    className={
-                      error?.field === 'newPassword'
-                        ? `${inputBase} pr-10 ${errorClass}`
-                        : `${inputBase} pr-10`
-                    }
-                    placeholder="Mínimo 9 caracteres"
-                    maxLength={100}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                </div>
-                {error?.field === 'newPassword' && (
-                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                  Confirmar contraseña
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirm ? 'text' : 'password'}
-                    value={password.confirmPassword}
-                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                    className={
-                      error?.field === 'confirmPassword'
-                        ? `${inputBase} pr-10 ${errorClass}`
-                        : `${inputBase} pr-10`
-                    }
-                    placeholder="Repite la nueva contraseña"
-                    maxLength={100}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                </div>
-                {error?.field === 'confirmPassword' && (
-                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
-                )}
-              </div>
-
-              <p className="text-xs text-text-tertiary">
-                Deja los campos de contraseña en blanco si no deseas cambiarla.
-              </p>
-            </div>
-          </Card>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+      <div className="px-4 md:px-8 py-8 md:py-12">
+        <div className="mx-auto max-w-[600px]">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
             <Button
               type="button"
-              variant="outline-primary"
-              className="w-full sm:w-auto justify-center"
+              variant="ghost"
+              size="sm"
               onClick={() => navigate('/dashboard')}
-              disabled={isLoading}
+              className="self-start"
             >
-              Cancelar
+              <ArrowLeft className="size-4 mr-1" />
+              Volver
             </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full sm:w-auto justify-center"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Guardando...
-                </span>
-              ) : (
-                <>
-                  <Save className="size-4 mr-1.5" />
-                  Guardar cambios
-                </>
-              )}
-            </Button>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">
+              Mi Perfil
+            </h1>
           </div>
-        </form>
+
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
+            <ProfilePersonalCard
+              profile={profile}
+              email={user?.email ?? ''}
+              error={error}
+              onChange={handleProfileChange}
+            />
+
+            <ProfilePasswordCard
+              password={password}
+              error={error}
+              onChange={handlePasswordChange}
+            />
+
+            <ProfileFormActions
+              isLoading={isLoading}
+              onCancel={() => navigate('/dashboard')}
+            />
+          </form>
+        </div>
       </div>
-    </div>
     </>
   )
 }

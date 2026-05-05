@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const refreshUser = useAuthStore((s) => s.refreshUser)
+  const logout = useAuthStore((s) => s.logout)
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<{ field: string; message: string } | null>(null)
@@ -63,6 +64,8 @@ export default function ProfilePage() {
       return
     }
 
+    const isChangingPassword = password.newPassword.length > 0
+
     setIsLoading(true)
     try {
       const payload: { firstName: string; lastName: string; phone: string; currentPassword?: string; newPassword?: string } = {
@@ -71,14 +74,22 @@ export default function ProfilePage() {
         phone: profile.phone,
       }
 
-      if (password.newPassword.length > 0) {
+      if (isChangingPassword) {
         payload.currentPassword = password.currentPassword
         payload.newPassword = password.newPassword
       }
 
       await updateProfile(payload)
-      await refreshUser()
-      toast.success('Perfil actualizado correctamente')
+
+      if (isChangingPassword) {
+        toast.success('Contraseña actualizada. Por seguridad, vuelve a iniciar sesión.')
+        logout()
+        navigate('/login')
+      } else {
+        await refreshUser()
+        toast.success('Perfil actualizado correctamente')
+      }
+
       setPassword({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (err) {
       if (err instanceof ApiError) {

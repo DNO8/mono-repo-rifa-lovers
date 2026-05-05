@@ -36,11 +36,13 @@ RifaLovers es una **SPA transaccional** con interactividad pesada (grilla de tic
 | Estado global     | Zustand                  | Ligero, patrón Observer nativo                      |
 | Estilos           | Tailwind CSS v4          | Utility-first, rápido para prototipar               |
 | Componentes UI    | shadcn/ui                | Accesibles, customizables, sin vendor lock-in       |
-| Formularios       | React Hook Form + Zod    | Validación tipada para registro/compra              |
+| Validación        | Zod                      | Schemas tipados para perfil, auth, forms            |
+| 3D / WebGL        | React Three Fiber + Drei | Modelo interactivo MacBook, lazy loaded             |
 | Gráficos KPI      | Recharts                 | Simple, suficiente para dashboard MVP               |
-| HTTP Client       | Axios                    | Interceptors para auth tokens                       |
+| HTTP Client       | Fetch API (custom)       | Cliente propio con interceptors auth + error handling |
 | Iconos            | Lucide React             | Consistente con shadcn/ui                           |
-| Notificaciones    | Sonner                   | Toasts modernos, ligero                             |
+| Notificaciones    | react-toastify           | Toasts con colas y persistencia                     |
+| SEO               | react-helmet-async + OG Edge Function | Meta tags dinámicas + Edge Function Vercel |
 
 ---
 
@@ -326,182 +328,78 @@ const client = new LoggingHttpClient(
 ```
 src/
 │
-├── api/                              # Capa API (Facade + Adapter)
-│   ├── adapters/                     # Adapter Pattern
-│   │   ├── raffle.adapter.ts
-│   │   ├── ticket.adapter.ts
-│   │   ├── user.adapter.ts
-│   │   └── payment.adapter.ts
-│   ├── clients/                      # Decorator Pattern
-│   │   ├── http-client.ts            # Interface base + implementación
-│   │   ├── auth.decorator.ts         # Decorator: inyecta token
-│   │   └── logging.decorator.ts      # Decorator: logging de requests
-│   ├── raffle.api.ts                 # Facade: endpoints de rifas
-│   ├── auth.api.ts                   # Facade: endpoints de auth
-│   ├── ticket.api.ts                 # Facade: endpoints de tickets
-│   ├── payment.api.ts                # Facade: endpoints de pagos
-│   └── index.ts                      # Re-exports
+├── api/                              # Capa API (Facade + Adapter + Decorator)
+│   ├── adapters/                     # Normalización de responses
+│   ├── client.ts                     # HTTP client con interceptors
+│   ├── endpoints.ts                  # Centralización de rutas
+│   └── *.api.ts                      # Facades por dominio
 │
-├── components/                       # UI Components (contratos Liskov)
-│   ├── ui/                           # Componentes base (shadcn/ui + custom)
-│   │   ├── button.tsx
-│   │   ├── input.tsx
-│   │   ├── card.tsx
-│   │   ├── modal.tsx
-│   │   ├── badge.tsx
-│   │   ├── progress-bar.tsx
-│   │   └── spinner.tsx
-│   └── shared/                       # Componentes compartidos entre features
-│       ├── layout/
-│       │   ├── header.tsx
-│       │   ├── footer.tsx
-│       │   ├── sidebar.tsx
-│       │   └── page-layout.tsx
-│       ├── error-boundary.tsx
-│       └── protected-route.tsx
+├── components/
+│   ├── ui/                           # shadcn/ui base + custom
+│   │   ├── button.tsx, card.tsx, badge.tsx, spinner.tsx
+│   │   ├── dialog.tsx, scroll-area.tsx, skeleton.tsx
+│   │   └── avatar.tsx, progress-bar.tsx
+│   ├── shared/                       # Cross-feature components
+│   │   ├── layout/                   # Header, Footer, PageLayout
+│   │   ├── seo/                      # Helmet wrapper, OG meta
+│   │   ├── aurora-canvas.tsx         # Background efecto aurora
+│   │   ├── confetti-canvas.tsx       # Efecto celebración
+│   │   ├── faq-item.tsx, step-card.tsx, metric-card.tsx
+│   │   └── section-divider.tsx
+│   └── skeletons/                    # Loading states por feature
 │
-├── features/                         # Módulos por dominio de negocio
-│   ├── landing/
-│   │   ├── components/
-│   │   │   ├── hero-model-viewer.tsx
-│   │   │   ├── model-annotations.tsx
-│   │   │   └── ticket-selector.tsx
-│   │   ├── sections/
-│   │   │   ├── hero-section.tsx
-│   │   │   ├── live-ticker-section.tsx
-│   │   │   ├── steps-section.tsx
-│   │   │   ├── winners-section.tsx
-│   │   │   ├── impact-section.tsx
-│   │   │   ├── testimonials-section.tsx
-│   │   │   ├── pricing-section.tsx
-│   │   │   ├── faq-section.tsx
-│   │   │   └── cta-section.tsx
+├── features/                         # Módulos por dominio
+│   ├── landing/                      # Hero 3D, pricing, countdown, FAQ, CTA
+│   │   ├── components/               # HeroModelViewer, LazyHeroModelViewer
+│   │   ├── sections/                 # 16 secciones (hero, pricing, steps...)
 │   │   └── pages/
-│   │       └── landing.page.tsx
-│   │
-│   ├── impact/
-│   │   ├── sections/
-│   │   │   ├── impact-hero-section.tsx
-│   │   │   ├── impact-steps-section.tsx
-│   │   │   ├── impact-stats-section.tsx
-│   │   │   └── impact-milestones-section.tsx
-│   │   └── pages/
-│   │       └── impact.page.tsx
-│   │
-│   ├── about/
-│   │   ├── sections/
-│   │   │   ├── about-hero-section.tsx
-│   │   │   ├── about-values-section.tsx
-│   │   │   └── about-team-section.tsx
-│   │   └── pages/
-│   │       └── about.page.tsx
-│   │
-│   ├── contact/
-│   │   ├── components/
-│   │   │   └── contact-form.tsx
-│   │   ├── sections/
-│   │   │   ├── contact-hero-section.tsx
-│   │   │   ├── contact-faq-section.tsx
-│   │   │   └── contact-community-section.tsx
-│   │   └── pages/
-│   │       └── contact.page.tsx
-│   │
-│   ├── auth/
-│   │   ├── components/
-│   │   │   ├── login-form.tsx
-│   │   │   └── register-form.tsx
-│   │   ├── hooks/
-│   │   │   └── use-auth.ts
-│   │   └── pages/
-│   │       ├── login.page.tsx
-│   │       └── register.page.tsx
-│   │
-│   ├── raffle/
-│   │   ├── components/
-│   │   │   ├── raffle-card.tsx
-│   │   │   ├── raffle-progress.tsx
-│   │   │   └── raffle-details.tsx
-│   │   ├── hooks/
-│   │   │   └── use-raffle.ts
-│   │   └── pages/
-│   │       └── raffle.page.tsx
-│   │
-│   ├── tickets/
-│   │   ├── components/
-│   │   │   ├── ticket-grid.tsx
-│   │   │   ├── ticket-cell.tsx
-│   │   │   └── ticket-selector.tsx
-│   │   ├── factories/               # Factory Pattern
-│   │   │   └── ticket-viewmodel.factory.ts
-│   │   ├── hooks/
-│   │   │   └── use-tickets.ts
-│   │   └── pages/
-│   │       └── tickets.page.tsx
-│   │
-│   ├── checkout/
-│   │   ├── components/
-│   │   │   ├── checkout-summary.tsx
-│   │   │   ├── payment-form.tsx
-│   │   │   └── purchase-confirmation.tsx
-│   │   ├── strategies/              # Strategy Pattern
-│   │   │   ├── pricing.strategy.ts
-│   │   │   ├── standard.pricing.ts
-│   │   │   ├── bulk-discount.pricing.ts
-│   │   │   └── referral.pricing.ts
-│   │   ├── hooks/
-│   │   │   └── use-checkout.ts
-│   │   └── pages/
-│   │       └── checkout.page.tsx
-│   │
-│   ├── dashboard/
-│   │   ├── components/
-│   │   │   ├── kpi-card.tsx
-│   │   │   ├── sales-chart.tsx
-│   │   │   ├── conversion-chart.tsx
-│   │   │   └── progress-overview.tsx
-│   │   ├── hooks/
-│   │   │   └── use-dashboard.ts
-│   │   └── pages/
-│   │       └── dashboard.page.tsx
-│   │
-│   └── admin/
-│       ├── components/
-│       │   ├── raffle-manager.tsx
-│       │   ├── user-table.tsx
-│       │   └── draw-executor.tsx
-│       ├── hooks/
-│       │   └── use-admin.ts
-│       └── pages/
-│           └── admin.page.tsx
+│   ├── auth/                         # Login, registro, verificación email
+│   ├── checkout/                     # Carrito, pago Flow, confirmación
+│   ├── dashboard/                    # KPIs, gráficos Recharts, admin rifas
+│   ├── impact/                       # Página impacto social
+│   ├── about/                        # Hero, valores, equipo
+│   ├── contact/                      # Formulario, FAQ contacto, comunidad
+│   ├── profile/                      # Edición perfil + cambio contraseña (Zod)
+│   ├── raffles/                      # Listado, detalle, sorteos
+│   ├── streaming/                    # Sorteo en vivo (WebSocket)
+│   ├── pack-mom/                     # Alianza Laboratorio SYS
+│   ├── legal/                        # Términos y condiciones
+│   └── errors/                       # Páginas de error
 │
 ├── hooks/                            # Hooks globales compartidos
-│   ├── use-media-query.ts
-│   └── use-debounce.ts
+│   ├── use-gsap-scroll.ts            # ScrollTrigger animations
+│   ├── use-carousel.ts               # Carrusel draggable
+│   ├── use-count-up.ts               # Contadores animados
+│   ├── use-media-query.ts            # Responsive hooks
+│   ├── use-async-data.ts             # Data fetching con estado
+│   └── use-purchases.ts, use-raffles.ts, use-draw.ts...
 │
-├── lib/                              # Utilidades y configuración
-│   ├── constants.ts
-│   ├── config.ts
-│   └── utils.ts
+├── lib/                              # Utilidades, config, contenido
+│   ├── constants.ts                  # Feature flags, config
+│   ├── content/                      # Copy estático (pricing, FAQ, steps)
+│   ├── mappers/                      # Pack → PricingTier, etc.
+│   ├── gsap.ts                       # Configuración GSAP + ScrollTrigger
+│   ├── env.ts                        # Variables de entorno tipadas
+│   ├── errors.ts                     # Clases de error custom
+│   └── utils.ts                      # cn() y helpers
 │
-├── routes/                           # Definición de rutas
+├── routes/                           # React Router v7
 │   ├── router.tsx
-│   ├── routes.ts
-│   └── guards.ts
+│   └── route-guards.tsx              # Auth guards, role guards
 │
-├── stores/                           # State Management — Observer Pattern
-│   ├── auth.store.ts
-│   ├── ticket.store.ts
-│   └── ui.store.ts
+├── stores/                           # Zustand — Observer Pattern
+│   ├── auth.store.ts                 # Auth + user + refreshUser
+│   └── ...
 │
-├── types/                            # TypeScript types/interfaces
-│   ├── api.types.ts                  # Tipos raw del backend
-│   ├── domain.types.ts               # Modelos de dominio transformados
-│   ├── store.types.ts                # Interfaces de stores
-│   └── component.types.ts            # Contratos de props (Liskov)
+├── types/                            # TypeScript types
+│   ├── domain.types.ts               # Modelos de dominio
+│   ├── api.types.ts                  # Contratos API
+│   └── ui.types.ts                   # Props, IconMap, etc.
 │
 ├── App.tsx
 ├── main.tsx
-└── index.css
+├── index.css                         # Tailwind v4 + design tokens + keyframes
+└── vercel.json                       # Routing + OG Edge Function
 ```
 
 ---
@@ -523,3 +421,24 @@ components/ui → types (solo props)
 - `api/` **nunca** importa de `stores/`
 - `features/X` **nunca** importa de `features/Y` (comunicación solo vía stores)
 - `types/` **nunca** importa de ninguna otra capa (es la base)
+
+---
+
+## Performance Optimizations
+
+Decisiones de arquitectura para performance:
+
+| Optimización | Implementación | Impacto |
+|-------------|----------------|---------|
+| **3D Model lazy loading** | `LazyHeroModelViewer` con `React.lazy()` + `IntersectionObserver` | Carga diferida del bundle Three.js (~300KB) |
+| **Draco compression** | Modelo GLB comprimido (`macbook-2k-draco.glb`) | Reducción ~60% del modelo 3D |
+| **HDRI eliminado** | Sin `Environment preset` de Drei | Ahorro 1.5MB (`potsdamer_platz_1k.hdr`) |
+| **CSS animations hero** | `hero-fade-up` keyframe en vez de `gsap.set()`+`gsap.to()` | Elimina 1,300ms LCP element render delay |
+| **GSAP fromTo** | `gsap.fromTo()` en vez de `gsap.set()` + `gsap.to()` | Evita forced reflow cycle (read→write→read) |
+| **SplitText eliminado** | Headings nativos en vez de spans individuales | Reducción ~900 nodos DOM |
+| **GPU-composited shimmer** | `transform: translateX()` en vez de `background-position` | Evita layout thrashing |
+| **Image async decode** | `decoding="async"` en logos no críticos | Descodificación fuera del main thread |
+| **fetchPriority low** | `fetchPriority="low"` en logo decorativo | No compite con LCP resources |
+| **Preconnect hints** | `rel="preconnect"` para API + gstatic.com | Reduce TTFB de requests críticos |
+| **Spotlight rect cache** | `rectRef` para cachear `getBoundingClientRect()` | Elimina reflow por mousemove |
+| **OG Edge Function** | `/api/og` en Vercel para meta tags sociales | HTML estático para crawlers, SPA para usuarios |

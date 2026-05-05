@@ -65,10 +65,10 @@ export const FLOW_STEPS: FlowStep[] = [
     color: '#EF4444',
     bg: '#EF444415',
     step: '04',
-    title: 'Sorteo en vivo cada viernes',
+    title: 'Sorteo en vivo',
     subtitle: 'Transparencia total. En vivo y sin trucos.',
     bullets: [
-      'Todos los viernes a las 21:00 hrs.',
+      'Sorteos anunciados con anteriodidad.',
       'Transmisión en vivo por nuestras redes sociales.',
       'Conoce al instante si eres uno de nuestros ganadores.',
     ],

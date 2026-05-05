@@ -1,6 +1,5 @@
 import { Badge } from '@/components/ui/badge'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { SplitText } from '@/components/shared/split-text'
 import { MetricCard } from '@/components/shared/metric-card'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import type { ImpactMetric } from '@/types/domain.types'
@@ -55,15 +54,9 @@ export function ImpactStatsSection() {
       <div className="mx-auto max-w-[1200px]">
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="subtle" className="mb-4">Números reales</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight">
             Esto es lo que ya logramos juntos
-          </SplitText>
+          </h2>
           <p className="text-text-secondary mt-4 max-w-xl mx-auto">
             Cada cifra representa personas reales, comunidades transformadas y sonrisas generadas
             gracias a tu participación.

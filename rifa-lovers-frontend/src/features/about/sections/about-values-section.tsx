@@ -2,7 +2,6 @@ import { Eye, Heart, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { SplitText } from '@/components/shared/split-text'
 
 const VALUES = [
   {
@@ -46,15 +45,9 @@ export function AboutValuesSection() {
       <div className="mx-auto max-w-[1200px]">
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="subtle" className="mb-4">Nuestros valores</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight">
             En qué creemos
-          </SplitText>
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

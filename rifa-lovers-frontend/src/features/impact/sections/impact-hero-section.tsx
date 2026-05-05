@@ -2,7 +2,6 @@ import { Link } from 'react-router'
 import { ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { SplitText } from '@/components/shared/split-text'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 
 export function ImpactHeroSection() {
@@ -17,15 +16,9 @@ export function ImpactHeroSection() {
       <div className="mx-auto max-w-[1200px] text-center">
         <Badge variant="gradient" className="mb-5">Impacto Social</Badge>
 
-        <SplitText
-          as="h1"
-          className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.08] tracking-tight text-text-primary mb-5"
-          type="words"
-          stagger={0.06}
-          duration={0.7}
-        >
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.08] tracking-tight text-text-primary mb-5">
           Transformamos la suerte en Impacto Real
-        </SplitText>
+        </h1>
 
         <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-8">
           Cada LuckyPass que activas no solo te acerca a ganar — también transforma vidas.

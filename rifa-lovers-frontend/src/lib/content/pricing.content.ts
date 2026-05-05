@@ -12,17 +12,17 @@ export interface PackUIMeta {
 export const PACK_UI_META: Record<string, PackUIMeta> = {
   'One': {
     tagline: 'Tu entrada a la experiencia RifaLovers.',
-    cta: 'Activar One',
+    cta: 'Ahí voy',
     benefits: ['1 LuckyPass', 'Producto digital de campaña', 'Acceso experiencia RifaLovers'],
   },
   'Flow': {
     tagline: 'Más oportunidades, mejor valor y energía ganadora.',
-    cta: 'Activar Flow',
+    cta: 'Quiero Flow',
     benefits: ['3 LuckyPass', 'Producto digital de campaña', 'Mejor valor para participar'],
   },
   'Max': {
     tagline: 'La opción más potente para quienes quieren ir con todo.',
-    cta: 'Activar Max',
+    cta: 'Voy con este',
     benefits: ['5 LuckyPass', 'Producto digital de campaña', 'Opción premium'],
   },
   'Pack Mom': {

@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge'
-import { SplitText } from '@/components/shared/split-text'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 
 export function ContactHeroSection() {
@@ -14,15 +13,9 @@ export function ContactHeroSection() {
       <div className="mx-auto max-w-[1200px] text-center">
         <Badge variant="gradient" className="mb-5">Contacto</Badge>
 
-        <SplitText
-          as="h1"
-          className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.08] tracking-tight text-text-primary mb-5"
-          type="words"
-          stagger={0.06}
-          duration={0.7}
-        >
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.08] tracking-tight text-text-primary mb-5">
           Estamos para ayudarte
-        </SplitText>
+        </h1>
 
         <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto">
           ¿Tienes preguntas? ¿Necesitas soporte? Estamos aquí para ti.

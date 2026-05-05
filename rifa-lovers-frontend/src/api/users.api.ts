@@ -6,6 +6,7 @@ export interface UpdateProfilePayload {
   firstName?: string
   lastName?: string
   phone?: string
+  currentPassword?: string
   newPassword?: string
 }
 

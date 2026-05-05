@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const refreshUser = useAuthStore((s) => s.refreshUser)
 
   const [isLoading, setIsLoading] = useState(false)
+  const [showCurrent, setShowCurrent] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState<{ field: string; message: string } | null>(null)
@@ -32,17 +33,18 @@ export default function ProfilePage() {
   })
 
   const [password, setPassword] = useState<PasswordFormData>({
+    currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   })
 
   const handleProfileChange = (field: keyof ProfileFormData, value: string) => {
-    setProfile((prev) => ({ ...prev, [field]: value }))
+    setProfile((prev: ProfileFormData) => ({ ...prev, [field]: value }))
     if (error?.field === field) setError(null)
   }
 
   const handlePasswordChange = (field: keyof PasswordFormData, value: string) => {
-    setPassword((prev) => ({ ...prev, [field]: value }))
+    setPassword((prev: PasswordFormData) => ({ ...prev, [field]: value }))
     if (error?.field === field) setError(null)
   }
 
@@ -64,20 +66,21 @@ export default function ProfilePage() {
 
     setIsLoading(true)
     try {
-      const payload: { firstName: string; lastName: string; phone: string; newPassword?: string } = {
+      const payload: { firstName: string; lastName: string; phone: string; currentPassword?: string; newPassword?: string } = {
         firstName: profile.firstName,
         lastName: profile.lastName,
         phone: profile.phone,
       }
 
       if (password.newPassword.length > 0) {
+        payload.currentPassword = password.currentPassword
         payload.newPassword = password.newPassword
       }
 
       await updateProfile(payload)
       await refreshUser()
       toast.success('Perfil actualizado correctamente')
-      setPassword({ newPassword: '', confirmPassword: '' })
+      setPassword({ currentPassword: '', newPassword: '', confirmPassword: '' })
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.getUserMessage('general'))
@@ -98,15 +101,19 @@ export default function ProfilePage() {
     <div className="px-4 md:px-8 py-8 md:py-12">
       <div className="mx-auto max-w-[600px]">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-          <div className="flex items-center gap-3">
-            <Button variant="outline-primary" size="sm" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="size-4 mr-1.5" />
-              Volver
-            </Button>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
-              Mi Perfil
-            </h1>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="self-start"
+          >
+            <ArrowLeft className="size-4 mr-1" />
+            Volver
+          </Button>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">
+            Mi Perfil
+          </h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -119,75 +126,73 @@ export default function ProfilePage() {
               <h2 className="text-lg font-bold text-text-primary">Datos personales</h2>
             </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                    Nombre
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.firstName}
-                    onChange={(e) => handleProfileChange('firstName', e.target.value)}
-                    className={
-                      error?.field === 'firstName'
-                        ? `${inputBase} ${errorClass}`
-                        : inputBase
-                    }
-                    placeholder="Tu nombre"
-                    maxLength={120}
-                  />
-                  {error?.field === 'firstName' && (
-                    <p className="text-xs text-red-500 mt-1">{error.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                    Apellido
-                  </label>
-                  <input
-                    type="text"
-                    value={profile.lastName}
-                    onChange={(e) => handleProfileChange('lastName', e.target.value)}
-                    className={
-                      error?.field === 'lastName'
-                        ? `${inputBase} ${errorClass}`
-                        : inputBase
-                    }
-                    placeholder="Tu apellido"
-                    maxLength={120}
-                  />
-                  {error?.field === 'lastName' && (
-                    <p className="text-xs text-red-500 mt-1">{error.message}</p>
-                  )}
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  value={profile.firstName}
+                  onChange={(e) => handleProfileChange('firstName', e.target.value)}
+                  className={
+                    error?.field === 'firstName'
+                      ? `${inputBase} ${errorClass}`
+                      : inputBase
+                  }
+                  placeholder="Tu nombre"
+                  maxLength={120}
+                />
+                {error?.field === 'firstName' && (
+                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
+                )}
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                  Apellido
+                </label>
+                <input
+                  type="text"
+                  value={profile.lastName}
+                  onChange={(e) => handleProfileChange('lastName', e.target.value)}
+                  className={
+                    error?.field === 'lastName'
+                      ? `${inputBase} ${errorClass}`
+                      : inputBase
+                  }
+                  placeholder="Tu apellido"
+                  maxLength={120}
+                />
+                {error?.field === 'lastName' && (
+                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
+                )}
+              </div>
+
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
                   Correo electrónico
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-tertiary pointer-events-none" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-tertiary" />
                   <input
                     type="email"
                     value={user?.email ?? ''}
                     disabled
-                    className={`${inputBase} pl-9 bg-bg-muted/50 cursor-not-allowed opacity-60`}
+                    className={`${inputBase} pl-9 bg-bg-muted cursor-not-allowed`}
                   />
                 </div>
                 <p className="text-xs text-text-tertiary mt-1">
-                  El correo no puede ser modificado.
+                  El correo no se puede modificar.
                 </p>
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
                   Teléfono
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-tertiary pointer-events-none" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-text-tertiary" />
                   <input
                     type="tel"
                     value={profile.phone}
@@ -217,6 +222,37 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                  Contraseña actual
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrent ? 'text' : 'password'}
+                    value={password.currentPassword}
+                    onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                    className={
+                      error?.field === 'currentPassword'
+                        ? `${inputBase} pr-10 ${errorClass}`
+                        : `${inputBase} pr-10`
+                    }
+                    placeholder="Ingresa tu contraseña actual"
+                    maxLength={100}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrent((v) => !v)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showCurrent ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+                {error?.field === 'currentPassword' && (
+                  <p className="text-xs text-red-500 mt-1">{error.message}</p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
                   Nueva contraseña
@@ -280,7 +316,7 @@ export default function ProfilePage() {
               </div>
 
               <p className="text-xs text-text-tertiary">
-                Deja ambos campos en blanco si no deseas cambiar tu contraseña.
+                Deja los campos de contraseña en blanco si no deseas cambiarla.
               </p>
             </div>
           </Card>

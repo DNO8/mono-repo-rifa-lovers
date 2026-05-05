@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { SplitText } from '@/components/shared/split-text'
 import { useCountUp } from '@/hooks/use-count-up'
 
 const ABOUT_STATS = [
@@ -40,15 +39,9 @@ export function AboutTeamSection() {
       <div className="mx-auto max-w-[1200px]">
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="subtle" className="mb-4">Nuestra misión</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight">
             Más que sorteos, un movimiento
-          </SplitText>
+          </h2>
           <p className="text-text-secondary mt-4 max-w-xl mx-auto">
             Creamos una plataforma donde la suerte y la solidaridad se encuentran.
             Cada ticket vendido es una promesa de impacto real.

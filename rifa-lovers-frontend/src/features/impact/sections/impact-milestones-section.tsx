@@ -4,7 +4,6 @@ import { ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { SplitText } from '@/components/shared/split-text'
 import { MilestoneCard } from '@/components/shared/milestone-card'
 import { ConfettiCanvas, type ConfettiRef } from '@/components/shared/confetti-canvas'
 import { useActiveRaffle } from '@/hooks/use-raffles'
@@ -49,15 +48,9 @@ export function ImpactMilestonesSection() {
       <div className="mx-auto max-w-[1200px]">
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="subtle" className="mb-4">Metas colectivas</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight">
             Hitos que cambian vidas
-          </SplitText>
+          </h2>
           <p className="text-text-secondary mt-4 max-w-xl mx-auto">
             Cada meta cumplida es una promesa honrada. Juntos desbloqueamos impacto real.
           </p>

@@ -32,6 +32,9 @@ let PurchasesController = class PurchasesController {
     async create(userId, createDto) {
         return this.purchasesService.create(userId, createDto);
     }
+    async createFree(userId, createDto) {
+        return this.purchasesService.createFreePurchase(userId, createDto);
+    }
     recentPurchasesStream() {
         return (0, rxjs_1.interval)(30000).pipe((0, rxjs_1.switchMap)(() => this.purchasesService.getRecentPurchases()), (0, rxjs_1.map)((data) => ({ data })));
     }
@@ -62,6 +65,15 @@ __decorate([
     __metadata("design:paramtypes", [String, dto_1.CreatePurchaseDto]),
     __metadata("design:returntype", Promise)
 ], PurchasesController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('free'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    __param(0, (0, decorators_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, dto_1.CreatePurchaseDto]),
+    __metadata("design:returntype", Promise)
+], PurchasesController.prototype, "createFree", null);
 __decorate([
     (0, common_1.Sse)('recent/stream'),
     __metadata("design:type", Function),

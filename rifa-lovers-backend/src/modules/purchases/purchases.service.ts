@@ -14,6 +14,7 @@ import { Purchase, Raffle, UserPack, Pack } from '@prisma/client'
 import { mapPurchaseToDto } from './mappers/purchase.mapper'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import * as crypto from 'crypto'
 
 // Tipo que incluye la relación raffle
 
@@ -406,6 +407,133 @@ export class PurchasesService {
       include: { purchase: true },
     })
     return paymentTx?.purchase ?? null
+  }
+
+  async createFreePurchase(
+    userId: string,
+    createDto: CreatePurchaseDto,
+  ): Promise<CreatePurchaseResponseDto> {
+    this.logger.debug(`Creando compra gratuita: userId=${userId}, raffleId=${createDto.raffleId}, packId=${createDto.packId}`)
+
+    // 1. Validar que los datos necesarios están presentes
+    if (!createDto.raffleId) {
+      throw new BadRequestException('El ID de la rifa es requerido')
+    }
+    if (!createDto.packId) {
+      throw new BadRequestException('El ID del pack es requerido')
+    }
+    if (!createDto.quantity || createDto.quantity < 1) {
+      throw new BadRequestException('La cantidad debe ser al menos 1')
+    }
+
+    // 2. Validar que la rifa existe y está activa
+    const raffle = await this.rafflesRepository.findUnique({ id: createDto.raffleId })
+    if (!raffle) {
+      throw new NotFoundException('Rifa no encontrada')
+    }
+    if (raffle.status !== 'active') {
+      throw new BadRequestException(`La rifa no está activa (estado: ${raffle.status})`)
+    }
+
+    // 3. Validar que el pack existe
+    const pack = await this.packsRepository.findUnique({ id: createDto.packId })
+    if (!pack) {
+      throw new NotFoundException('Pack no encontrado')
+    }
+
+    // 4. Validar que el pack es "Exclusivo Preventa" (por nombre)
+    if (pack.name?.toUpperCase() !== 'EXCLUSIVO PREVENTA') {
+      throw new BadRequestException('Este endpoint solo acepta el pack Exclusivo Preventa')
+    }
+
+    // 5. Validar que la rifa es "Rifa Preventa" (por título)
+    if (raffle.title?.toUpperCase() !== 'RIFA PREVENTA') {
+      throw new BadRequestException('Este endpoint solo acepta la Rifa Preventa')
+    }
+
+    // 6. Validar que el usuario no tenga ya este pack (1 por usuario)
+    const existingPurchase = await this.prisma.purchase.findFirst({
+      where: {
+        userId,
+        raffleId: createDto.raffleId,
+        userPacks: {
+          some: {
+            packId: createDto.packId,
+          },
+        },
+      },
+    })
+    if (existingPurchase) {
+      throw new BadRequestException('Ya tienes este pack preventa. Solo puedes obtenerlo una vez.')
+    }
+
+    // 7. Calcular el total (debe ser 0)
+    const unitPrice = pack.price?.toNumber() ?? 0
+    const totalAmount = unitPrice * createDto.quantity
+
+    if (totalAmount !== 0) {
+      throw new BadRequestException('El pack preventa debe tener valor $0')
+    }
+
+    try {
+      // 8. Crear Purchase + UserPack + PaymentTransaction en transacción
+      const result = await this.purchasesRepository.createFullPurchase({
+        userId,
+        raffleId: createDto.raffleId,
+        packId: createDto.packId,
+        quantity: createDto.quantity,
+        totalAmount,
+        selectedNumbers: createDto.selectedNumbers,
+        pack,
+      })
+
+      // 9. Crear PaymentTransaction con provider='Rifalovers'
+      const providerTransactionId = `RIFALOVERS-${crypto.randomUUID()}`
+      await this.prisma.paymentTransaction.create({
+        data: {
+          purchaseId: result.purchase.id,
+          provider: 'Rifalovers',
+          providerTransactionId,
+          amount: 0,
+          status: 'approved',
+        },
+      })
+
+      // 10. Marcar compra como paid directamente (ya que es gratuita)
+      await this.prisma.purchase.update({
+        where: { id: result.purchase.id },
+        data: { status: 'paid', paidAt: new Date() },
+      })
+
+      // 11. Generar LuckyPasses (reutilizar lógica de confirmPayment)
+      await this.confirmPayment(result.purchase.id, {
+        providerTransactionId,
+        provider: 'Rifalovers',
+        status: 'approved',
+      })
+
+      this.logger.log(`Compra gratuita creada exitosamente: ${result.purchase.id}`)
+
+      return {
+        id: result.purchase.id,
+        raffleId: raffle.id,
+        raffleName: raffle.title || 'Rifa sin nombre',
+        totalAmount: 0,
+        status: 'paid',
+        createdAt: result.purchase.createdAt.toISOString(),
+        flowOrderId: undefined,
+        paymentUrl: undefined,
+        packName: pack.name || 'Pack sin nombre',
+        quantity: createDto.quantity,
+        unitPrice: 0,
+        luckyPassCount: createDto.quantity * (pack.luckyPassQuantity ?? 1),
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      const stack = error instanceof Error ? error.stack : undefined
+      this.logger.error(`Error creando compra gratuita: ${msg}`, stack)
+      throw error
+    }
   }
 
   /**

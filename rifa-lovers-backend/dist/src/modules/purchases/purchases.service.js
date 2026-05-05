@@ -1,10 +1,43 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -20,6 +53,7 @@ const resend_service_1 = require("../email/resend.service");
 const purchase_mapper_1 = require("./mappers/purchase.mapper");
 const date_fns_1 = require("date-fns");
 const locale_1 = require("date-fns/locale");
+const crypto = __importStar(require("crypto"));
 let PurchasesService = PurchasesService_1 = class PurchasesService {
     constructor(purchasesRepository, packsRepository, rafflesRepository, prisma, resendService) {
         this.purchasesRepository = purchasesRepository;
@@ -297,6 +331,105 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
             include: { purchase: true },
         });
         return paymentTx?.purchase ?? null;
+    }
+    async createFreePurchase(userId, createDto) {
+        this.logger.debug(`Creando compra gratuita: userId=${userId}, raffleId=${createDto.raffleId}, packId=${createDto.packId}`);
+        if (!createDto.raffleId) {
+            throw new common_1.BadRequestException('El ID de la rifa es requerido');
+        }
+        if (!createDto.packId) {
+            throw new common_1.BadRequestException('El ID del pack es requerido');
+        }
+        if (!createDto.quantity || createDto.quantity < 1) {
+            throw new common_1.BadRequestException('La cantidad debe ser al menos 1');
+        }
+        const raffle = await this.rafflesRepository.findUnique({ id: createDto.raffleId });
+        if (!raffle) {
+            throw new common_1.NotFoundException('Rifa no encontrada');
+        }
+        if (raffle.status !== 'active') {
+            throw new common_1.BadRequestException(`La rifa no está activa (estado: ${raffle.status})`);
+        }
+        const pack = await this.packsRepository.findUnique({ id: createDto.packId });
+        if (!pack) {
+            throw new common_1.NotFoundException('Pack no encontrado');
+        }
+        if (pack.name?.toUpperCase() !== 'EXCLUSIVO PREVENTA') {
+            throw new common_1.BadRequestException('Este endpoint solo acepta el pack Exclusivo Preventa');
+        }
+        if (raffle.title?.toUpperCase() !== 'RIFA PREVENTA') {
+            throw new common_1.BadRequestException('Este endpoint solo acepta la Rifa Preventa');
+        }
+        const existingPurchase = await this.prisma.purchase.findFirst({
+            where: {
+                userId,
+                raffleId: createDto.raffleId,
+                userPacks: {
+                    some: {
+                        packId: createDto.packId,
+                    },
+                },
+            },
+        });
+        if (existingPurchase) {
+            throw new common_1.BadRequestException('Ya tienes este pack preventa. Solo puedes obtenerlo una vez.');
+        }
+        const unitPrice = pack.price?.toNumber() ?? 0;
+        const totalAmount = unitPrice * createDto.quantity;
+        if (totalAmount !== 0) {
+            throw new common_1.BadRequestException('El pack preventa debe tener valor $0');
+        }
+        try {
+            const result = await this.purchasesRepository.createFullPurchase({
+                userId,
+                raffleId: createDto.raffleId,
+                packId: createDto.packId,
+                quantity: createDto.quantity,
+                totalAmount,
+                selectedNumbers: createDto.selectedNumbers,
+                pack,
+            });
+            const providerTransactionId = `RIFALOVERS-${crypto.randomUUID()}`;
+            await this.prisma.paymentTransaction.create({
+                data: {
+                    purchaseId: result.purchase.id,
+                    provider: 'Rifalovers',
+                    providerTransactionId,
+                    amount: 0,
+                    status: 'approved',
+                },
+            });
+            await this.prisma.purchase.update({
+                where: { id: result.purchase.id },
+                data: { status: 'paid', paidAt: new Date() },
+            });
+            await this.confirmPayment(result.purchase.id, {
+                providerTransactionId,
+                provider: 'Rifalovers',
+                status: 'approved',
+            });
+            this.logger.log(`Compra gratuita creada exitosamente: ${result.purchase.id}`);
+            return {
+                id: result.purchase.id,
+                raffleId: raffle.id,
+                raffleName: raffle.title || 'Rifa sin nombre',
+                totalAmount: 0,
+                status: 'paid',
+                createdAt: result.purchase.createdAt.toISOString(),
+                flowOrderId: undefined,
+                paymentUrl: undefined,
+                packName: pack.name || 'Pack sin nombre',
+                quantity: createDto.quantity,
+                unitPrice: 0,
+                luckyPassCount: createDto.quantity * (pack.luckyPassQuantity ?? 1),
+            };
+        }
+        catch (error) {
+            const msg = error instanceof Error ? error.message : 'Unknown error';
+            const stack = error instanceof Error ? error.stack : undefined;
+            this.logger.error(`Error creando compra gratuita: ${msg}`, stack);
+            throw error;
+        }
     }
     async getRecentPurchases() {
         this.logger.debug('Obteniendo compras recientes para ticker');

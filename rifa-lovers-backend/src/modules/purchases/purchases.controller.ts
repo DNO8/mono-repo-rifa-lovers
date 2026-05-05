@@ -34,6 +34,15 @@ export class PurchasesController {
     return this.purchasesService.create(userId, createDto)
   }
 
+  @Post('free')
+  @UseGuards(AuthGuard('jwt'))
+  async createFree(
+    @CurrentUser('id') userId: string,
+    @Body() createDto: CreatePurchaseDto,
+  ): Promise<PurchaseResponseDto> {
+    return this.purchasesService.createFreePurchase(userId, createDto)
+  }
+
   /**
    * SSE stream for recent purchases (live ticker)
    * Updates every 30 seconds

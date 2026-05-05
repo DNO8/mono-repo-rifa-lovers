@@ -10,6 +10,7 @@ export declare class PurchasesController {
     getMyPurchases(userId: string): Promise<PurchaseResponseDto[]>;
     getById(id: string): Promise<PurchaseResponseDto>;
     create(userId: string, createDto: CreatePurchaseDto): Promise<PurchaseResponseDto>;
+    createFree(userId: string, createDto: CreatePurchaseDto): Promise<PurchaseResponseDto>;
     recentPurchasesStream(): Observable<MessageEvent>;
 }
 export {};

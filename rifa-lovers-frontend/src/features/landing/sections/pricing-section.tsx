@@ -19,8 +19,10 @@ export function PricingSection() {
   const { raffle } = useActiveRaffle()
   const { packs, isLoading, error } = usePacks()
 
-  // Mapear packs de API a PricingTiers
-  const pricingTiers = packs.length > 0 ? mapPacksToPricingTiers(packs) : []
+  // Mapear packs de API a PricingTiers, filtrando 'Exclusivo Preventa'
+  const pricingTiers = packs.length > 0 
+    ? mapPacksToPricingTiers(packs.filter(p => p.name?.toUpperCase() !== 'EXCLUSIVO PREVENTA'))
+    : []
 
   const handleSelect = (packId: string) => {
     const raffleId = raffle?.id ?? ''

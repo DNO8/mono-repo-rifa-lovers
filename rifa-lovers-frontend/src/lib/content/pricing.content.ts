@@ -35,6 +35,11 @@ export const PACK_UI_META: Record<string, PackUIMeta> = {
     cta: 'Activar Pack Mom Premium',
     benefits: ['3 LuckyPass', 'Pack Hidratante SYS de regalo', 'Alianza exclusiva'],
   },
+  'Exclusivo Preventa': {
+    tagline: 'Participación gratuita en sorteo exclusivo SYS.',
+    cta: 'Obtener Preventa',
+    benefits: ['1 LuckyPass', 'Sorteo privado SYS', 'Sin costo'],
+  },
 }
 
 export const DEFAULT_PACK_UI_META: PackUIMeta = {

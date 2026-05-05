@@ -30,5 +30,6 @@ export declare class PurchasesService {
         totalAmount: import("@prisma/client/runtime/client").Decimal | null;
         paidAt: Date | null;
     } | null>;
+    createFreePurchase(userId: string, createDto: CreatePurchaseDto): Promise<CreatePurchaseResponseDto>;
     getRecentPurchases(): Promise<RecentPurchaseDto[]>;
 }

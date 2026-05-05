@@ -29,7 +29,7 @@ export function HeroSection() {
     const rect = rectRef.current
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
-    spot.style.transform = `translate(${x - 25}px, ${y - 25}px)`
+    spot.style.transform = `translate(${x - 5}px, ${y - 5}px)`
     spot.style.opacity = '1'
   }
 
@@ -62,7 +62,7 @@ export function HeroSection() {
 
       {/* ── Desktop: text overlay left + model right ── */}
       {/* ── Mobile: stacked — text top, model bottom ── */}
-      <div className="relative min-h-[85vh] lg:min-h-screen flex flex-col lg:flex-row">
+      <div className="relative min-h-[85vh] lg:min-h-screen flex flex-col lg:flex-row lg:gap-52">
         {/* Left: Copy overlay */}
         <div className="relative z-20 flex flex-col justify-center px-6 md:px-12 lg:px-10 xl:px-16 pt-24 pb-8 lg:py-0 lg:w-[38%] xl:w-[40%]">
           <div className="hero-fade-up" style={{ animationDelay: '0.2s' }}>

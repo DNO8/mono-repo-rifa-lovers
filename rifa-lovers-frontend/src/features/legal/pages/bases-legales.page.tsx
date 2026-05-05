@@ -86,6 +86,12 @@ const SECTIONS = [
 
 export default function BasesLegalesPage() {
   return (
+    <>
+      <SEOHead
+        title="Bases legales"
+        description="Bases legales de los sorteos y rifas online de RifaLovers. Sorteos legales y transparentes en Chile con asesoría jurídica profesional."
+        canonical="/bases-legales"
+      />
     <div className="px-4 md:px-8 py-12 md:py-16">
       <div className="mx-auto max-w-[800px]">
         {/* Back link */}
@@ -154,6 +160,7 @@ export default function BasesLegalesPage() {
             </Link>
           </div>
         </div>
+      </div>
     </div>
     </>
   )

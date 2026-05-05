@@ -183,6 +183,8 @@ export default function DashboardPage() {
   const historyItems = transformPurchasesToHistory(purchases, passes)
 
   return (
+    <>
+      <SEOHead title="Dashboard" noindex />
     <div className="px-4 md:px-8 py-8 md:py-12">
       <div className="mx-auto max-w-[1200px]">
         {/* Header con logout + toggle modo cliente */}
@@ -299,6 +301,7 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+    </div>
     </>
   )
 }

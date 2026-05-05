@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { toast } from 'react-toastify'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
 import { ArrowLeft, Save, User, Lock, Eye, EyeOff, Mail, Phone } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -92,6 +93,8 @@ export default function ProfilePage() {
   const errorClass = 'border-red-400 focus:border-red-400 focus:ring-red-200'
 
   return (
+    <>
+      <SEOHead title="Mi Perfil" noindex />
     <div className="px-4 md:px-8 py-8 md:py-12">
       <div className="mx-auto max-w-[600px]">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
@@ -313,6 +316,7 @@ export default function ProfilePage() {
             </Button>
           </div>
         </form>
+      </div>
     </div>
     </>
   )

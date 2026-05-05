@@ -45,16 +45,13 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
         const flowOrder = await this.flowService.createPaymentOrder(purchase.id, `Rifa Lovers - ${purchase.raffleName}`, purchase.totalAmount, user.email, `${backendUrl}/payments/return`, `${backendUrl}/webhooks/flow`);
         this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`);
-        await this.prisma.paymentTransaction.create({
+        await this.prisma.paymentTransaction.updateMany({
+            where: { purchaseId: purchase.id },
             data: {
-                purchaseId: purchase.id,
-                provider: 'flow',
                 providerTransactionId: flowOrder.token,
-                amount: purchase.totalAmount,
-                status: 'created',
             },
         });
-        this.logger.debug(`PaymentTransaction creada con token: ${flowOrder.token}`);
+        this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`);
         return {
             purchaseId: purchase.id,
             flowOrderId: flowOrder.flowOrder.toString(),

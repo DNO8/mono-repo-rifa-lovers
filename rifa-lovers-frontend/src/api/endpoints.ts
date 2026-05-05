@@ -6,6 +6,7 @@ export const ENDPOINTS = {
     refresh: '/auth/refresh',
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
+    resendConfirmation: '/auth/resend-confirmation',
   },
 
   users: {

@@ -161,20 +161,21 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Expirar purchases no pagadas - cada 15 minutos
-   * Marca como "failed" las compras pendientes de más de 30 minutos
+   * Marca como "failed" las compras pendientes de más de 15 minutos
+   * (coincide con la expiración de ticket reservations)
    */
   async expirePendingPurchases(): Promise<void> {
     this.logger.log('[JOB] Ejecutando expiración de purchases...')
 
     try {
-      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000)
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
 
-      // Buscar purchases pendientes de más de 30 minutos
+      // Buscar purchases pendientes de más de 15 minutos
       const purchasesToExpire = await this.prisma.purchase.findMany({
         where: {
           status: PurchaseStatus.pending,
           createdAt: {
-            lt: thirtyMinutesAgo,
+            lt: fifteenMinutesAgo,
           },
         },
         select: {

@@ -132,9 +132,9 @@ export default function PackMomPage() {
 
   const isLoading = raffleLoading || packsLoading
 
-  const momPack = packs.find((p) => p.name?.toUpperCase() === 'PACK MOM')
+  const momPack = packs.find((p) => p.name?.toUpperCase() === 'MOM HOME EXPERIENCE')
   const momPremiumPack = packs.find(
-    (p) => p.name?.toUpperCase() === 'PACK MOM PREMIUM'
+    (p) => p.name?.toUpperCase() === 'MOM SKIN RITUAL'
   )
 
   if (isLoading) {
@@ -182,26 +182,26 @@ export default function PackMomPage() {
         {/* Pack Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12">
           <PackMomCard
-            name="Pack Mom"
-            price={momPack?.price ?? 9990}
-            originalPrice={14990}
+            name="Mom Home Experience"
+            price={momPack?.price ?? 19900}
+            originalPrice={23800}
             tickets={momPack?.luckyPassQuantity ?? 1}
-            giftName="Pack Anti-Mosquito"
-            giftUrl="https://www.laboratoriosys.cl/producto/pack-anti-mosquito/"
-            giftDescription="Protección natural para toda la familia contra mosquitos."
+            giftName="Pack Home Experience"
+            giftUrl="https://www.laboratoriosys.cl/"
+            giftDescription="Cochecito aromático, Mikado frutos rojos 50ml, Crema de manos castaña, Jabón líquido hidratante de regalo."
             packId={momPack?.id}
             raffleId={raffle?.id}
             isAuthenticated={isAuthenticated}
             navigate={navigate}
           />
           <PackMomCard
-            name="Pack Mom Premium"
-            price={momPremiumPack?.price ?? 14990}
-            originalPrice={24990}
+            name="Mom Skin Ritual"
+            price={momPremiumPack?.price ?? 39800}
+            originalPrice={46800}
             tickets={momPremiumPack?.luckyPassQuantity ?? 3}
-            giftName="Pack Hidratante"
-            giftUrl="https://www.laboratoriosys.cl/producto/pack-hidratante/"
-            giftDescription="Hidratación profunda con productos premium Laboratorio SYS."
+            giftName="Pack Skin Ritual"
+            giftUrl="https://www.laboratoriosys.cl/"
+            giftDescription="Crema facial Labnatur, Serum facial Labnatur, Crema de manos Labnatur, Bálsamo labial de regalo."
             popular
             packId={momPremiumPack?.id}
             raffleId={raffle?.id}

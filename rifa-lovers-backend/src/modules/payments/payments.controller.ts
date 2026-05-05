@@ -60,17 +60,14 @@ export class PaymentsController {
 
     this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`)
 
-    // Crear PaymentTransaction con el token de Flow para identificar en webhook
-    await this.prisma.paymentTransaction.create({
+    // Actualizar PaymentTransaction existente con el token de Flow
+    await this.prisma.paymentTransaction.updateMany({
+      where: { purchaseId: purchase.id },
       data: {
-        purchaseId: purchase.id,
-        provider: 'flow',
         providerTransactionId: flowOrder.token,
-        amount: purchase.totalAmount,
-        status: 'created',
       },
     })
-    this.logger.debug(`PaymentTransaction creada con token: ${flowOrder.token}`)
+    this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`)
 
     // Flow docs: la URL de redirección = url + "?token=" + token
     return {

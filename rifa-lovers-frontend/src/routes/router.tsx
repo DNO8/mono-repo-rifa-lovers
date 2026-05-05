@@ -32,8 +32,9 @@ const LazyCheckoutPage = lazy(() => import('@/features/checkout/pages/checkout.p
 const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffle-detail.page'))
 const LazyPaymentReturnPage = lazy(() => import('@/features/checkout/pages/payment-return.page'))
 const LazyPackMomPage = lazy(() => import('@/features/pack-mom/pages/pack-mom.page'))
-const LazyPackPreventaPage = lazy(() => import('@/features/pack-preventa/pages/pack-preventa.page'))
-const LazyCheckoutPreventaPage = lazy(() => import('@/features/pack-preventa/pages/checkout-preventa.page'))
+// Preventa pages - disabled for now, can be re-enabled in future
+// const LazyPackPreventaPage = lazy(() => import('@/features/pack-preventa/pages/pack-preventa.page'))
+// const LazyCheckoutPreventaPage = lazy(() => import('@/features/pack-preventa/pages/checkout-preventa.page'))
 const LazyAdminDashboardPage = lazy(() => import('@/features/admin/pages/admin-dashboard.page').then(m => ({ default: m.AdminDashboardPage })))
 const LazyNotFoundPage = lazy(() => import('@/features/errors/pages/not-found.page'))
 const LazyWinnersPage = lazy(() => import('@/features/raffles/pages/winners.page'))
@@ -164,17 +165,18 @@ export const router = createBrowserRouter([
     ),
     errorElement: <RouteErrorBoundary />,
   },
-  {
-    path: '/checkout-preventa',
-    element: (
-      <PageWithSuspense fallback={<CheckoutPageSkeleton />}>
-        <ProtectedRoute>
-          <LazyCheckoutPreventaPage />
-        </ProtectedRoute>
-      </PageWithSuspense>
-    ),
-    errorElement: <RouteErrorBoundary />,
-  },
+  // Preventa checkout route disabled for now - can be re-enabled in future
+  // {
+  //   path: '/checkout-preventa',
+  //   element: (
+  //     <PageWithSuspense fallback={<CheckoutPageSkeleton />}>
+  //       <ProtectedRoute>
+  //         <LazyCheckoutPreventaPage />
+  //       </ProtectedRoute>
+  //     </PageWithSuspense>
+  //   ),
+  //   errorElement: <RouteErrorBoundary />,
+  // },
   {
     path: '/bases-legales',
     element: (
@@ -211,15 +213,16 @@ export const router = createBrowserRouter([
     ),
     errorElement: <RouteErrorBoundary />,
   },
-  {
-    path: '/pack-preventa',
-    element: (
-      <PageWithSuspense fallback={<LandingPageSkeleton />}>
-        <LazyPackPreventaPage />
-      </PageWithSuspense>
-    ),
-    errorElement: <RouteErrorBoundary />,
-  },
+  // Preventa routes disabled for now - can be re-enabled in future
+  // {
+  //   path: '/pack-preventa',
+  //   element: (
+  //     <PageWithSuspense fallback={<LandingPageSkeleton />}>
+  //       <LazyPackPreventaPage />
+  //     </PageWithSuspense>
+  //   ),
+  //   errorElement: <RouteErrorBoundary />,
+  // },
   {
     path: '/admin',
     element: (

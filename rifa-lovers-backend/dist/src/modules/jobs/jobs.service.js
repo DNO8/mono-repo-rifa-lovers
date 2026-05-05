@@ -155,12 +155,12 @@ let JobsService = JobsService_1 = class JobsService {
     async expirePendingPurchases() {
         this.logger.log('[JOB] Ejecutando expiración de purchases...');
         try {
-            const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+            const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
             const purchasesToExpire = await this.prisma.purchase.findMany({
                 where: {
                     status: client_1.PurchaseStatus.pending,
                     createdAt: {
-                        lt: thirtyMinutesAgo,
+                        lt: fifteenMinutesAgo,
                     },
                 },
                 select: {

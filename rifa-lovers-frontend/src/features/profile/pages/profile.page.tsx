@@ -28,7 +28,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileFormData>(() => ({
     firstName: user?.firstName ?? '',
     lastName: user?.lastName ?? '',
-    phone: (user?.phone ?? '').replace(/[^\d+]/g, ''),
+    phone: String(user?.phone ?? '').replace(/[^\d+]/g, ''),
   }))
 
   const [password, setPassword] = useState<PasswordFormData>({

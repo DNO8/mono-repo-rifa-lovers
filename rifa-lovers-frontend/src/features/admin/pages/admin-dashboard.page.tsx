@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { useAdminKPIs, useAdminRaffles, useAdminUsers } from '@/features/admin/hooks/use-admin'
+import { AdminChartsTabs } from '../components/admin-charts-tabs'
 import { checkDrawAvailability, executeDraw } from '@/api/draw.api'
 import { toastError } from '@/lib/errors'
 import type { DrawCheckResponse, DrawResults } from '@/api/draw.api'
@@ -514,6 +515,13 @@ export function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
+
+          <AdminChartsTabs
+            kpis={kpis}
+            raffles={raffles}
+            users={users}
+            isLoading={kpisLoading || rafflesLoading || usersLoading}
+          />
         </div>
       )}
 

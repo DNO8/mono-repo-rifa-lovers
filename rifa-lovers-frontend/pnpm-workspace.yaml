@@ -1,0 +1,2 @@
+patchedDependencies:
+  vite-plugin-prerender: patches/vite-plugin-prerender.patch

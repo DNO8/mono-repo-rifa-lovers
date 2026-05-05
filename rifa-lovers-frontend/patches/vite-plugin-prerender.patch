@@ -1,0 +1,14 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 8fc0df976b9bc71608350143988ac968482e8358..600622f1802d287559064f00cbec023d664810c5 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -2,7 +2,9 @@ import path from 'path';
+ import Debug from 'debug';
+ import fs from 'fs';
+ import chalk from 'chalk';
++import { createRequire } from 'module';
+ 
++const require = createRequire(import.meta.url);
+ const Prerenderer = require("@prerenderer/prerenderer");
+ const PuppeteerRenderer = require("@prerenderer/renderer-puppeteer");
+ const { minify } = require("html-minifier");

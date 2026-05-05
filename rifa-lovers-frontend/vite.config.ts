@@ -4,7 +4,6 @@ import { defineConfig } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
-import prerender from 'vite-plugin-prerender'
 import path from 'path'
 
 // https://vite.dev/config/
@@ -18,18 +17,6 @@ export default defineConfig({
       exclude: /node_modules/,
       // Only process files with JSX — skip pure .ts files (types, utils, constants)
       include: /src\/.*\.(tsx|jsx)$/,
-    }),
-    prerender({
-      staticDir: path.join(__dirname, 'dist'),
-      routes: [
-        '/',
-        '/impacto',
-        '/nosotros',
-        '/contacto',
-        '/bases-legales',
-        '/terminos',
-        '/privacidad',
-      ],
     }),
   ],
   resolve: {

@@ -2,7 +2,6 @@ import { useRef, useEffect } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Badge } from '@/components/ui/badge'
-import { SplitText } from '@/components/shared/split-text'
 import { FLOW_STEPS, TRUST_ITEMS } from '@/lib/content/how-it-works.content'
 
 /* ══════════════════════════════════════════════════════
@@ -274,15 +273,9 @@ export function HowItWorksSection() {
         {/* ── Block A: Timeline ── */}
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="subtle" className="mb-4">Paso a paso</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3">
             ¿Cómo funciona exactamente?
-          </SplitText>
+          </h2>
           <p className="text-text-secondary max-w-lg mx-auto">
             De principio a fin, en 5 pasos simples.
           </p>
@@ -302,15 +295,9 @@ export function HowItWorksSection() {
         {/* ── Block B: Trust ── */}
         <div className="text-center mb-10 md:mb-14">
           <Badge variant="gradient" className="mb-4">Transparencia</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3">
             Por qué confiar en nosotros
-          </SplitText>
+          </h2>
           <p className="text-text-secondary max-w-lg mx-auto">
             Construimos cada parte del proceso pensando en tu confianza.
           </p>

@@ -1,6 +1,5 @@
-import { useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import { ArrowRight, Hand, CalendarClock } from 'lucide-react'
-import { gsap } from '@/lib/gsap'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LazyHeroModelViewer } from '../components/lazy-hero-model-viewer'
@@ -9,6 +8,7 @@ import { useActiveRaffle } from '@/hooks/use-raffles'
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const spotlightRef = useRef<HTMLDivElement>(null)
+  const rectRef = useRef<DOMRect | null>(null)
   const { raffle } = useActiveRaffle()
 
   const drawDate = raffle?.endDate
@@ -22,40 +22,21 @@ export function HeroSection() {
     document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  useEffect(() => {
-    const el = sectionRef.current
-    if (!el) return
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReducedMotion) return
-
-    const targets = el.querySelectorAll('[data-gsap]')
-    gsap.set(targets, { y: 30, opacity: 0 })
-    const tween = gsap.to(targets, {
-      y: 0,
-      opacity: 1,
-      duration: 0.7,
-      stagger: 0.12,
-      ease: 'power3.out',
-      delay: 0.2,
-    })
-
-    return () => { tween.kill() }
-  }, [])
-
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const spot = spotlightRef.current
-    const section = sectionRef.current
-    if (!spot || !section) return
-    const rect = section.getBoundingClientRect()
+    if (!spot) return
+    if (!rectRef.current) rectRef.current = e.currentTarget.getBoundingClientRect()
+    const rect = rectRef.current
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
-    spot.style.transform = `translate(${x - 25}px, ${y -25}px)`
+    spot.style.transform = `translate(${x - 25}px, ${y - 25}px)`
     spot.style.opacity = '1'
   }
 
   const handleMouseLeave = () => {
     const spot = spotlightRef.current
     if (spot) spot.style.opacity = '0'
+    rectRef.current = null
   }
 
   return (
@@ -84,7 +65,7 @@ export function HeroSection() {
       <div className="relative min-h-[85vh] lg:min-h-screen flex flex-col lg:flex-row">
         {/* Left: Copy overlay */}
         <div className="relative z-20 flex flex-col justify-center px-6 md:px-12 lg:px-10 xl:px-16 pt-24 pb-8 lg:py-0 lg:w-[38%] xl:w-[40%]">
-          <div data-gsap>
+          <div className="hero-fade-up" style={{ animationDelay: '0.2s' }}>
             <Badge variant="gradient" className="mb-5">
               <div className="size-2 rounded-full bg-white animate-pulse" />
               SORTEO EN VIVO
@@ -110,23 +91,23 @@ export function HeroSection() {
           </h1>
 
           <p
-            data-gsap
-            className="text-sm md:text-base text-text-secondary max-w-xl mb-2 leading-relaxed"
+            className="text-sm md:text-base text-text-secondary max-w-xl mb-2 leading-relaxed hero-fade-up"
+            style={{ animationDelay: '0.4s' }}
           >
             y cumple el sueño de los niños de la{' '}
             <span className="font-semibold text-text-primary">Fundación Niño y Cáncer</span>
           </p>
 
           <p
-            data-gsap
-            className="text-sm md:text-base text-text-secondary max-w-xl mb-4 leading-relaxed"
+            className="text-sm md:text-base text-text-secondary max-w-xl mb-4 leading-relaxed hero-fade-up"
+            style={{ animationDelay: '0.55s' }}
           >
             <span className="font-semibold text-primary">3 smartphones y 3 tablets</span>, además
             participas en la escala de desbloqueo de fabulosos premios.
           </p>
 
           {drawDate && (
-            <div data-gsap className="flex items-center gap-2 mb-5 text-sm">
+            <div className="flex items-center gap-2 mb-5 text-sm hero-fade-up" style={{ animationDelay: '0.7s' }}>
               <CalendarClock className="size-4 text-primary" />
               <span className="text-text-primary font-semibold">
                 Sorteo en vivo — {drawDate}{drawTime ? ` a las ${drawTime}` : ''}
@@ -134,7 +115,7 @@ export function HeroSection() {
             </div>
           )}
 
-          <div data-gsap className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 hero-fade-up" style={{ animationDelay: '0.85s' }}>
             <Button variant="primary" size="lg" onClick={scrollToPricing}>
               Participar Ahora
               <ArrowRight className="size-4" />
@@ -156,8 +137,8 @@ export function HeroSection() {
 
         {/* Right: Live frame with 3D model (lazy loaded) */}
         <div
-          data-gsap
-          className="relative z-10 flex-1 flex items-center justify-center px-4 pb-8 lg:px-4 xl:px-8 lg:py-16"
+          className="relative z-10 flex-1 flex items-center justify-center px-4 pb-8 lg:px-4 xl:px-8 lg:py-16 hero-fade-up"
+          style={{ animationDelay: '1.0s' }}
         >
           <div className="w-full max-w-[700px]">
             <LazyHeroModelViewer />

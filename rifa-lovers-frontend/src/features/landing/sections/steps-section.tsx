@@ -3,7 +3,6 @@ import { Target, Gift, Radio, Award } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Badge } from '@/components/ui/badge'
 import { STEPS } from '@/lib/constants'
-import { SplitText } from '@/components/shared/split-text'
 import type { IconMap } from '@/types/ui.types'
 import type { Step } from '@/types/domain.types'
 
@@ -263,15 +262,9 @@ export function StepsSection() {
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="gradient" className="mb-4">🎁 Sistema de premios</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3">
             Tú decides cuántos premios se desbloquean
-          </SplitText>
+          </h2>
           <p className="text-text-secondary max-w-lg mx-auto">
             Mientras más personas participan, más hitos se desbloquean y más premios entran al sorteo.
             El mínimo garantizado es siempre <strong className="text-text-primary">1 premio</strong>.

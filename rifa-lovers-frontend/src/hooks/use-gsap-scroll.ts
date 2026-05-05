@@ -34,26 +34,25 @@ export function useGsapScroll<T extends HTMLElement>(
       ? Array.from(el.children)
       : [el]
 
-    const rafId = requestAnimationFrame(() => {
-      gsap.set(children, { y, opacity })
-    })
-
-    const tween = gsap.to(children, {
-      y: 0,
-      opacity: 1,
-      duration,
-      stagger,
-      delay,
-      ease: 'power3.out',
-      scrollTrigger: {
-        trigger: el,
-        start: 'top 85%',
-        once,
-      },
-    })
+    const tween = gsap.fromTo(
+      children,
+      { y, opacity },
+      {
+        y: 0,
+        opacity: 1,
+        duration,
+        stagger,
+        delay,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: el,
+          start: 'top 85%',
+          once,
+        },
+      }
+    )
 
     return () => {
-      cancelAnimationFrame(rafId)
       tween.kill()
     }
   }, [y, opacity, duration, stagger, delay, once])

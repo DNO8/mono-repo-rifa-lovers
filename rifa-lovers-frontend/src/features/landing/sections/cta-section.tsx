@@ -1,7 +1,6 @@
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { SplitText } from '@/components/shared/split-text'
 
 function scrollToPricing() {
   const el = document.getElementById('pricing')
@@ -24,16 +23,9 @@ export function CTASection() {
           <span className="text-sm font-bold uppercase tracking-wider">No esperes más</span>
         </div>
 
-        <SplitText
-          as="h2"
-          className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-4"
-          type="words"
-          stagger={0.06}
-          duration={0.7}
-          y={25}
-        >
+        <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-4">
           Tu próximo LuckyPass puede cambiar todo.
-        </SplitText>
+        </h2>
 
         <p className="text-text-secondary mb-8 max-w-md mx-auto">
           Cada LuckyPass es una oportunidad para ganar y una acción real de impacto social.

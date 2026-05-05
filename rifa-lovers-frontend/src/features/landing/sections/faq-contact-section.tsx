@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card'
 import { FAQItem } from '@/components/shared/faq-item'
 import { FAQS } from '@/lib/constants'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { SplitText } from '@/components/shared/split-text'
 import type { IconMap } from '@/types/ui.types'
 
 const FAQ_ICONS: IconMap = {
@@ -37,15 +36,9 @@ export function FAQContactSection() {
         {/* Section header */}
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="subtle" className="mb-4">Soporte</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight">
             ¿Tienes dudas? Aquí te ayudamos
-          </SplitText>
+          </h2>
         </div>
 
         {/* Two columns */}

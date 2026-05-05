@@ -3,7 +3,6 @@ import { ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { SplitText } from '@/components/shared/split-text'
 import { MetricCard } from '@/components/shared/metric-card'
 import { MilestoneCard } from '@/components/shared/milestone-card'
 import { useActiveRaffle } from '@/hooks/use-raffles'
@@ -104,15 +103,9 @@ export function ImpactSection() {
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
           <Badge variant="subtle" className="mb-4">Impacto Social</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight">
             Esto es lo que ya logramos juntos
-          </SplitText>
+          </h2>
         </div>
 
         {/* Metrics */}

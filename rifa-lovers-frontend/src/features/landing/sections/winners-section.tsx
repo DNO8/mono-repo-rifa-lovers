@@ -8,7 +8,6 @@ import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { useCarousel } from '@/hooks/use-carousel'
 import { useDrawResults } from '@/hooks/use-draw'
 import { useActiveRaffle } from '@/hooks/use-raffles'
-import { SplitText } from '@/components/shared/split-text'
 import { cn } from '@/lib/utils'
 
 // Fallback winner type for static data
@@ -71,15 +70,9 @@ export function WinnersSection() {
             <Trophy className="size-3.5" />
             Ganadores reales
           </Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
-            type="words"
-            stagger={0.06}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight">
             Ellos ya ganaron
-          </SplitText>
+          </h2>
           <p className="text-text-secondary mt-3 max-w-md mx-auto">
             Personas reales que participaron y se llevaron premios increíbles.
           </p>

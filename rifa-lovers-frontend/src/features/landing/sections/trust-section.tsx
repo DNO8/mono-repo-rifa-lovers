@@ -3,7 +3,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { SplitText } from '@/components/shared/split-text'
 
 const TRUST_POINTS = [
   {
@@ -42,15 +41,9 @@ export function TrustSection() {
           <div className="flex-1">
             <Badge variant="subtle" className="mb-4">100% Transparente</Badge>
 
-            <SplitText
-              as="h2"
-              className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3"
-              type="words"
-              stagger={0.05}
-              duration={0.6}
-            >
+            <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3">
               Todo es real. Todo es transparente.
-            </SplitText>
+            </h2>
 
             <p className="text-text-secondary mb-2">
               Sin trucos · Sin letra chica · Sin dudas

@@ -4,7 +4,6 @@ import { Card } from '@/components/ui/card'
 import { TESTIMONIALS, SHOW_TESTIMONIALS } from '@/lib/constants'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { useCarousel } from '@/hooks/use-carousel'
-import { SplitText } from '@/components/shared/split-text'
 import { cn } from '@/lib/utils'
 import type { Testimonial } from '@/types/domain.types'
 import { useActiveRaffle } from '@/hooks/use-raffles'
@@ -113,15 +112,9 @@ export function TestimonialsSection() {
         {/* Header */}
         <div className="text-center mb-10 md:mb-14">
           <Badge variant="subtle" className="mb-4">Testimonios</Badge>
-          <SplitText
-            as="h2"
-            className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight"
-            type="words"
-            stagger={0.05}
-            duration={0.6}
-          >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight">
             Lo que dicen nuestros participantes
-          </SplitText>
+          </h2>
         </div>
 
         {/* Draggable Carousel */}

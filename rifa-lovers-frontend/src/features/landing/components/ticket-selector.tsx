@@ -113,20 +113,27 @@ function FlashCampaignBanner() {
       data-ms-banner
       className="relative mt-4 rounded-xl overflow-hidden cursor-pointer group block"
     >
-      {/* Shimmer border effect */}
+      {/* Shimmer border effect — GPU-composited via transform */}
       <div
-        className="absolute inset-0 rounded-xl"
+        className="absolute inset-0 rounded-xl overflow-hidden"
         style={{
           padding: '1.5px',
-          background: 'linear-gradient(90deg, transparent, #F59E0B, #FF8A3D, #F59E0B, transparent)',
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 3s linear infinite',
           mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           maskComposite: 'exclude',
           WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           WebkitMaskComposite: 'xor',
         }}
-      />
+      >
+        <div
+          className="absolute inset-y-0 left-0"
+          style={{
+            width: '200%',
+            background: 'linear-gradient(90deg, transparent, #F59E0B, #FF8A3D, #F59E0B, transparent)',
+            animation: 'shimmer-translate 3s linear infinite',
+            willChange: 'transform',
+          }}
+        />
+      </div>
 
       {/* Content */}
       <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl bg-warning/4">

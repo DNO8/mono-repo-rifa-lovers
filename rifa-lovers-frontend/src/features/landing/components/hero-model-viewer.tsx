@@ -1,12 +1,12 @@
 import { Suspense, useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, ContactShadows, OrbitControls, Center, Environment } from '@react-three/drei'
+import { useGLTF, ContactShadows, OrbitControls, Center } from '@react-three/drei'
 import * as THREE from 'three'
 import { Spinner } from '@/components/ui/spinner'
 import { useModelDrag } from '@/hooks/use-model-drag'
 import { ModelAnnotations } from './model-annotations'
 
-const MODEL_PATH = '/models/macbook-2k.glb'
+const MODEL_PATH = '/models/macbook-2k-draco.glb'
 const DEFAULT_CAMERA_POS = new THREE.Vector3(2.5, 1.2, 5)
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0.1, 0)
 const ORBIT_TARGET = new THREE.Vector3(0, 0.1, 0)
@@ -215,7 +215,6 @@ export default function HeroModelViewer({ isVisible = true, pausedRef: externalP
           <directionalLight position={[-3, 2, -3]} intensity={0.8} color="#7B3FE4" />
           <directionalLight position={[-4, 3, 5]} intensity={0.6} color="#ffffff" />
           <pointLight position={[1, 3, 1]} intensity={0.5} color="#FF4DA6" />
-          <Environment preset="city" />
 
           <InnerScene
             userRotation={userRotation}

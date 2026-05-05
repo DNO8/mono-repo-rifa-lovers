@@ -1,4 +1,7 @@
 import { SectionDivider } from '@/components/shared/section-divider'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
+import { SchemaOrg } from '@/components/shared/seo/schema-org'
+import { DEFAULT_ORGANIZATION, DEFAULT_WEBSITE } from '@/components/shared/seo/schema-org-constants'
 import { HeroSection } from '../sections/hero-section'
 import { TrustBarSection } from '../sections/trust-bar-section'
 import { ProgressFomoSection } from '../sections/progress-fomo-section'
@@ -17,6 +20,13 @@ import { CTASection } from '../sections/cta-section'
 export default function LandingPage() {
   return (
     <>
+      <SEOHead
+        title="RifaLovers — Rifas online con impacto social en Chile"
+        description="Participa en rifas online legales y transparentes en Chile. Gana premios increíbles y contribuye a causas solidarias con nuestra comunidad participativa."
+        keywords="rifas online, sorteos Chile, rifas con causa social, comunidad participativa, sorteos legales Chile, rifas solidarias"
+        ogUrl="/"
+      />
+      <SchemaOrg organization={DEFAULT_ORGANIZATION} website={DEFAULT_WEBSITE} />
       <HeroSection />
       <TrustBarSection />
       <ProgressFomoSection />

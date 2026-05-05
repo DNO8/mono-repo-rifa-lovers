@@ -1,75 +1,70 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 
 type ConfirmType = 'recovery' | 'signup' | null
 
+function parseHash() {
+  const hash = window.location.hash
+  if (!hash || hash.length < 2) {
+    return { error: 'Enlace inválido o expirado.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
+  }
+
+  const hashParams = new URLSearchParams(hash.substring(1))
+  const accessToken = hashParams.get('access_token')
+  const type = hashParams.get('type')
+
+  if (!accessToken) {
+    return { error: 'Token no encontrado en el enlace.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
+  }
+
+  if (type === 'signup') {
+    return {
+      error: null,
+      success: '¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.',
+      confirmType: 'signup' as ConfirmType,
+      recoveryToken: null,
+      recoveryEmail: null,
+    }
+  }
+
+  if (type === 'recovery') {
+    try {
+      const parts = accessToken.split('.')
+      if (parts.length !== 3) {
+        return { error: 'Token inválido.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
+      }
+      const payload = JSON.parse(atob(parts[1]))
+      const email = payload.email
+      if (!email) {
+        return { error: 'No se pudo obtener el email del token.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
+      }
+      return { error: null, success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: accessToken, recoveryEmail: email }
+    } catch {
+      return { error: 'Error al procesar el token. Solicita un nuevo enlace.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
+    }
+  }
+
+  return { error: 'Tipo de confirmación no válido.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
+}
+
 export default function ConfirmPage() {
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [confirmType, setConfirmType] = useState<ConfirmType>(null)
+  const [error] = useState<string | null>(() => parseHash().error)
+  const [success] = useState<string | null>(() => parseHash().success)
+  const [confirmType] = useState<ConfirmType>(() => parseHash().confirmType)
+  const [recoveryToken] = useState<string | null>(() => parseHash().recoveryToken)
+  const [recoveryEmail] = useState<string | null>(() => parseHash().recoveryEmail)
 
   useEffect(() => {
-    // Parse hash fragment (everything after #)
-    const hash = window.location.hash
-    if (!hash || hash.length < 2) {
-      setError('Enlace inválido o expirado.')
-      return
+    if (recoveryToken && recoveryEmail) {
+      navigate(`/reset-password?token=${encodeURIComponent(recoveryToken)}&email=${encodeURIComponent(recoveryEmail)}`, {
+        replace: true,
+      })
     }
-
-    // Remove the leading # and parse as query params
-    const hashParams = new URLSearchParams(hash.substring(1))
-    const accessToken = hashParams.get('access_token')
-    const type = hashParams.get('type')
-
-    if (!accessToken) {
-      setError('Token no encontrado en el enlace.')
-      return
-    }
-
-    // Handle signup confirmation
-    if (type === 'signup') {
-      setConfirmType('signup')
-      // Supabase has already verified the email server-side
-      // Just show success and redirect to login
-      setSuccess('¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.')
-      return
-    }
-
-    // Handle password recovery
-    if (type === 'recovery') {
-      setConfirmType('recovery')
-      try {
-        // Decode JWT payload to extract email
-        const parts = accessToken.split('.')
-        if (parts.length !== 3) {
-          setError('Token inválido.')
-          return
-        }
-
-        const payload = JSON.parse(atob(parts[1]))
-        const email = payload.email
-
-        if (!email) {
-          setError('No se pudo obtener el email del token.')
-          return
-        }
-
-        // Redirect to reset-password page with token and email as query params
-        navigate(`/reset-password?token=${encodeURIComponent(accessToken)}&email=${encodeURIComponent(email)}`, {
-          replace: true,
-        })
-      } catch {
-        setError('Error al procesar el token. Solicita un nuevo enlace.')
-      }
-      return
-    }
-
-    // Unknown type
-    setError('Tipo de confirmación no válido.')
-  }, [navigate])
+  }, [navigate, recoveryToken, recoveryEmail])
 
   if (error) {
     return (
@@ -95,7 +90,9 @@ export default function ConfirmPage() {
 
   if (success) {
     return (
-      <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+      <>
+        <SEOHead title="Email verificado" noindex />
+        <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
         <Card variant="glass" className="w-full max-w-md p-8 md:p-10 text-center">
           <div className="size-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">✅</span>
@@ -112,11 +109,14 @@ export default function ConfirmPage() {
           </button>
         </Card>
       </section>
+      </>
     )
   }
 
   return (
-    <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <>
+      <SEOHead title="Verificando email..." noindex />
+      <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
       <Card variant="glass" className="w-full max-w-md p-8 md:p-10 text-center">
         <Spinner size="lg" className="mx-auto mb-4" />
         <h1 className="text-xl font-bold text-text-primary mb-2">Procesando...</h1>
@@ -127,5 +127,6 @@ export default function ConfirmPage() {
         </p>
       </Card>
     </section>
+    </>
   )
 }

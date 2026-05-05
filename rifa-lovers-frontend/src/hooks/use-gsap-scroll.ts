@@ -34,7 +34,9 @@ export function useGsapScroll<T extends HTMLElement>(
       ? Array.from(el.children)
       : [el]
 
-    gsap.set(children, { y, opacity })
+    const rafId = requestAnimationFrame(() => {
+      gsap.set(children, { y, opacity })
+    })
 
     const tween = gsap.to(children, {
       y: 0,
@@ -51,6 +53,7 @@ export function useGsapScroll<T extends HTMLElement>(
     })
 
     return () => {
+      cancelAnimationFrame(rafId)
       tween.kill()
     }
   }, [y, opacity, duration, stagger, delay, once])

@@ -60,6 +60,8 @@ export function BackingSection() {
               <img
                 src="/images/logos/logo-krim.png"
                 alt="KRIM Consultores"
+                width="80"
+                height="40"
                 className="h-10 w-auto object-contain"
               />
               <div className="leading-tight">
@@ -106,6 +108,8 @@ export function BackingSection() {
               <img
                 src="/images/logos/innovachain.png"
                 alt="Innovaxchain"
+                width="80"
+                height="40"
                 className="h-10 w-auto object-contain"
               />
               <div className="leading-tight">

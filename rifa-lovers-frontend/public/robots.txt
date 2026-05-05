@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+Disallow: /dashboard
+Disallow: /perfil
+Disallow: /checkout
+Disallow: /admin
+Disallow: /login
+Disallow: /registro
+Disallow: /recuperar-contrasena
+Disallow: /reset-password
+Disallow: /auth/
+Disallow: /stream/
+
+Sitemap: https://www.rifalovers.cl/sitemap.xml

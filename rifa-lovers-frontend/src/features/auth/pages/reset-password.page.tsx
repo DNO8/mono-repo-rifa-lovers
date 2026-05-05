@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -74,7 +75,9 @@ export default function ResetPasswordPage() {
 
   if (isSuccess) {
     return (
-      <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+      <>
+        <SEOHead title="Contraseña actualizada" noindex />
+        <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
         <Card variant="glass" className="w-full max-w-md p-8 md:p-10 text-center">
           <div className="size-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="size-8 text-success" />
@@ -93,11 +96,14 @@ export default function ResetPasswordPage() {
           </Link>
         </Card>
       </section>
+      </>
     )
   }
 
   return (
-    <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <>
+      <SEOHead title="Nueva contraseña" noindex />
+      <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
       <Card variant="glass" className="w-full max-w-md p-8 md:p-10">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -185,5 +191,6 @@ export default function ResetPasswordPage() {
         </p>
       </Card>
     </section>
+    </>
   )
 }

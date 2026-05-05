@@ -1,4 +1,5 @@
 import { useShallow } from 'zustand/react/shallow'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
 import { useAuthStore } from '@/stores/auth.store'
 import { DashboardGreetingSection } from '../sections/dashboard-greeting-section'
 import { DashboardImpactSection } from '../sections/dashboard-impact-section'
@@ -185,26 +186,27 @@ export default function DashboardPage() {
     <div className="px-4 md:px-8 py-8 md:py-12">
       <div className="mx-auto max-w-[1200px]">
         {/* Header con logout + toggle modo cliente */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-text-primary">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">
             {viewMode === 'customer' ? 'Mi Dashboard' : 'Mi Dashboard'}
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isOperatorOrAdmin && (
               <Button
                 variant="outline-primary"
                 size="sm"
+                className="shrink-0"
                 onClick={() => setViewMode(viewMode === 'operator' ? 'customer' : 'operator')}
               >
                 {viewMode === 'operator' ? (
                   <>
-                    <Eye className="size-4 mr-2" />
-                    Modo Cliente
+                    <Eye className="size-4 mr-1.5" />
+                    <span className="hidden sm:inline">Modo Cliente</span>
                   </>
                 ) : (
                   <>
-                    <LayoutDashboard className="size-4 mr-2" />
-                    Modo Operador
+                    <LayoutDashboard className="size-4 mr-1.5" />
+                    <span className="hidden sm:inline">Modo Operador</span>
                   </>
                 )}
               </Button>
@@ -212,14 +214,15 @@ export default function DashboardPage() {
             <Button
               variant="outline-primary"
               size="sm"
+              className="shrink-0"
               onClick={() => navigate('/perfil')}
             >
-              <UserCog className="size-4 mr-2" />
-              Perfil
+              <UserCog className="size-4 mr-1.5 sm:mr-0" />
+              <span className="hidden sm:inline ml-1.5">Perfil</span>
             </Button>
-            <Button variant="outline-primary" size="sm" onClick={handleLogout}>
-              <LogOut className="size-4 mr-2" />
-              Cerrar sesión
+            <Button variant="outline-primary" size="sm" className="shrink-0" onClick={handleLogout}>
+              <LogOut className="size-4 mr-1.5 sm:mr-0" />
+              <span className="hidden sm:inline ml-1.5">Cerrar sesión</span>
             </Button>
           </div>
         </div>
@@ -296,6 +299,6 @@ export default function DashboardPage() {
           </>
         )}
       </div>
-    </div>
+    </>
   )
 }

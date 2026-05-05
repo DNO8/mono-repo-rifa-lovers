@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
 import { ArrowLeft, FileText, Scale, Shield, Gift, Users, Truck, Lock, MapPin, Gavel } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -153,7 +154,7 @@ export default function BasesLegalesPage() {
             </Link>
           </div>
         </div>
-      </div>
     </div>
+    </>
   )
 }

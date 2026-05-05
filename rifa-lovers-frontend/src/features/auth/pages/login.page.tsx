@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
 import { LogIn, Eye, EyeOff } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,7 +26,9 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <>
+      <SEOHead title="Inicia sesión" noindex />
+      <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
       <Card variant="glass" className="w-full max-w-md p-8 md:p-10">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -100,5 +103,6 @@ export default function LoginPage() {
         </p>
       </Card>
     </section>
+    </>
   )
 }

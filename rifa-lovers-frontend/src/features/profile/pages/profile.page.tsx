@@ -94,14 +94,16 @@ export default function ProfilePage() {
   return (
     <div className="px-4 md:px-8 py-8 md:py-12">
       <div className="mx-auto max-w-[600px]">
-        <div className="flex items-center gap-3 mb-6">
-          <Button variant="outline-primary" size="sm" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft className="size-4 mr-1.5" />
-            Volver
-          </Button>
-          <h1 className="text-2xl font-extrabold text-text-primary tracking-tight">
-            Mi Perfil
-          </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <Button variant="outline-primary" size="sm" onClick={() => navigate('/dashboard')}>
+              <ArrowLeft className="size-4 mr-1.5" />
+              Volver
+            </Button>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight">
+              Mi Perfil
+            </h1>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -281,10 +283,11 @@ export default function ProfilePage() {
           </Card>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
             <Button
               type="button"
               variant="outline-primary"
+              className="w-full sm:w-auto justify-center"
               onClick={() => navigate('/dashboard')}
               disabled={isLoading}
             >
@@ -293,6 +296,7 @@ export default function ProfilePage() {
             <Button
               type="submit"
               variant="primary"
+              className="w-full sm:w-auto justify-center"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -309,7 +313,7 @@ export default function ProfilePage() {
             </Button>
           </div>
         </form>
-      </div>
     </div>
+    </>
   )
 }

@@ -25,8 +25,8 @@ export function ProgressFomoSection() {
 
     gsap.fromTo(
       bar,
-      { width: '0%' },
-      { width: `${percentage}%`, duration: 1.8, ease: 'power2.out', delay: 0.3 }
+      { scaleX: 0 },
+      { scaleX: 1, duration: 1.8, ease: 'power2.out', delay: 0.3, transformOrigin: 'left center' }
     )
 
     gsap.fromTo(
@@ -96,13 +96,19 @@ export function ProgressFomoSection() {
             <div
               ref={barRef}
               className="absolute inset-y-0 left-0 rounded-full gradient-rl transition-none"
-              style={{ width: `${percentage}%` }}
+              style={{
+                width: '100%',
+                transformOrigin: 'left center',
+                transform: `scaleX(${percentage / 100})`,
+              }}
             />
             {/* Shimmer */}
             <div
               className="absolute inset-y-0 left-0 rounded-full animate-pulse opacity-30"
               style={{
-                width: `${percentage}%`,
+                width: '100%',
+                transformOrigin: 'left center',
+                transform: `scaleX(${percentage / 100})`,
                 background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)',
               }}
             />

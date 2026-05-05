@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { SplitText } from '@/components/shared/split-text'
 import { SectionDivider } from '@/components/shared/section-divider'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
 import { ContactHeroSection } from '../sections/contact-hero-section'
 import { ContactFaqSection } from '../sections/contact-faq-section'
 import { ContactCommunitySection } from '../sections/contact-community-section'
@@ -9,6 +10,11 @@ import { ContactForm } from '../components/contact-form'
 export default function ContactPage() {
   return (
     <>
+      <SEOHead
+        title="Contacto"
+        description="Contacta a RifaLovers. Resolvemos tus dudas sobre rifas online, sorteos y nuestra comunidad participativa. Soporte rápido y atención personalizada."
+        canonical="/contacto"
+      />
       <ContactHeroSection />
       <SectionDivider />
 

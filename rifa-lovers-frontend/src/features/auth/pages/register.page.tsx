@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
 import { toast } from 'react-toastify'
 import { UserPlus, Eye, EyeOff, Mail, Check, ShieldCheck } from 'lucide-react'
 import ReCAPTCHA from 'react-google-recaptcha'
@@ -79,7 +80,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <>
+      <SEOHead title="Regístrate" noindex />
+      <section className="min-h-[80vh] flex items-center justify-center px-4 py-16">
       <Card variant="glass" className="w-full max-w-md p-8 md:p-10">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -279,5 +282,6 @@ export default function RegisterPage() {
         </p>
       </Card>
     </section>
+    </>
   )
 }

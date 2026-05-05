@@ -1,4 +1,4 @@
-import { MessageCircle, Instagram } from 'lucide-react'
+import {FaInstagram,FaDiscord} from 'react-icons/fa'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
@@ -23,12 +23,12 @@ export function ContactCommunitySection() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button variant="secondary" size="lg" className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/40 hover:text-white">
-              <MessageCircle className="size-4" />
+              <FaDiscord className="size-4" />
               Discord
             </Button>
             <Button variant="secondary" size="lg" className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/40 hover:text-white">
-              <a href={"https://www.instagram.com/rifalovers_cl"} target="_blank">
-                <Instagram className="size-4" />
+              <a href={"https://www.instagram.com/rifalovers_cl"} target="_blank" className='inline-flex items-center gap-2'>
+                <FaInstagram className="size-4" />  
                 Instagram
               </a>
             </Button>

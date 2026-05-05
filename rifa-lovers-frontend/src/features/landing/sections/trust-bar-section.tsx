@@ -64,7 +64,10 @@ export function TrustBarSection() {
     if (prefersReducedMotion) return
 
     const items = el.querySelectorAll<HTMLElement>(':scope > div > div > *')
-    gsap.set(items, { y: -20, opacity: 0 })
+
+    const rafId = requestAnimationFrame(() => {
+      gsap.set(items, { y: -20, opacity: 0 })
+    })
 
     const tween = gsap.to(items, {
       y: 0,
@@ -80,7 +83,10 @@ export function TrustBarSection() {
       },
     })
 
-    return () => { tween.kill() }
+    return () => {
+      cancelAnimationFrame(rafId)
+      tween.kill()
+    }
   }, [])
 
   return (
@@ -95,6 +101,8 @@ export function TrustBarSection() {
                   <img
                     src={item.logoSrc}
                     alt={item.logoAlt}
+                    width="32"
+                    height="24"
                     className="h-6 w-auto object-contain"
                   />
                 ) : (

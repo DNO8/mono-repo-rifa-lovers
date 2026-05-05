@@ -171,7 +171,7 @@ export function PricingSection() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div className="rounded-xl bg-bg-muted border border-border-light p-4">
-                  <h4 className="font-bold text-text-primary mb-1">Pack Mom</h4>
+                  <h3 className="font-bold text-text-primary mb-1">Pack Mom</h3>
                   <div className="flex items-baseline gap-2 mb-2">
                     <span className="text-lg font-extrabold text-text-primary">$9.990</span>
                     <span className="text-xs text-text-tertiary line-through">$14.990</span>
@@ -188,7 +188,7 @@ export function PricingSection() {
                   </ul>
                 </div>
                 <div className="rounded-xl bg-bg-purple-soft/40 border border-primary/15 p-4">
-                  <h4 className="font-bold text-text-primary mb-1">Pack Mom Premium</h4>
+                  <h3 className="font-bold text-text-primary mb-1">Pack Mom Premium</h3>
                   <div className="flex items-baseline gap-2 mb-2">
                     <span className="text-lg font-extrabold text-text-primary">$14.990</span>
                     <span className="text-xs text-text-tertiary line-through">$24.990</span>

@@ -4,7 +4,7 @@ import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa'
 
 function NavLink({ href, onClick, children }: { href: string; onClick?: (e: React.MouseEvent) => void; children: React.ReactNode }) {
   return (
-    <Link to={href} onClick={onClick} className="text-xs text-text-secondary hover:text-primary transition-colors">
+    <Link to={href} onClick={onClick} className="text-xs text-text-secondary hover:text-primary transition-colors py-1.5 inline-block">
       {children}
     </Link>
   )
@@ -25,7 +25,7 @@ const SOCIAL_LINKS = [
 function SocialLinks() {
   return (
     <div>
-      <h4 className="font-semibold text-text-primary text-xs uppercase tracking-wide mb-2">Comunidad</h4>
+      <h2 className="font-semibold text-text-primary text-xs uppercase tracking-wide mb-2">Comunidad</h2>
       <p className="text-xs text-text-secondary mb-2.5">
         Síguenos y únete a nuestra comunidad en redes sociales.
       </p>
@@ -36,7 +36,7 @@ function SocialLinks() {
               href={item.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-primary transition-colors py-1.5"
             >
               <item.icon className="size-3.5" style={{ color: item.color }} />
               {item.label}
@@ -90,7 +90,7 @@ export function Footer() {
 
           {/* Navigation */}
           <div>
-            <h4 className="font-semibold text-text-primary text-xs uppercase tracking-wide mb-2">Navegación</h4>
+            <h2 className="font-semibold text-text-primary text-xs uppercase tracking-wide mb-2">Navegación</h2>
             <ul className="space-y-1.5">
               {NAV_ITEMS.map((item) => (
                 <li key={item.href}>
@@ -102,13 +102,13 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="font-semibold text-text-primary text-xs uppercase tracking-wide mb-2">Legal</h4>
+            <h2 className="font-semibold text-text-primary text-xs uppercase tracking-wide mb-2">Legal</h2>
             <ul className="space-y-1.5">
               {LEGAL_LINKS.map((item) => (
                 <li key={item.href}>
                   <Link
                     to={item.href}
-                    className="text-xs text-text-secondary hover:text-primary transition-colors"
+                    className="text-xs text-text-secondary hover:text-primary transition-colors py-1.5 inline-block"
                   >
                     {item.label}
                   </Link>

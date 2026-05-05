@@ -31,7 +31,7 @@ function TimeBlock({ value, label }: { value: string; label: string }) {
       <span className="block text-4xl sm:text-5xl md:text-6xl font-extrabold text-text-primary tracking-tight leading-none">
         {value}
       </span>
-      <span className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-tertiary mt-1">
+      <span className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-text-secondary mt-1">
         {label}
       </span>
     </div>
@@ -189,7 +189,7 @@ export function CountdownSection() {
                 <span className="text-base">🧑🏼</span>
                 <span className="text-base">👩🏻</span>
               </div>
-              <span className="text-xs text-text-tertiary">
+              <span className="text-xs text-text-secondary">
                 <Users className="size-3 inline mr-0.5" />
                 Miles de personas ya participando en tiempo real
               </span>

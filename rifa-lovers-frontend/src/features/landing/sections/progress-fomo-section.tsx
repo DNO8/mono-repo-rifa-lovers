@@ -79,18 +79,18 @@ export function ProgressFomoSection() {
           {/* Stats row */}
           <div className="flex items-end justify-between mb-3">
             <div>
-              <p className="text-xs text-text-tertiary uppercase tracking-wider font-semibold mb-0.5">
+              <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold mb-0.5">
                 Packs vendidos
               </p>
               <p className="text-2xl md:text-3xl font-extrabold text-text-primary">
                 <span ref={countRef}>{packsSold.toLocaleString('es-CL')}</span>
-                <span className="text-base md:text-lg font-medium text-text-tertiary ml-1">
+                <span className="text-base md:text-lg font-medium text-text-secondary ml-1">
                   / {goalPacks.toLocaleString('es-CL')}
                 </span>
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-text-tertiary uppercase tracking-wider font-semibold mb-0.5">
+              <p className="text-xs text-text-secondary uppercase tracking-wider font-semibold mb-0.5">
                 Cupos restantes
               </p>
               <p className="text-2xl md:text-3xl font-extrabold text-primary">
@@ -126,7 +126,7 @@ export function ProgressFomoSection() {
 
           {/* Percentage */}
           <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-text-tertiary">
+            <span className="text-xs text-text-secondary">
               {percentage.toFixed(1)}% completado
             </span>
             <span className="text-xs font-semibold text-primary">

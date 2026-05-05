@@ -66,7 +66,7 @@ export function TrustSection() {
                     <point.icon className="size-5" style={{ color: point.color }} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-text-primary text-sm mb-0.5">{point.title}</h4>
+                    <h3 className="font-bold text-text-primary text-sm mb-0.5">{point.title}</h3>
                     <p className="text-sm text-text-secondary leading-relaxed">{point.description}</p>
                   </div>
                 </div>

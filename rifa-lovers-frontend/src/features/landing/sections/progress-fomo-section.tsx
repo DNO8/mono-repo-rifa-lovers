@@ -7,6 +7,7 @@ import { gsap } from '@/lib/gsap'
 export function ProgressFomoSection() {
   const { raffle, progress, isLoading } = useActiveRaffle()
   const barRef = useRef<HTMLDivElement>(null)
+  const indicatorRef = useRef<HTMLDivElement>(null)
   const countRef = useRef<HTMLSpanElement>(null)
   const hasAnimated = useRef(false)
 
@@ -17,8 +18,9 @@ export function ProgressFomoSection() {
 
   useEffect(() => {
     const bar = barRef.current
+    const indicator = indicatorRef.current
     const count = countRef.current
-    if (!bar || !count || isLoading || hasAnimated.current) return
+    if (!bar || !indicator || !count || isLoading || hasAnimated.current) return
     if (packsSold === 0) return
 
     hasAnimated.current = true
@@ -27,6 +29,12 @@ export function ProgressFomoSection() {
       bar,
       { scaleX: 0 },
       { scaleX: 1, duration: 1.8, ease: 'power2.out', delay: 0.3, transformOrigin: 'left center' }
+    )
+
+    gsap.fromTo(
+      indicator,
+      { left: '0%' },
+      { left: `${percentage}%`, duration: 1.8, ease: 'power2.out', delay: 0.3 }
     )
 
     gsap.fromTo(
@@ -92,7 +100,8 @@ export function ProgressFomoSection() {
           </div>
 
           {/* Bar */}
-          <div className="relative h-4 rounded-full bg-bg-muted overflow-hidden">
+          <div className="relative h-4 rounded-full bg-border-light overflow-hidden">
+            {/* Gradient fill */}
             <div
               ref={barRef}
               className="absolute inset-y-0 left-0 rounded-full gradient-rl transition-none"
@@ -102,16 +111,17 @@ export function ProgressFomoSection() {
                 transform: `scaleX(${percentage / 100})`,
               }}
             />
-            {/* Shimmer */}
+            {/* Position indicator */}
             <div
-              className="absolute inset-y-0 left-0 rounded-full animate-pulse opacity-30"
-              style={{
-                width: '100%',
-                transformOrigin: 'left center',
-                transform: `scaleX(${percentage / 100})`,
-                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)',
-              }}
-            />
+              ref={indicatorRef}
+              className="absolute top-1/2 -translate-y-1/2 z-10"
+              style={{ left: 0 }}
+            >
+              <div className="relative -translate-x-1/2">
+                <div className="size-3.5 rounded-full bg-white shadow-md ring-[2.5px] ring-white/80" />
+                <div className="absolute inset-0 size-3.5 rounded-full ring-2 ring-primary/20" />
+              </div>
+            </div>
           </div>
 
           {/* Percentage */}
@@ -120,7 +130,7 @@ export function ProgressFomoSection() {
               {percentage.toFixed(1)}% completado
             </span>
             <span className="text-xs font-semibold text-primary">
-              {remaining <= 500 ? '⚡ ¡Últimos cupos!' : `${remaining.toLocaleString('es-CL')} disponibles`}
+              {remaining <= 500 ? `¡Últimos ${remaining} cupos!` : `${remaining.toLocaleString('es-CL')} disponibles`}
             </span>
           </div>
         </div>

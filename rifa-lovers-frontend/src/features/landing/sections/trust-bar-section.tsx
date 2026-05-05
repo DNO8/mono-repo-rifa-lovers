@@ -104,6 +104,7 @@ export function TrustBarSection() {
                     width="32"
                     height="24"
                     className="h-6 w-auto object-contain"
+                    decoding="async"
                   />
                 ) : (
                   <Icon className="size-4 text-primary shrink-0" />

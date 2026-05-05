@@ -3,7 +3,6 @@ import { ArrowRight, Hand, CalendarClock } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { SplitText } from '@/components/shared/split-text'
 import { LazyHeroModelViewer } from '../components/lazy-hero-model-viewer'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 
@@ -96,29 +95,18 @@ export function HeroSection() {
             className="text-3xl sm:text-4xl md:text-5xl lg:text-[2.5rem] xl:text-6xl leading-[1.15] tracking-tight mb-4"
             style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}
           >
-            <SplitText
-              as="span"
-              className="block text-text-primary"
-              type="words"
-              stagger={0.06}
-              duration={0.7}
-              y={30}
-              delay={0.3}
+            <span
+              className="block text-text-primary hero-fade-up"
+              style={{ animationDelay: '0.3s' }}
             >
               Gana un MacBook M5
-            </SplitText>
-            <SplitText
-              as="span"
-              className="block bg-linear-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent"
-              type="words"
-              gradient
-              stagger={0.06}
-              duration={0.7}
-              y={30}
-              delay={0.7}
+            </span>
+            <span
+              className="block bg-linear-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent hero-fade-up"
+              style={{ animationDelay: '0.7s' }}
             >
               desde $4.990
-            </SplitText>
+            </span>
           </h1>
 
           <p

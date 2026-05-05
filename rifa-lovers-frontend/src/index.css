@@ -260,6 +260,21 @@
    Accessibility — Reduced Motion
    ═══════════════════════════════════════════════════════════════ */
 
+/* Hero heading fade-in (GPU-composited, avoids SplitText LCP delay) */
+.hero-fade-up {
+  display: block;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: hero-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes hero-fade-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

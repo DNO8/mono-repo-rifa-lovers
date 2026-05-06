@@ -40,7 +40,6 @@ function PackMomCard({
   navigate,
 }: PackMomCardProps) {
   const handleBuy = () => {
-    console.log('Button clicked - packId:', packId, 'raffleId:', raffleId)
     if (!packId || !raffleId) {
       toast.error('No se puede procesar la compra. Pack o rifa no disponibles.')
       return
@@ -136,14 +135,10 @@ export default function PackMomPage() {
 
   const isLoading = raffleLoading || packsLoading
 
-  console.log('Available packs:', packs.map(p => ({ id: p.id, name: p.name, nameUpper: p.name?.toUpperCase() })))
-
   const momPack = packs.find((p) => p.name?.toUpperCase() === 'MOM HOME EXPERIENCE')
   const momPremiumPack = packs.find(
     (p) => p.name?.toUpperCase() === 'MOM SKIN RITUAL'
   )
-
-  console.log('Found packs:', { momPack, momPremiumPack })
 
 
 

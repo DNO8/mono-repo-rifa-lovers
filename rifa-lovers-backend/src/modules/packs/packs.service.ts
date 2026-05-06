@@ -13,7 +13,7 @@ export class PacksService {
     this.logger.debug('Buscando todos los packs')
 
     const packs = await this.packsRepository.findMany(
-      { isPreSale: false }, // Solo packs activos (no pre-sale)
+      {}, // Sin filtro - incluir todos los packs (activos y pre-sale)
       { price: 'asc' }, // Ordenar por precio
     )
 

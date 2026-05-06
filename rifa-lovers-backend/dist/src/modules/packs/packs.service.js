@@ -21,7 +21,7 @@ let PacksService = PacksService_1 = class PacksService {
     }
     async findAll() {
         this.logger.debug('Buscando todos los packs');
-        const packs = await this.packsRepository.findMany({ isPreSale: false }, { price: 'asc' });
+        const packs = await this.packsRepository.findMany({}, { price: 'asc' });
         this.logger.debug(`Encontrados ${packs.length} packs`);
         return packs.map(pack_mapper_1.mapPackToDto);
     }

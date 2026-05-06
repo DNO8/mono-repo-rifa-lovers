@@ -39,7 +39,10 @@ function PackMomCard({
   navigate,
 }: PackMomCardProps) {
   const handleBuy = () => {
-    if (!packId || !raffleId) return
+    if (!packId || !raffleId) {
+      alert('No se puede procesar la compra. Pack o rifa no disponibles.')
+      return
+    }
     const checkoutUrl = `/checkout?raffle=${raffleId}&packId=${packId}`
     if (isAuthenticated) {
       navigate(checkoutUrl)
@@ -135,6 +138,7 @@ export default function PackMomPage() {
   const momPremiumPack = packs.find(
     (p) => p.name?.toUpperCase() === 'MOM SKIN RITUAL'
   )
+
 
   if (isLoading) {
     return (

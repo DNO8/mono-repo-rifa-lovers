@@ -104,6 +104,8 @@ export class RefreshDecorator implements HttpClient {
       const newToken = await this.tryRefresh()
       if (!newToken) {
         this.store.logout()
+        // Redirect to login after logout
+        window.location.href = '/login'
         throw error
       }
 

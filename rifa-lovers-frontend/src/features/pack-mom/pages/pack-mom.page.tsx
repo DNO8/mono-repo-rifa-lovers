@@ -114,7 +114,6 @@ function PackMomCard({
           size="lg"
           className="w-full cursor-pointer"
           onClick={handleBuy}
-          disabled={!packId || !raffleId}
         >
           Activar {name}
           <ArrowRight className="size-4" />

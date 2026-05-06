@@ -8,6 +8,7 @@ import { useActiveRaffle } from '@/hooks/use-raffles'
 import { usePacks } from '@/hooks/use-packs'
 import { useAuthStore } from '@/stores/auth.store'
 import { Spinner } from '@/components/ui/spinner'
+import { toast } from 'react-toastify'
 
 interface PackMomCardProps {
   name: string
@@ -40,7 +41,7 @@ function PackMomCard({
 }: PackMomCardProps) {
   const handleBuy = () => {
     if (!packId || !raffleId) {
-      alert('No se puede procesar la compra. Pack o rifa no disponibles.')
+      toast.error('No se puede procesar la compra. Pack o rifa no disponibles.')
       return
     }
     const checkoutUrl = `/checkout?raffle=${raffleId}&packId=${packId}`

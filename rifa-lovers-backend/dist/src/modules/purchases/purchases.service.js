@@ -171,6 +171,7 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 data: {
                     providerTransactionId: paymentData.providerTransactionId,
                     status: 'approved',
+                    idempotencyKey: null,
                 },
             });
             const userPacks = await tx.userPack.findMany({

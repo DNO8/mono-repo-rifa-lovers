@@ -40,6 +40,7 @@ const LazyNotFoundPage = lazy(() => import('@/features/errors/pages/not-found.pa
 const LazyWinnersPage = lazy(() => import('@/features/raffles/pages/winners.page'))
 const LazyStreamingPage = lazy(() => import('@/features/streaming/pages/streaming.page'))
 const LazyBasesLegalesPage = lazy(() => import('@/features/legal/pages/bases-legales.page'))
+const LazyTerminosPage = lazy(() => import('@/features/legal/pages/terminos.page'))
 
 export const router = createBrowserRouter([
   {
@@ -190,7 +191,7 @@ export const router = createBrowserRouter([
     path: '/terminos',
     element: (
       <PageWithSuspense fallback={<LegalPageSkeleton />}>
-        <LazyBasesLegalesPage />
+        <LazyTerminosPage />
       </PageWithSuspense>
     ),
     errorElement: <RouteErrorBoundary />,

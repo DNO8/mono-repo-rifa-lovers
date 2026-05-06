@@ -356,6 +356,7 @@ model PaymentTransaction {
   providerTransactionId  String?        @map("provider_transaction_id") @db.VarChar(255)
   amount                 Decimal?       @db.Decimal(12, 2)
   status                 PaymentStatus  @default(created)
+  idempotencyKey         String?        @map("idempotency_key") @db.Uuid
   createdAt              DateTime       @default(now()) @map("created_at")
 
   purchase Purchase? @relation(fields: [purchaseId], references: [id])
@@ -363,4 +364,5 @@ model PaymentTransaction {
   @@map("payment_transactions")
   @@schema("public")
   @@index([providerTransactionId])
+  @@index([idempotencyKey], map: "idx_idempotency_key")
 }

@@ -181,7 +181,7 @@ let JobsService = JobsService_1 = class JobsService {
                 });
                 await this.prisma.paymentTransaction.updateMany({
                     where: { purchaseId: purchase.id },
-                    data: { status: 'rejected' },
+                    data: { status: 'rejected', idempotencyKey: null },
                 });
                 this.logger.log(`[JOB] Purchase ${purchase.id} expirada (creada: ${purchase.createdAt.toISOString()})`);
             }

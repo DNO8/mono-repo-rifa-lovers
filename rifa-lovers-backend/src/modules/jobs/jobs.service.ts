@@ -198,10 +198,10 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
           data: { status: PurchaseStatus.failed },
         })
 
-        // Actualizar payment_transactions asociadas a 'rejected'
+        // Actualizar payment_transactions asociadas a 'rejected' y limpiar idempotencyKey
         await this.prisma.paymentTransaction.updateMany({
           where: { purchaseId: purchase.id },
-          data: { status: 'rejected' },
+          data: { status: 'rejected', idempotencyKey: null },
         })
 
         this.logger.log(

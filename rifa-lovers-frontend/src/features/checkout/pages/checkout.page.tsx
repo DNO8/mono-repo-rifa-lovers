@@ -50,6 +50,9 @@ export default function CheckoutPage() {
     }
     setIsProcessing(true)
     try {
+      // Generar llave de idempotencia para evitar duplicados
+      const idempotencyKey = crypto.randomUUID()
+
       // Filtrar los números no vacíos para enviar al backend
       const filledNumbers = selectedNumbers.filter((n): n is number => n !== '')
 
@@ -61,28 +64,34 @@ export default function CheckoutPage() {
         selectedNumbers: filledNumbers.length > 0 ? filledNumbers : undefined,
       })
 
-      // 2. La reserva ya se hizo atómicamente en el backend dentro de createPurchase
+      // 2. Persistir la llave de idempotencia en sessionStorage
+      sessionStorage.setItem(`idempotencyKey_${purchase.id}`, idempotencyKey)
+
+      // 3. La reserva ya se hizo atómicamente en el backend dentro de createPurchase
       if (filledNumbers.length > 0) {
         setReservationExpiresAt(new Date(Date.now() + 15 * 60 * 1000).toISOString())
       }
 
-      // 3. Iniciar el pago con Flow
+      // 4. Iniciar el pago con Flow
       toast.info('Iniciando pago seguro con Flow...')
       const payment = await initiatePayment({
         purchaseId: purchase.id,
+        idempotencyKey,
       })
 
-      // 4. Guardar purchaseId para la página de retorno y redirigir a Flow
+      // 5. Guardar purchaseId para la página de retorno y redirigir a Flow
       sessionStorage.setItem('pending_purchase_id', purchase.id)
       toast.success('Redirigiendo a plataforma de pago...')
       window.location.href = payment.paymentUrl
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 409) {
-        // Números ya reservados/tomados — mostrar mensaje específico del backend
+        // Error 409 — puede ser idempotencia o números reservados
         const message = getErrorMessage(err, 'payment')
         toast.error(message)
-        // Resetear selección para que elija nuevos números
-        setSelectedNumbers(Array(ticketCount).fill(''))
+        // Si es error de números reservados, resetear selección
+        if (message.toLowerCase().includes('número') || message.toLowerCase().includes('reserv')) {
+          setSelectedNumbers(Array(ticketCount).fill(''))
+        }
       } else {
         toastError(err, 'payment', 'No se pudo procesar la compra. Por favor intenta de nuevo.')
       }

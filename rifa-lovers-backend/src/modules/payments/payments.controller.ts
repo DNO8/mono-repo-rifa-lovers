@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger, NotFoundException, UseGuards, Res } from '@nestjs/common'
+import { Controller, Post, Body, Logger, NotFoundException, UseGuards, Res, ConflictException } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import type { Response } from 'express'
 import { ConfigService } from '@nestjs/config'
@@ -11,6 +11,7 @@ import { PrismaService } from '../../database/prisma.service'
 
 interface InitiatePaymentDto {
   purchaseId: string
+  idempotencyKey?: string
 }
 
 @Controller('payments')
@@ -34,13 +35,30 @@ export class PaymentsController {
   ) {
     this.logger.debug(`Iniciando pago para purchase: ${dto.purchaseId}, user: ${userId}`)
 
-    // 1. Obtener la compra
+    // 1. Validar idempotencyKey si se proporciona
+    if (dto.idempotencyKey) {
+      const existingTransaction = await this.prisma.paymentTransaction.findFirst({
+        where: {
+          idempotencyKey: dto.idempotencyKey,
+          purchase: {
+            status: 'pending',
+          },
+        },
+      })
+
+      if (existingTransaction) {
+        this.logger.warn(`Intento de pago duplicado con idempotencyKey: ${dto.idempotencyKey}`)
+        throw new ConflictException('Ya existe un pago en proceso para esta solicitud')
+      }
+    }
+
+    // 2. Obtener la compra
     const purchase = await this.purchasesService.findById(dto.purchaseId)
     if (!purchase) {
       throw new NotFoundException('Compra no encontrada')
     }
 
-    // 2. Obtener el usuario para el email
+    // 3. Obtener el usuario para el email
     const user = await this.usersService.findOne(userId)
     if (!user || !user.email) {
       throw new NotFoundException('Usuario no encontrado o sin email')
@@ -48,7 +66,7 @@ export class PaymentsController {
 
     const backendUrl = this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'
 
-    // 3. Crear orden en Flow
+    // 4. Crear orden en Flow
     const flowOrder = await this.flowService.createPaymentOrder(
       purchase.id,           // commerceOrder (nuestro ID de compra)
       `Rifa Lovers - ${purchase.raffleName}`,  // subject
@@ -60,11 +78,12 @@ export class PaymentsController {
 
     this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`)
 
-    // Actualizar PaymentTransaction existente con el token de Flow
+    // Actualizar PaymentTransaction existente con el token de Flow y idempotencyKey
     await this.prisma.paymentTransaction.updateMany({
       where: { purchaseId: purchase.id },
       data: {
         providerTransactionId: flowOrder.token,
+        ...(dto.idempotencyKey && { idempotencyKey: dto.idempotencyKey }),
       },
     })
     this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`)

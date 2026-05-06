@@ -34,6 +34,20 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
     }
     async initiatePayment(userId, dto) {
         this.logger.debug(`Iniciando pago para purchase: ${dto.purchaseId}, user: ${userId}`);
+        if (dto.idempotencyKey) {
+            const existingTransaction = await this.prisma.paymentTransaction.findFirst({
+                where: {
+                    idempotencyKey: dto.idempotencyKey,
+                    purchase: {
+                        status: 'pending',
+                    },
+                },
+            });
+            if (existingTransaction) {
+                this.logger.warn(`Intento de pago duplicado con idempotencyKey: ${dto.idempotencyKey}`);
+                throw new common_1.ConflictException('Ya existe un pago en proceso para esta solicitud');
+            }
+        }
         const purchase = await this.purchasesService.findById(dto.purchaseId);
         if (!purchase) {
             throw new common_1.NotFoundException('Compra no encontrada');
@@ -49,6 +63,7 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
             where: { purchaseId: purchase.id },
             data: {
                 providerTransactionId: flowOrder.token,
+                ...(dto.idempotencyKey && { idempotencyKey: dto.idempotencyKey }),
             },
         });
         this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`);

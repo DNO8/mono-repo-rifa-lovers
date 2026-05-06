@@ -6,6 +6,7 @@ import { UsersService } from '../users/users.service';
 import { PrismaService } from '../../database/prisma.service';
 interface InitiatePaymentDto {
     purchaseId: string;
+    idempotencyKey?: string;
 }
 export declare class PaymentsController {
     private readonly configService;

@@ -196,6 +196,7 @@ export class PurchasesService {
         data: {
           providerTransactionId: paymentData.providerTransactionId,
           status: 'approved',
+          idempotencyKey: null,
         },
       })
 

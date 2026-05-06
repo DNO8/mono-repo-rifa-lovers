@@ -3,6 +3,7 @@ import { ENDPOINTS } from './endpoints'
 
 export interface InitiatePaymentRequest {
   purchaseId: string
+  idempotencyKey?: string
 }
 
 export interface InitiatePaymentResponse {

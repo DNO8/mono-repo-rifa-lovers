@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
-import { ArrowLeft, FileText, Scale, Shield, Gift, Users, Truck, Lock, MapPin, Gavel } from 'lucide-react'
+import { ArrowLeft, FileText, Scale, Shield, Gift, Users, Truck, Lock, Gavel } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -10,77 +10,77 @@ const SECTIONS = [
     icon: Scale,
     title: '1. Organizador',
     content:
-      'La presente rifa es organizada por Rifa Lovers SpA, sociedad legalmente constituida en Chile, RUT [por confirmar], con domicilio en [dirección por confirmar]. La empresa cuenta con asesoría legal permanente de KRIM Consultores, representada por Katherynne Moreno Ortiz, Abogada Senior especializada en Derecho Corporativo, Inmobiliario y Data Compliance.',
+      'La presente campaña promocional es organizada por RifaLovers SpA.',
   },
   {
-    id: 'objeto',
-    icon: Gift,
-    title: '2. Objeto del sorteo',
+    id: 'nombre',
+    icon: FileText,
+    title: '2. Nombre de la campaña',
     content:
-      'El sorteo tiene como objetivo principal la entrega de premios tecnológicos y de consumo a los participantes, al mismo tiempo que se destina un porcentaje de los fondos recaudados a causas benéficas, en particular a la Fundación Niño y Cáncer. Los premios incluyen, entre otros: MacBook M5, smartphones, tablets y premios adicionales desbloqueados por la comunidad a través de la escala de hitos.',
+      '"Pack Mom RifaLovers – Edición Lanzamiento".',
   },
   {
     id: 'vigencia',
     icon: FileText,
     title: '3. Vigencia',
     content:
-      'La rifa estará vigente desde la fecha de publicación de la misma en la plataforma www.rifalovers.cl hasta la fecha de cierre indicada en cada rifa activa. El sorteo se realizará en la fecha y hora publicadas en la plataforma, en formato de transmisión en vivo verificable.',
-  },
-  {
-    id: 'participacion',
-    icon: Users,
-    title: '4. Participación',
-    content:
-      'Podrán participar todas las personas mayores de 18 años residentes en Chile. Para participar, el usuario deberá: (a) crear una cuenta gratuita en la plataforma, (b) adquirir uno o más packs de LuckyPass, y (c) completar el pago a través de los medios habilitados. Cada LuckyPass adquirido otorga un número único e irrepetible dentro de la rifa activa.',
+      'La campaña estará vigente hasta completar un máximo de 300 packs vendidos o hasta la fecha que RifaLovers informe oficialmente en sus canales digitales.',
   },
   {
     id: 'mecanica',
     icon: Shield,
-    title: '5. Mecánica del sorteo',
+    title: '4. Mecánica de la campaña',
     content:
-      'El sorteo se realiza en vivo a través de la plataforma de streaming de Rifa Lovers. El proceso es 100% transparente y verificable: se utiliza un algoritmo de selección aleatoria ejecutado en tiempo real ante la audiencia. El sorteo puede contar con la presencia de un notario público para certificar la validez del proceso y los resultados.',
+      'Las personas que adquieran un Pack Mom participante durante la vigencia de la campaña recibirán uno o 3 LuckyPass promocional (según pack adquirido) asociado a esta activación. La campaña contempla hitos progresivos de desbloqueo de premios según la cantidad de packs efectivamente vendidos.',
   },
   {
     id: 'premios',
     icon: Gift,
-    title: '6. Premios',
+    title: '5. Premios y hitos',
     content:
-      'Los premios serán los publicados en la plataforma para cada rifa activa. La cantidad y tipo de premios puede variar según el avance de la escala de hitos (milestones). Los premios no son canjeables por dinero en efectivo ni transferibles a terceros salvo indicación expresa del organizador.',
+      'La campaña contempla la entrega de las siguientes Gift Cards: Al alcanzar 100 packs vendidos: 🎁 1 Gift Card de $100.000 CLP. Al alcanzar 200 packs vendidos: 🎁 1 Gift Card de $100.000 CLP. Al alcanzar 300 packs vendidos: 🎁 1 Gift Card de $100.000 CLP. Cada premio será sorteado únicamente una vez alcanzado el respectivo hito de ventas.',
   },
   {
-    id: 'ganadores',
+    id: 'sorteos',
     icon: Gavel,
-    title: '7. Selección de ganadores',
+    title: '6. Sorteos',
     content:
-      'Los ganadores serán seleccionados de forma aleatoria entre todos los LuckyPass activos al momento del sorteo. Un mismo participante puede ganar más de un premio si posee múltiples LuckyPass seleccionados. Los resultados serán publicados en la plataforma y comunicados directamente a los ganadores por correo electrónico.',
+      'Cada sorteo será realizado en vivo mediante las plataformas oficiales de RifaLovers. La fecha y hora de cada live serán informadas previamente a través de redes sociales y canales oficiales.',
+  },
+  {
+    id: 'participantes',
+    icon: Users,
+    title: '7. Participantes y ganadores',
+    content:
+      'Participarán en cada sorteo todos los LuckyPass válidamente emitidos hasta el momento del cierre del respectivo hito. Cada participante podrá ganar solo una vez durante la campaña.',
   },
   {
     id: 'entrega',
     icon: Truck,
     title: '8. Entrega de premios',
     content:
-      'Los premios serán entregados a todo Chile sin costo adicional para el ganador. La entrega se realizará dentro de los 10 días hábiles siguientes a la confirmación del ganador. El ganador deberá proporcionar sus datos de envío completos y verificar su identidad.',
+      'Los ganadores serán contactados vía WhatsApp, correo electrónico o redes sociales. Los premios podrán ser entregados mediante transferencia bancaria, gift card digital o mecanismo equivalente definido por RifaLovers. Para hacer efectiva la entrega, el ganador deberá acreditar su identidad dentro de un plazo máximo de 7 días corridos desde el contacto oficial. En caso de no respuesta, RifaLovers podrá efectuar un nuevo sorteo.',
   },
   {
-    id: 'responsabilidades',
+    id: 'transparencia',
+    icon: Shield,
+    title: '9. Transparencia y difusión',
+    content:
+      'Los sorteos y entregas podrán ser grabados y difundidos por RifaLovers con fines promocionales, de transparencia y generación de contenido. Los participantes autorizan el uso de nombre, imagen y registro audiovisual relacionado con la entrega del premio.',
+  },
+  {
+    id: 'modificaciones',
     icon: Lock,
-    title: '9. Responsabilidades',
+    title: '10. Modificaciones',
     content:
-      'El organizador no se hace responsable por problemas técnicos ajenos a la plataforma que impidan la participación. El participante es responsable de mantener actualizados sus datos de contacto. El organizador se reserva el derecho de descalificar a participantes que incurran en conductas fraudulentas.',
+      'RifaLovers podrá modificar aspectos operativos de la campaña por razones técnicas, fuerza mayor o situaciones que afecten el correcto funcionamiento de la promoción. Toda modificación será informada oportunamente mediante los canales oficiales.',
   },
   {
-    id: 'datos',
-    icon: Lock,
-    title: '10. Protección de datos personales',
+    id: 'aceptacion',
+    icon: Scale,
+    title: '11. Aceptación de las bases',
     content:
-      'Los datos personales proporcionados por los participantes serán tratados conforme a la Ley N° 19.628 sobre Protección de la Vida Privada y la normativa vigente en Chile. Los datos se utilizarán exclusivamente para la gestión del sorteo, comunicación con los participantes y entrega de premios. Para más información, consulte nuestra Política de Privacidad.',
-  },
-  {
-    id: 'jurisdiccion',
-    icon: MapPin,
-    title: '11. Jurisdicción',
-    content:
-      'Las presentes bases legales se rigen por la legislación chilena. Cualquier controversia será resuelta ante los tribunales ordinarios de justicia de Santiago de Chile.',
+      'La participación en esta campaña implica el conocimiento y aceptación íntegra de las presentes bases legales.',
   },
 ]
 
@@ -104,10 +104,10 @@ export default function BasesLegalesPage() {
         <div className="mb-10">
           <Badge variant="subtle" className="mb-4">Documento legal</Badge>
           <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3">
-            Bases Legales del Sorteo
+            Bases Legales – Campaña Promocional RifaLovers
           </h1>
           <p className="text-text-secondary">
-            Última actualización: {new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+            Pack Mom RifaLovers – Edición Lanzamiento
           </p>
         </div>
 

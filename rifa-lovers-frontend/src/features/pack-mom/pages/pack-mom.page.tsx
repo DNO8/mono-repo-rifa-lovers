@@ -40,6 +40,7 @@ function PackMomCard({
   navigate,
 }: PackMomCardProps) {
   const handleBuy = () => {
+    console.log('Button clicked - packId:', packId, 'raffleId:', raffleId)
     if (!packId || !raffleId) {
       toast.error('No se puede procesar la compra. Pack o rifa no disponibles.')
       return

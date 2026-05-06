@@ -11,7 +11,6 @@ import { ApiError } from '@/api/client'
 import { toastError, getErrorMessage } from '@/lib/errors'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { usePacks } from '@/hooks/use-packs'
-import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
 import { Spinner } from '@/components/ui/spinner'
 import { OrderSummary } from '../components/order-summary'
 import { NumberSelectorGrid } from '../components/number-selector-grid'
@@ -32,20 +31,19 @@ export default function CheckoutPage() {
 
   const isLoading = raffleLoading || packsLoading
 
-  const pricingTiers = packs.length > 0 ? mapPacksToPricingTiers(packs) : []
-  const tier = pricingTiers.find((t) => t.packId === packIdParam) ?? pricingTiers[0]
+  const selectedPack = packs.find((p) => p.id === packIdParam) ?? packs[0]
 
   const raffleTitle = raffle?.title ?? 'Premio por confirmar'
   const maxTicketNumber = raffle?.maxTicketNumber ?? 30000
-  const ticketCount = tier?.tickets ?? 1
-  const unitPrice = tier ? tier.price / tier.tickets : 0
-  const totalPrice = tier ? tier.price : 0
+  const ticketCount = selectedPack?.luckyPassQuantity ?? 1
+  const unitPrice = selectedPack ? selectedPack.price / selectedPack.luckyPassQuantity : 0
+  const totalPrice = selectedPack ? selectedPack.price : 0
 
   const handleNumbersChange = (nums: (number | '')[]) => setSelectedNumbers(nums)
   const handleValidityChange = (valid: boolean) => setNumbersValid(valid)
 
   const handleConfirm = async () => {
-    if (!raffle || !tier) return
+    if (!raffle || !selectedPack) return
     if (!numbersValid) {
       toast.error('Uno o más números elegidos no están disponibles. Corrígelos antes de continuar.')
       return
@@ -58,7 +56,7 @@ export default function CheckoutPage() {
       // 1. Crear la compra (quantity=1 pack)
       const purchase = await createPurchase({
         raffleId: raffle.id,
-        packId: tier.packId,
+        packId: selectedPack.id,
         quantity: 1,
         selectedNumbers: filledNumbers.length > 0 ? filledNumbers : undefined,
       })

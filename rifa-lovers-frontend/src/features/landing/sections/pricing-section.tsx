@@ -14,6 +14,7 @@ export function PricingSection() {
   const { isLoading, error } = usePacks()
 
   // Mapear packs de API a PricingTiers, filtrando todos los packs (deshabilitado temporalmente)
+  // Cuando se habilite, usar: const pricingTiers = mapPacksToPricingTiers(packs.filter(p => p.name?.toUpperCase() !== 'EXCLUSIVO PREVENTA'))
   const pricingTiers: never[] = [] // Deshabilitado temporalmente
 
   return (

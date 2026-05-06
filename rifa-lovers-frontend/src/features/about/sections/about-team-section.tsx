@@ -4,28 +4,6 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-import { useCountUp } from '@/hooks/use-count-up'
-
-const ABOUT_STATS = [
-  { label: 'Sorteos realizados', value: 48, prefix: '+' },
-  { label: 'Participantes activos', value: 8000, prefix: '+' },
-  { label: 'En impacto entregado', value: 24, prefix: '$', suffix: 'M' },
-]
-
-function StatItem({ stat }: { stat: typeof ABOUT_STATS[number] }) {
-  const countRef = useCountUp({
-    end: stat.value,
-    prefix: stat.prefix,
-    suffix: stat.suffix,
-  })
-
-  return (
-    <div className="text-center">
-      <span ref={countRef} className="block text-2xl md:text-3xl font-extrabold gradient-text mb-1" />
-      <span className="text-sm text-text-secondary">{stat.label}</span>
-    </div>
-  )
-}
 
 export function AboutTeamSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.12 })
@@ -72,12 +50,6 @@ export function AboutTeamSection() {
               Tecnología de punta para garantizar transparencia y la mejor experiencia para nuestra comunidad.
             </p>
           </Card>
-        </div>
-
-        <div className="grid grid-cols-3 gap-6 mb-12">
-          {ABOUT_STATS.map((stat) => (
-            <StatItem key={stat.label} stat={stat} />
-          ))}
         </div>
 
         <div className="text-center">

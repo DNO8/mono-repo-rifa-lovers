@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { ArrowLeft, ArrowRight, Gift, Heart, Sparkles, CheckCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Heart, Sparkles, CheckCircle } from 'lucide-react'
 import { Link } from 'react-router'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,30 +14,30 @@ interface PackMomCardProps {
   name: string
   price: number
   originalPrice: number
-  tickets: number
-  giftName: string
-  giftUrl: string
-  giftDescription: string
   popular?: boolean
   packId?: string
   raffleId?: string
   isAuthenticated: boolean
   navigate: ReturnType<typeof useNavigate>
+  subtitle?: string
+  benefitText?: string
+  productItems?: string[]
+  ctaText?: string
 }
 
 function PackMomCard({
   name,
   price,
   originalPrice,
-  tickets,
-  giftName,
-  giftUrl,
-  giftDescription,
   popular = false,
   packId,
   raffleId,
   isAuthenticated,
   navigate,
+  subtitle,
+  benefitText,
+  productItems,
+  ctaText,
 }: PackMomCardProps) {
   const handleBuy = () => {
     if (!packId || !raffleId) {
@@ -69,7 +69,7 @@ function PackMomCard({
       <div className="text-center mb-6">
         <h3 className="text-xl font-bold text-text-primary mb-1">{name}</h3>
         <p className="text-sm text-text-secondary">
-          LuckyPass + Regalo exclusivo SYS
+          {subtitle}
         </p>
       </div>
 
@@ -88,28 +88,14 @@ function PackMomCard({
       <div className="space-y-3 mb-6">
         <div className="flex items-start gap-2 text-sm text-text-secondary">
           <CheckCircle className="size-4 text-success shrink-0 mt-0.5" />
-          <span>
-            <strong className="text-text-primary">{tickets} LuckyPass</strong> para participar en la rifa
-          </span>
+          <span>{benefitText}</span>
         </div>
-        <div className="flex items-start gap-2 text-sm text-text-secondary">
-          <Gift className="size-4 text-primary shrink-0 mt-0.5" />
-          <span>
-            <strong className="text-text-primary">Regalo:</strong>{' '}
-            <a
-              href={giftUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {giftName}
-            </a>
-          </span>
-        </div>
-        <div className="flex items-start gap-2 text-sm text-text-secondary">
-          <Heart className="size-4 text-secondary shrink-0 mt-0.5" />
-          <span>{giftDescription}</span>
-        </div>
+        {productItems && productItems.map((item, index) => (
+          <div key={index} className="flex items-start gap-2 text-sm text-text-secondary">
+            <CheckCircle className="size-4 text-success shrink-0 mt-0.5" />
+            <span>{item}</span>
+          </div>
+        ))}
       </div>
 
       <div className="mt-auto pt-4">
@@ -119,7 +105,7 @@ function PackMomCard({
           className="w-full cursor-pointer"
           onClick={handleBuy}
         >
-          Activar {name}
+          {ctaText}
           <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -179,7 +165,7 @@ export default function PackMomPage() {
             />
           </div>
           <p className="text-lg text-text-secondary max-w-lg mx-auto">
-            Participa en la rifa y recibe un pack de regalo exclusivo de Laboratorio SYS.
+            Participa en el sorteo de Gifcards y recibe un pack de regalo exclusivo de Laboratorio SYS.
             Tu LuckyPass + cuidado real.
           </p>
         </div>
@@ -190,10 +176,15 @@ export default function PackMomPage() {
             name="Mom Home Experience"
             price={momPack?.price ?? 19900}
             originalPrice={23800}
-            tickets={momPack?.luckyPassQuantity ?? 1}
-            giftName="Pack Home Experience"
-            giftUrl="https://www.laboratoriosys.cl/"
-            giftDescription="Cochecito aromático, Mikado frutos rojos 50ml, Crema de manos castaña, Jabón líquido hidratante de regalo."
+            subtitle="Aromas y cuidado diario para regalar bienestar y momentos especiales"
+            benefitText="Incluye productos exclusivos Laboratorio SYS + 1 LuckyPass promocional asociado a la campaña activa."
+            productItems={[
+              "Cochecito aromático",
+              "Mikado frutos rojos 50ml",
+              "Crema de manos castaña",
+              "Jabón líquido hidratante"
+            ]}
+            ctaText="Obtener Pack Home Experience"
             packId={momPack?.id}
             raffleId={raffle?.id}
             isAuthenticated={isAuthenticated}
@@ -203,10 +194,15 @@ export default function PackMomPage() {
             name="Mom Skin Ritual"
             price={momPremiumPack?.price ?? 39800}
             originalPrice={46800}
-            tickets={momPremiumPack?.luckyPassQuantity ?? 3}
-            giftName="Pack Skin Ritual"
-            giftUrl="https://www.laboratoriosys.cl/"
-            giftDescription="Crema facial Labnatur, Serum facial Labnatur, Crema de manos Labnatur, Bálsamo labial de regalo."
+            subtitle="Rutina facial premium pensada para cuidar, regalar y sorprender"
+            benefitText="Incluye productos exclusivos Labnatur + 3 LuckyPass promocionales asociados a la campaña activa."
+            productItems={[
+              "Crema facial Labnatur",
+              "Serum facial Labnatur",
+              "Crema de manos Labnatur",
+              "Bálsamo labial de regalo"
+            ]}
+            ctaText="Obtener Mom Skin Ritual"
             popular
             packId={momPremiumPack?.id}
             raffleId={raffle?.id}

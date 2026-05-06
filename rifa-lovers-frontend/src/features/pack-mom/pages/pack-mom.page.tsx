@@ -136,10 +136,15 @@ export default function PackMomPage() {
 
   const isLoading = raffleLoading || packsLoading
 
+  console.log('Available packs:', packs.map(p => ({ id: p.id, name: p.name, nameUpper: p.name?.toUpperCase() })))
+
   const momPack = packs.find((p) => p.name?.toUpperCase() === 'MOM HOME EXPERIENCE')
   const momPremiumPack = packs.find(
     (p) => p.name?.toUpperCase() === 'MOM SKIN RITUAL'
   )
+
+  console.log('Found packs:', { momPack, momPremiumPack })
+
 
 
   if (isLoading) {

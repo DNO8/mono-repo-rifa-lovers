@@ -1,6 +1,4 @@
 import { useRef, useEffect } from 'react'
-import { Flame, Clock, TrendingUp } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { gsap } from '@/lib/gsap'
 
@@ -58,22 +56,6 @@ export function ProgressFomoSection() {
   return (
     <section className="py-8 md:py-10 px-4 md:px-8">
       <div className="mx-auto max-w-[800px]">
-        {/* Urgency badges */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-5">
-          <Badge variant="gradient" className="gap-1.5 text-xs">
-            <Flame className="size-3" />
-            Alta demanda
-          </Badge>
-          <Badge variant="outline-primary" className="gap-1.5 text-xs">
-            <Clock className="size-3" />
-            Cierre este viernes
-          </Badge>
-          <Badge variant="subtle" className="gap-1.5 text-xs">
-            <TrendingUp className="size-3" />
-            Precio sube pronto
-          </Badge>
-        </div>
-
         {/* Progress bar */}
         <div className="rounded-2xl p-5 md:p-6 glass-light border border-border-light">
           {/* Stats row */}

@@ -20,20 +20,20 @@ export function CTASection() {
       <div className="mx-auto max-w-[800px] text-center glass-medium rounded-2xl p-10 md:p-14">
         <div className="inline-flex items-center gap-2 mb-5 text-primary">
           <Sparkles className="size-5" />
-          <span className="text-sm font-bold uppercase tracking-wider">No esperes más</span>
+          <span className="text-sm font-bold uppercase tracking-wider">EXPERIENCIAS REALES</span>
         </div>
 
         <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-4">
-          Tu próximo LuckyPass puede cambiar todo.
+          Vive la experiencia RifaLovers
         </h2>
 
         <p className="text-text-secondary mb-8 max-w-md mx-auto">
-          Cada LuckyPass es una oportunidad para ganar y una acción real de impacto social.
+          Packs exclusivos, beneficios promocionales y campañas transparentes para nuestra comunidad.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button variant="primary" size="lg" onClick={scrollToPricing}>
-            Participar Ahora
+            Obtener mi Pack
             <ArrowRight className="size-4" />
           </Button>
         </div>

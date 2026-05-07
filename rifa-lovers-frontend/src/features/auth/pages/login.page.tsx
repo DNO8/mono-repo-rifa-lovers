@@ -33,10 +33,10 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <img src="/images/logos/logo-v2.webp" alt="RifaLovers" className="h-8 w-auto" />
-            <span className="text-xl gradient-text leading-none" style={{ fontFamily: 'Montserrat, sans-serif' }}><span className="font-bold">Rifa</span><span className="font-semibold"> Lovers</span></span>
+            <span className="text-xl gradient-text leading-none" style={{ fontFamily: 'Montserrat, sans-serif' }}><span className="font-bold">Rifa</span><span className="font-semibold">Lovers</span></span>
           </Link>
           <h1 className="text-2xl font-extrabold text-text-primary tracking-tight">
-            Inicia sesión
+            Ingresar a RifaLovers
           </h1>
           <p className="text-sm text-text-secondary mt-1">
             Ingresa tus datos para continuar participando

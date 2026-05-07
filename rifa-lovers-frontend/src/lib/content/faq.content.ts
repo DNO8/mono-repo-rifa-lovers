@@ -3,30 +3,30 @@ import type { FAQ } from '@/types/domain.types'
 export const FAQS: FAQ[] = [
   {
     id: 'faq-1',
-    question: '¿Cómo recibo mi LuckyPass?',
+    question: '¿Cómo funcionan los LuckyPass?',
     answer:
-      'Recibes tu LuckyPass al instante en tu correo electrónico y queda disponible en tu cuenta.',
+      'Cada pack incluye LuckyPass promocionales asociados a campañas activas de RifaLovers.',
     icon: 'Ticket',
   },
   {
     id: 'faq-2',
-    question: '¿A dónde va el dinero?',
+    question: '¿Cómo se realizan los lives?',
     answer:
-      'Tu participación genera impacto real. Apoyamos causas verificadas y visibles para todos.',
-    icon: 'Heart',
-  },
-  {
-    id: 'faq-3',
-    question: '¿Cuándo son los sorteos?',
-    answer:
-      'Todos los domingos a las 20:00 hrs. Te avisamos por email para que no te pierdas el sorteo en vivo.',
+      'Todos los sorteos y entregas se realizan públicamente mediante transmisiones en vivo.',
     icon: 'Radio',
   },
   {
-    id: 'faq-4',
+    id: 'faq-3',
     question: '¿Es seguro participar?',
     answer:
-      'Totalmente seguro y transparente. Pagos protegidos y sorteos en vivo verificables.',
+      'Sí. Trabajamos con pagos seguros y procesos transparentes para toda la comunidad.',
     icon: 'Shield',
+  },
+  {
+    id: 'faq-4',
+    question: '¿Cómo se desbloquean los beneficios?',
+    answer:
+      'Cada campaña activa nuevos hitos y experiencias según el avance de la comunidad.',
+    icon: 'Heart',
   },
 ]

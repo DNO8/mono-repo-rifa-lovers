@@ -68,7 +68,7 @@ export function ContactForm() {
     <Card variant="glass" className="p-6 md:p-8">
       <h3 className="text-lg font-bold text-text-primary mb-1">Escríbenos</h3>
       <p className="text-sm text-text-secondary mb-6">
-        Completa el formulario y te responderemos en menos de 24 horas.
+        Responderemos lo antes posible 💜
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">

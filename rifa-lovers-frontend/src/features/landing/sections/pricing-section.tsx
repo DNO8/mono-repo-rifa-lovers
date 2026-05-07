@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { usePacks } from '@/hooks/use-packs'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 
-const SHOW_PACK_MOM = false
+const SHOW_PACK_MOM = true
 
 export function PricingSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.15 })
@@ -91,10 +91,10 @@ export function PricingSection() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div className="rounded-xl bg-bg-muted border border-border-light p-4">
-                  <h3 className="font-bold text-text-primary mb-1">Pack Mom</h3>
+                  <h3 className="font-bold text-text-primary mb-1">Mom Home Experience</h3>
                   <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-lg font-extrabold text-text-primary">$9.990</span>
-                    <span className="text-xs text-text-tertiary line-through">$14.990</span>
+                    <span className="text-lg font-extrabold text-text-primary">$19.990</span>
+                    <span className="text-xs text-text-tertiary line-through">$23.800</span>
                   </div>
                   <ul className="space-y-1">
                     <li className="flex items-center gap-2 text-xs text-text-secondary">
@@ -103,15 +103,27 @@ export function PricingSection() {
                     </li>
                     <li className="flex items-center gap-2 text-xs text-text-secondary">
                       <CheckCircle className="size-3 text-success shrink-0" />
-                      Pack Anti-Mosquito SYS
+                      Cochecito aromático
+                    </li>
+                    <li className="flex items-center gap-2 text-xs text-text-secondary">
+                      <CheckCircle className="size-3 text-success shrink-0" />
+                      Mikado frutos rojos 50ml
+                    </li>
+                    <li className="flex items-center gap-2 text-xs text-text-secondary">
+                      <CheckCircle className="size-3 text-success shrink-0" />
+                      Crema de manos castaña
+                    </li>
+                    <li className="flex items-center gap-2 text-xs text-text-secondary">
+                      <CheckCircle className="size-3 text-success shrink-0" />
+                      Jabón líquido hidratante
                     </li>
                   </ul>
                 </div>
                 <div className="rounded-xl bg-bg-purple-soft/40 border border-primary/15 p-4">
-                  <h3 className="font-bold text-text-primary mb-1">Pack Mom Premium</h3>
+                  <h3 className="font-bold text-text-primary mb-1">Mom Skin Ritual</h3>
                   <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-lg font-extrabold text-text-primary">$14.990</span>
-                    <span className="text-xs text-text-tertiary line-through">$24.990</span>
+                    <span className="text-lg font-extrabold text-text-primary">$39.800</span>
+                    <span className="text-xs text-text-tertiary line-through">$46.800</span>
                   </div>
                   <ul className="space-y-1">
                     <li className="flex items-center gap-2 text-xs text-text-secondary">
@@ -120,7 +132,19 @@ export function PricingSection() {
                     </li>
                     <li className="flex items-center gap-2 text-xs text-text-secondary">
                       <CheckCircle className="size-3 text-success shrink-0" />
-                      Pack Hidratante SYS
+                      Crema facial Labnatur
+                    </li>
+                    <li className="flex items-center gap-2 text-xs text-text-secondary">
+                      <CheckCircle className="size-3 text-success shrink-0" />
+                      Serum facial Labnatur
+                    </li>
+                    <li className="flex items-center gap-2 text-xs text-text-secondary">
+                      <CheckCircle className="size-3 text-success shrink-0" />
+                      Crema de manos Labnatur
+                    </li>
+                    <li className="flex items-center gap-2 text-xs text-text-secondary">
+                      <CheckCircle className="size-3 text-success shrink-0" />
+                      Bálsamo labial de regalo
                     </li>
                   </ul>
                 </div>

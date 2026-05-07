@@ -58,6 +58,7 @@ export const ENDPOINTS = {
 
   payments: {
     initiate: '/payments/initiate',
+    verifyFlowStatus: '/payments/verify-flow-status',
   },
 
   testimonials: {

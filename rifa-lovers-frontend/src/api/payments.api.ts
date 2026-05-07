@@ -16,3 +16,17 @@ export interface InitiatePaymentResponse {
 export async function initiatePayment(data: InitiatePaymentRequest): Promise<InitiatePaymentResponse> {
   return apiClient.post<InitiatePaymentResponse>(ENDPOINTS.payments.initiate, data)
 }
+
+export interface VerifyFlowStatusRequest {
+  token: string
+}
+
+export interface VerifyFlowStatusResponse {
+  flowStatus: number
+  purchaseStatus: string
+  purchaseId: string
+}
+
+export async function verifyFlowPaymentStatus(data: VerifyFlowStatusRequest): Promise<VerifyFlowStatusResponse> {
+  return apiClient.post<VerifyFlowStatusResponse>(ENDPOINTS.payments.verifyFlowStatus, data)
+}

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { getPurchaseStatus } from '@/api/purchases.api'
+import { verifyFlowPaymentStatus } from '@/api/payments.api'
 
 type PaymentResult = 'loading' | 'success' | 'failed' | 'pending' | 'cancelled'
 
@@ -28,33 +29,64 @@ export default function PaymentReturnPage() {
     const purchaseId = sessionStorage.getItem('pending_purchase_id')
     if (!purchaseId) return
 
-    const poll = async () => {
+    const verifyFlowStatus = async () => {
       try {
-        const data = await getPurchaseStatus(purchaseId)
-        if (data.status === 'paid') {
+        const flowData = await verifyFlowPaymentStatus({ token })
+        // Flow status: 1=pendiente, 2=pagada, 3=rechazada, 4=anulada
+        if (flowData.flowStatus === 2) {
+          // Pago pagado
           sessionStorage.removeItem('pending_purchase_id')
           setResult('success')
           return
         }
-        if (data.status === 'failed') {
+        if (flowData.flowStatus === 3 || flowData.flowStatus === 4) {
+          // Pago rechazado o anulado
           sessionStorage.removeItem('pending_purchase_id')
           setResult('failed')
           return
         }
-      } catch {
-        // Error de red — contar como intento fallido
+        // Si está pendiente (status 1), proceder con polling normal
+      } catch (error) {
+        // Error verificando Flow (JWT expirado, error de red, etc.)
+        // Fallback al polling normal
+        console.error('Error verificando estado en Flow:', error)
       }
 
-      attemptsRef.current += 1
-      if (attemptsRef.current >= MAX_ATTEMPTS) {
-        setResult('pending')
-        return
+      // Iniciar polling normal
+      startPolling(purchaseId)
+    }
+
+    const startPolling = (pid: string) => {
+      const poll = async () => {
+        try {
+          const data = await getPurchaseStatus(pid)
+          if (data.status === 'paid') {
+            sessionStorage.removeItem('pending_purchase_id')
+            setResult('success')
+            return
+          }
+          if (data.status === 'failed') {
+            sessionStorage.removeItem('pending_purchase_id')
+            setResult('failed')
+            return
+          }
+        } catch {
+          // Error de red — contar como intento fallido
+        }
+
+        attemptsRef.current += 1
+        if (attemptsRef.current >= MAX_ATTEMPTS) {
+          setResult('pending')
+          return
+        }
+
+        timerRef.current = setTimeout(poll, POLL_INTERVAL_MS)
       }
 
       timerRef.current = setTimeout(poll, POLL_INTERVAL_MS)
     }
 
-    timerRef.current = setTimeout(poll, POLL_INTERVAL_MS)
+    verifyFlowStatus()
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)

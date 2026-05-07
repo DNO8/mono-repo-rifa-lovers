@@ -83,6 +83,29 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         res.setHeader('Content-Type', 'text/html');
         res.send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"><script>window.location.replace("${redirectUrl}");</script></head><body></body></html>`);
     }
+    async verifyFlowPaymentStatus(token) {
+        this.logger.debug(`Verificando estado de pago en Flow con token: ${token}`);
+        if (!token) {
+            throw new common_1.NotFoundException('Token requerido');
+        }
+        const paymentStatus = await this.flowService.getPaymentStatus(token);
+        const { commerceOrder, status } = paymentStatus;
+        this.logger.log(`Flow payment status verification: order=${commerceOrder}, status=${status}`);
+        const purchase = await this.purchasesService.findByProviderTransactionId(token);
+        if (!purchase) {
+            this.logger.error(`No se encontró compra con providerTransactionId: ${token}`);
+            throw new common_1.NotFoundException('Compra no encontrada');
+        }
+        if (status === 3 || status === 4) {
+            await this.purchasesService.updateStatus(purchase.id, 'failed');
+            this.logger.log(`Pago marcado como failed por Flow status ${status}: ${purchase.id}`);
+        }
+        return {
+            flowStatus: status,
+            purchaseStatus: purchase.status,
+            purchaseId: purchase.id,
+        };
+    }
 };
 exports.PaymentsController = PaymentsController;
 __decorate([
@@ -103,6 +126,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "handleFlowReturn", null);
+__decorate([
+    (0, common_1.Post)('verify-flow-status'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, throttler_1.Throttle)({ default: { limit: 20, ttl: 60000 } }),
+    __param(0, (0, common_1.Body)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "verifyFlowPaymentStatus", null);
 exports.PaymentsController = PaymentsController = PaymentsController_1 = __decorate([
     (0, common_1.Controller)('payments'),
     __metadata("design:paramtypes", [config_1.ConfigService,

@@ -80,13 +80,13 @@ export function HeroSection() {
               className="block text-text-primary hero-fade-up"
               style={{ animationDelay: '0.3s' }}
             >
-              Gana un MacBook M5
+              Próximamente: Gana un MacBook M5
             </span>
             <span
               className="block bg-linear-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent hero-fade-up"
               style={{ animationDelay: '0.7s' }}
             >
-              desde $4.990
+              desde $2.990
             </span>
           </h1>
 

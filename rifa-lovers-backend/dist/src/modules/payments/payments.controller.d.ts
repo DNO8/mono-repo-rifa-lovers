@@ -23,5 +23,10 @@ export declare class PaymentsController {
         token: string;
     }>;
     handleFlowReturn(token: string, res: Response): void;
+    verifyFlowPaymentStatus(token: string): Promise<{
+        flowStatus: number;
+        purchaseStatus: import("@prisma/client").$Enums.PurchaseStatus;
+        purchaseId: string;
+    }>;
 }
 export {};

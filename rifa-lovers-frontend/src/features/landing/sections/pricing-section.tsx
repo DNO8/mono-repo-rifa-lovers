@@ -25,17 +25,19 @@ export function PricingSection() {
       className="px-4 md:px-8 py-16 md:py-24"
     >
       <div className="mx-auto max-w-[1200px]">
-        {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <Badge variant="subtle" className="mb-4">Elige tu Pack</Badge>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3">
-            Elige tu{' '}
-            <span className="gradient-text">Pack</span>
-          </h2>
-          <p className="text-base text-text-secondary max-w-lg mx-auto">
-            Participa, recibe un producto digital y vive la experiencia RifaLovers.
-          </p>
-        </div>
+        {/* Header - solo mostrar si hay pricingTiers */}
+        {pricingTiers.length > 0 && (
+          <div className="text-center mb-12 md:mb-16">
+            <Badge variant="subtle" className="mb-4">Elige tu Pack</Badge>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-3">
+              Elige tu{' '}
+              <span className="gradient-text">Pack</span>
+            </h2>
+            <p className="text-base text-text-secondary max-w-lg mx-auto">
+              Participa, recibe un producto digital y vive la experiencia RifaLovers.
+            </p>
+          </div>
+        )}
 
         {/* Loading State */}
         {isLoading && (
@@ -48,13 +50,6 @@ export function PricingSection() {
         {error && (
           <div className="text-center py-12 text-text-secondary">
             Error al cargar los packs. Intenta recargar la página.
-          </div>
-        )}
-
-        {/* Pricing Cards */}
-        {!isLoading && !error && pricingTiers.length === 0 && (
-          <div className="text-center py-12 text-text-secondary">
-            Los packs están temporalmente deshabilitados.
           </div>
         )}
 

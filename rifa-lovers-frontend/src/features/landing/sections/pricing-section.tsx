@@ -62,7 +62,7 @@ export function PricingSection() {
                 <span className="gradient-text">Pack Mom</span>
               </h2>
               <p className="text-base text-text-secondary max-w-lg mx-auto">
-                Participa en la rifa y recibe un pack de regalo exclusivo de Laboratorio SYS.
+                Una experiencia creada para mamá, Compra un pack exclusivo de Laboratorio SYS y participa por 3 Gift Cards de $100.000 junto a RifaLovers.
               </p>
             </div>
 

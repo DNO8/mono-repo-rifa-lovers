@@ -11,6 +11,8 @@ export interface KpiData {
   totalPurchases: number
   pendingPurchases: number
   completedPurchases: number
+  failedPurchases: number
+  refundedPurchases: number
   totalLuckyPasses: number
   winnersCount: number
 }
@@ -319,6 +321,8 @@ export class AdminService {
       totalPurchases,
       pendingPurchases,
       completedPurchases,
+      failedPurchases,
+      refundedPurchases,
       totalLuckyPasses,
       winnersCount,
     ] = await Promise.all([
@@ -349,6 +353,14 @@ export class AdminService {
         where: { status: 'paid' },
       }),
 
+      this.prisma.purchase.count({
+        where: { status: 'failed' },
+      }),
+
+      this.prisma.purchase.count({
+        where: { status: 'refunded' },
+      }),
+
       this.prisma.luckyPass.count(),
 
       this.prisma.prizeWinner.count(),
@@ -366,6 +378,8 @@ export class AdminService {
       totalPurchases,
       pendingPurchases,
       completedPurchases,
+      failedPurchases,
+      refundedPurchases,
       totalLuckyPasses,
       winnersCount,
     }

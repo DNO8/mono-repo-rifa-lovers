@@ -128,7 +128,6 @@ __decorate([
 ], PaymentsController.prototype, "handleFlowReturn", null);
 __decorate([
     (0, common_1.Post)('verify-flow-status'),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     (0, throttler_1.Throttle)({ default: { limit: 20, ttl: 60000 } }),
     __param(0, (0, common_1.Body)('token')),
     __metadata("design:type", Function),

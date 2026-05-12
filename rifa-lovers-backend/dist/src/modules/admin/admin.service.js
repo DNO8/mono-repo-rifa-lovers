@@ -244,7 +244,7 @@ let AdminService = AdminService_1 = class AdminService {
     }
     async getKpis() {
         this.logger.log('Obteniendo KPIs');
-        const [totalSalesAgg, packsSold, activeUsers, activeRaffles, totalPurchases, pendingPurchases, completedPurchases, totalLuckyPasses, winnersCount,] = await Promise.all([
+        const [totalSalesAgg, packsSold, activeUsers, activeRaffles, totalPurchases, pendingPurchases, completedPurchases, failedPurchases, refundedPurchases, totalLuckyPasses, winnersCount,] = await Promise.all([
             this.prisma.purchase.aggregate({
                 where: { status: 'paid' },
                 _sum: { totalAmount: true },
@@ -265,6 +265,12 @@ let AdminService = AdminService_1 = class AdminService {
             this.prisma.purchase.count({
                 where: { status: 'paid' },
             }),
+            this.prisma.purchase.count({
+                where: { status: 'failed' },
+            }),
+            this.prisma.purchase.count({
+                where: { status: 'refunded' },
+            }),
             this.prisma.luckyPass.count(),
             this.prisma.prizeWinner.count(),
         ]);
@@ -279,6 +285,8 @@ let AdminService = AdminService_1 = class AdminService {
             totalPurchases,
             pendingPurchases,
             completedPurchases,
+            failedPurchases,
+            refundedPurchases,
             totalLuckyPasses,
             winnersCount,
         };

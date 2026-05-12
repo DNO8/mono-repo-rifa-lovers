@@ -112,7 +112,6 @@ export class PaymentsController {
   }
 
   @Post('verify-flow-status')
-  @UseGuards(AuthGuard('jwt'))
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   async verifyFlowPaymentStatus(@Body('token') token: string) {
     this.logger.debug(`Verificando estado de pago en Flow con token: ${token}`)

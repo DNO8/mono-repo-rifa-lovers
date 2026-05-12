@@ -54,6 +54,8 @@ export interface KpiData {
   totalPurchases: number
   pendingPurchases: number
   completedPurchases: number
+  failedPurchases: number
+  refundedPurchases: number
   totalLuckyPasses: number
   winnersCount: number
 }

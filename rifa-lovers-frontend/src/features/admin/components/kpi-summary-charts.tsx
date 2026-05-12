@@ -23,8 +23,11 @@ export function KpiSummaryCharts({ kpis }: KpiSummaryChartsProps) {
   const pieData = [
     { id: 0, value: kpis.completedPurchases, label: 'Completadas' },
     { id: 1, value: kpis.pendingPurchases, label: 'Pendientes' },
-    ...(kpis.totalPurchases > kpis.completedPurchases + kpis.pendingPurchases
-      ? [{ id: 2, value: kpis.totalPurchases - kpis.completedPurchases - kpis.pendingPurchases, label: 'Otros' }]
+    ...(kpis.failedPurchases > 0
+      ? [{ id: 2, value: kpis.failedPurchases, label: 'Rechazados' }]
+      : []),
+    ...(kpis.refundedPurchases > 0
+      ? [{ id: 3, value: kpis.refundedPurchases, label: 'Reembolsados' }]
       : []),
   ]
 

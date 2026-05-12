@@ -120,12 +120,6 @@ export class PaymentsController {
       throw new NotFoundException('Token requerido')
     }
 
-    // Consultar estado real del pago en Flow API
-    const paymentStatus = await this.flowService.getPaymentStatus(token)
-    const { commerceOrder, status } = paymentStatus
-
-    this.logger.log(`Flow payment status verification: order=${commerceOrder}, status=${status}`)
-
     // Buscar la compra por providerTransactionId (token de Flow) en PaymentTransaction
     const purchase = await this.purchasesService.findByProviderTransactionId(token)
     if (!purchase) {
@@ -133,16 +127,42 @@ export class PaymentsController {
       throw new NotFoundException('Compra no encontrada')
     }
 
+    // Retry loop: reconsultar Flow hasta obtener estado definitivo
     // Flow status: 1=pendiente, 2=pagada, 3=rechazada, 4=anulada
-    // Si Flow indica que el pago fue rechazado o anulado, actualizar el estado de la compra
-    if (status === 3 || status === 4) {
-      await this.purchasesService.updateStatus(purchase.id, 'failed')
-      this.logger.log(`Pago marcado como failed por Flow status ${status}: ${purchase.id}`)
+    const MAX_RETRIES = 5
+    const RETRY_DELAY_MS = 3000
+    let finalStatus = 1
+    let commerceOrder = ''
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const paymentStatus = await this.flowService.getPaymentStatus(token)
+      finalStatus = paymentStatus.status
+      commerceOrder = paymentStatus.commerceOrder
+
+      this.logger.log(
+        `Flow status intento ${attempt + 1}/${MAX_RETRIES}: order=${commerceOrder}, status=${finalStatus}`,
+      )
+
+      if (finalStatus !== 1) {
+        // Estado definitivo encontrado (2=pagada, 3=rechazada, 4=anulada)
+        break
+      }
+
+      // Esperar antes del siguiente intento (excepto en el último)
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS))
+      }
     }
 
-    // Retornar el estado de Flow y el estado actual de la compra
+    // Si Flow indica que el pago fue rechazado o anulado, actualizar el estado de la compra
+    if (finalStatus === 3 || finalStatus === 4) {
+      await this.purchasesService.updateStatus(purchase.id, 'failed')
+      this.logger.log(`Pago marcado como failed por Flow status ${finalStatus}: ${purchase.id}`)
+    }
+
+    // Retornar el estado final de Flow y el estado actual de la compra
     return {
-      flowStatus: status,
+      flowStatus: finalStatus,
       purchaseStatus: purchase.status,
       purchaseId: purchase.id,
     }

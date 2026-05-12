@@ -1,16 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { CheckCircle, XCircle, Clock, ArrowLeft, ArrowRight, type LucideIcon } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
-import { getPurchaseStatus } from '@/api/purchases.api'
 import { verifyFlowPaymentStatus } from '@/api/payments.api'
 
 type PaymentResult = 'loading' | 'success' | 'failed' | 'pending' | 'cancelled'
-
-const MAX_ATTEMPTS = 8
-const POLL_INTERVAL_MS = 2000
 
 export default function PaymentReturnPage() {
   const [searchParams] = useSearchParams()
@@ -20,84 +16,39 @@ export default function PaymentReturnPage() {
     if (!sessionStorage.getItem('pending_purchase_id')) return 'pending'
     return 'loading'
   })
-  const attemptsRef = useRef(0)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!token) return
-
-    const purchaseId = sessionStorage.getItem('pending_purchase_id')
-    if (!purchaseId) return
 
     const verifyFlowStatus = async () => {
       try {
         const flowData = await verifyFlowPaymentStatus({ token })
         // Flow status: 1=pendiente, 2=pagada, 3=rechazada, 4=anulada
         if (flowData.flowStatus === 2) {
-          // Pago pagado
           sessionStorage.removeItem('pending_purchase_id')
           setResult('success')
-          return
-        }
-        if (flowData.flowStatus === 3 || flowData.flowStatus === 4) {
-          // Pago rechazado o anulado
+        } else if (flowData.flowStatus === 3 || flowData.flowStatus === 4) {
           sessionStorage.removeItem('pending_purchase_id')
           setResult('failed')
-          return
-        }
-        // Si está pendiente (status 1), proceder con polling normal
-      } catch (error) {
-        // Error verificando Flow (JWT expirado, error de red, etc.)
-        // Fallback al polling normal
-        console.error('Error verificando estado en Flow:', error)
-      }
-
-      // Iniciar polling normal
-      startPolling(purchaseId)
-    }
-
-    const startPolling = (pid: string) => {
-      const poll = async () => {
-        try {
-          const data = await getPurchaseStatus(pid)
-          if (data.status === 'paid') {
-            sessionStorage.removeItem('pending_purchase_id')
-            setResult('success')
-            return
-          }
-          if (data.status === 'failed') {
-            sessionStorage.removeItem('pending_purchase_id')
-            setResult('failed')
-            return
-          }
-        } catch {
-          // Error de red — contar como intento fallido
-        }
-
-        attemptsRef.current += 1
-        if (attemptsRef.current >= MAX_ATTEMPTS) {
+        } else {
+          // Status 1 (pendiente) después de retry agotado en backend
           setResult('pending')
-          return
         }
-
-        timerRef.current = setTimeout(poll, POLL_INTERVAL_MS)
+      } catch (error) {
+        console.error('Error verificando estado en Flow:', error)
+        setResult('pending')
       }
-
-      timerRef.current = setTimeout(poll, POLL_INTERVAL_MS)
     }
 
     verifyFlowStatus()
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
   }, [token])
 
   if (result === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
         <Spinner size="lg" />
-        <p className="text-text-secondary text-lg">Verificando tu pago...</p>
+        <p className="text-text-secondary text-lg">Verificando tu pago con Flow...</p>
+        <p className="text-text-tertiary text-sm">Esto puede tomar unos segundos</p>
       </div>
     )
   }

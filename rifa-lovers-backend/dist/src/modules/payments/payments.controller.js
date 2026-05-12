@@ -88,20 +88,33 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         if (!token) {
             throw new common_1.NotFoundException('Token requerido');
         }
-        const paymentStatus = await this.flowService.getPaymentStatus(token);
-        const { commerceOrder, status } = paymentStatus;
-        this.logger.log(`Flow payment status verification: order=${commerceOrder}, status=${status}`);
         const purchase = await this.purchasesService.findByProviderTransactionId(token);
         if (!purchase) {
             this.logger.error(`No se encontró compra con providerTransactionId: ${token}`);
             throw new common_1.NotFoundException('Compra no encontrada');
         }
-        if (status === 3 || status === 4) {
+        const MAX_RETRIES = 5;
+        const RETRY_DELAY_MS = 3000;
+        let finalStatus = 1;
+        let commerceOrder = '';
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            const paymentStatus = await this.flowService.getPaymentStatus(token);
+            finalStatus = paymentStatus.status;
+            commerceOrder = paymentStatus.commerceOrder;
+            this.logger.log(`Flow status intento ${attempt + 1}/${MAX_RETRIES}: order=${commerceOrder}, status=${finalStatus}`);
+            if (finalStatus !== 1) {
+                break;
+            }
+            if (attempt < MAX_RETRIES - 1) {
+                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+            }
+        }
+        if (finalStatus === 3 || finalStatus === 4) {
             await this.purchasesService.updateStatus(purchase.id, 'failed');
-            this.logger.log(`Pago marcado como failed por Flow status ${status}: ${purchase.id}`);
+            this.logger.log(`Pago marcado como failed por Flow status ${finalStatus}: ${purchase.id}`);
         }
         return {
-            flowStatus: status,
+            flowStatus: finalStatus,
             purchaseStatus: purchase.status,
             purchaseId: purchase.id,
         };

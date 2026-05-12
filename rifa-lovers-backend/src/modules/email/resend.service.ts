@@ -35,6 +35,22 @@ export interface PurchaseConfirmationData {
   ticketNumbers: number[]
 }
 
+export interface FailedPaymentData {
+  toEmail: string
+  toName: string
+  purchaseId: string
+  raffleName: string | null
+  amount: number
+}
+
+export interface IncompletePaymentData {
+  toEmail: string
+  toName: string
+  purchaseId: string
+  raffleName: string | null
+  amount: number
+}
+
 @Injectable()
 export class ResendService {
   private readonly logger = new Logger(ResendService.name)
@@ -385,6 +401,162 @@ export class ResendService {
     </div>
     <div style="padding:20px 32px;border-top:1px solid #f3f4f6;text-align:center;">
       <p style="margin:0;font-size:12px;color:#9ca3af;">RifaLovers · Chile</p>
+    </div>
+  </div>
+</body>
+</html>`
+  }
+
+  async sendFailedPaymentEmail(data: FailedPaymentData): Promise<void> {
+    if (!this.resend) {
+      this.logger.warn(`[EMAIL SKIP] Pago fallido: ${data.toEmail} — ${data.purchaseId}`)
+      return
+    }
+
+    const from = this.getFromEmail('noreply')
+    const firstName = data.toName.split(' ')[0] || 'Participante'
+    const raffle = data.raffleName ?? 'RifaLovers'
+    const formattedAmount = data.amount.toLocaleString('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    })
+
+    const html = this.buildFailedPaymentTemplate({
+      firstName,
+      raffle,
+      amount: formattedAmount,
+      frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+    })
+
+    try {
+      const { error } = await this.resend.emails.send({
+        from: `RifaLovers <${from}>`,
+        to: data.toEmail,
+        subject: `❌ Tu pago en ${raffle} no pudo ser procesado`,
+        html,
+      })
+
+      if (error) {
+        this.logger.error(`Error enviando email de pago fallido a ${data.toEmail}: ${error.message}`)
+        return
+      }
+
+      this.logger.log(`Email de pago fallido enviado a ${data.toEmail}`)
+    } catch (err) {
+      this.logger.error(`Error enviando email de pago fallido a ${data.toEmail}: ${err}`)
+    }
+  }
+
+  async sendIncompletePaymentEmail(data: IncompletePaymentData): Promise<void> {
+    if (!this.resend) {
+      this.logger.warn(`[EMAIL SKIP] Pago incompleto: ${data.toEmail} — ${data.purchaseId}`)
+      return
+    }
+
+    const from = this.getFromEmail('noreply')
+    const firstName = data.toName.split(' ')[0] || 'Participante'
+    const raffle = data.raffleName ?? 'RifaLovers'
+    const formattedAmount = data.amount.toLocaleString('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+    })
+
+    const html = this.buildIncompletePaymentTemplate({
+      firstName,
+      raffle,
+      amount: formattedAmount,
+      frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+    })
+
+    try {
+      const { error } = await this.resend.emails.send({
+        from: `RifaLovers <${from}>`,
+        to: data.toEmail,
+        subject: `⏳ Tu pago en ${raffle} quedó pendiente`,
+        html,
+      })
+
+      if (error) {
+        this.logger.error(`Error enviando email de pago incompleto a ${data.toEmail}: ${error.message}`)
+        return
+      }
+
+      this.logger.log(`Email de pago incompleto enviado a ${data.toEmail}`)
+    } catch (err) {
+      this.logger.error(`Error enviando email de pago incompleto a ${data.toEmail}: ${err}`)
+    }
+  }
+
+  private buildFailedPaymentTemplate(params: {
+    firstName: string
+    raffle: string
+    amount: string
+    frontendUrl: string
+  }): string {
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Pago no procesado</title></head>
+<body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
+  <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#ef4444,#dc2626);padding:40px 32px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:12px;">❌</div>
+      <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu pago no pudo ser procesado</p>
+    </div>
+    <div style="padding:32px;">
+      <p style="color:#374151;line-height:1.6;font-size:15px;">El pago para tu participación en <strong>${params.raffle}</strong> no fue aprobado por el procesador de pagos.</p>
+      <div style="background:#fef2f2;border:2px solid #fee2e2;border-radius:12px;padding:20px;text-align:center;margin:24px 0;">
+        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Monto no cobrado</p>
+        <p style="margin:0;font-size:22px;font-weight:800;color:#ef4444;">${params.amount}</p>
+      </div>
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Puedes intentar nuevamente con otro método de pago o contactarnos si necesitas ayuda.</p>
+      <div style="margin-top:28px;text-align:center;">
+        <a href="${params.frontendUrl}/checkout" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+          Intentar de nuevo
+        </a>
+      </div>
+    </div>
+    <div style="padding:20px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;">RifaLovers · Chile · <a href="mailto:contacto@rifalovers.cl" style="color:#7c3aed;">contacto@rifalovers.cl</a></p>
+    </div>
+  </div>
+</body>
+</html>`
+  }
+
+  private buildIncompletePaymentTemplate(params: {
+    firstName: string
+    raffle: string
+    amount: string
+    frontendUrl: string
+  }): string {
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Pago pendiente</title></head>
+<body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
+  <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:40px 32px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:12px;">⏳</div>
+      <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu pago quedó pendiente</p>
+    </div>
+    <div style="padding:32px;">
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Detectamos que iniciaste una participación en <strong>${params.raffle}</strong> pero no completaste el pago.</p>
+      <div style="background:#fffbeb;border:2px solid #fef3c7;border-radius:12px;padding:20px;text-align:center;margin:24px 0;">
+        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Monto pendiente</p>
+        <p style="margin:0;font-size:22px;font-weight:800;color:#d97706;">${params.amount}</p>
+      </div>
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Puedes retomar tu compra desde tu cuenta. Si necesitas ayuda, contáctanos.</p>
+      <div style="margin-top:28px;text-align:center;">
+        <a href="${params.frontendUrl}/dashboard" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+          Ir a mi cuenta
+        </a>
+      </div>
+    </div>
+    <div style="padding:20px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;">RifaLovers · Chile · <a href="mailto:contacto@rifalovers.cl" style="color:#7c3aed;">contacto@rifalovers.cl</a></p>
     </div>
   </div>
 </body>

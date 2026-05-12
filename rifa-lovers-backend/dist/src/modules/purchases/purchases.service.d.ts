@@ -21,7 +21,17 @@ export declare class PurchasesService {
         provider: string;
         status: string;
     }): Promise<PurchaseResponseDto>;
-    findByProviderTransactionId(providerTransactionId: string): Promise<{
+    findByProviderTransactionId(providerTransactionId: string): Promise<({
+        raffle: {
+            title: string | null;
+        } | null;
+        user: {
+            id: string;
+            email: string | null;
+            firstName: string | null;
+            lastName: string | null;
+        } | null;
+    } & {
         id: string;
         status: import("@prisma/client").$Enums.PurchaseStatus;
         createdAt: Date;
@@ -29,7 +39,7 @@ export declare class PurchasesService {
         userId: string | null;
         totalAmount: import("@prisma/client/runtime/client").Decimal | null;
         paidAt: Date | null;
-    } | null>;
+    }) | null>;
     createFreePurchase(userId: string, createDto: CreatePurchaseDto): Promise<CreatePurchaseResponseDto>;
     getRecentPurchases(): Promise<RecentPurchaseDto[]>;
 }

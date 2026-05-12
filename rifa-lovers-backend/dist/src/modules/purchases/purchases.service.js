@@ -329,7 +329,14 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
     async findByProviderTransactionId(providerTransactionId) {
         const paymentTx = await this.prisma.paymentTransaction.findFirst({
             where: { providerTransactionId },
-            include: { purchase: true },
+            include: {
+                purchase: {
+                    include: {
+                        raffle: { select: { title: true } },
+                        user: { select: { id: true, email: true, firstName: true, lastName: true } },
+                    },
+                },
+            },
         });
         return paymentTx?.purchase ?? null;
     }

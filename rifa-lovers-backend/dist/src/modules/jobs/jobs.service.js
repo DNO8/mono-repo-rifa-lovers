@@ -49,12 +49,18 @@ const prisma_service_1 = require("../../database/prisma.service");
 const client_1 = require("@prisma/client");
 const raffle_scheduler_service_1 = require("../raffles/raffle-scheduler.service");
 const ticket_reservations_repository_1 = require("../ticket-reservations/ticket-reservations.repository");
+const resend_service_1 = require("../email/resend.service");
+const flow_service_1 = require("../payments/flow.service");
+const purchases_service_1 = require("../purchases/purchases.service");
 const cron = __importStar(require("node-cron"));
 let JobsService = JobsService_1 = class JobsService {
-    constructor(prisma, raffleSchedulerService, ticketReservationsRepository) {
+    constructor(prisma, raffleSchedulerService, ticketReservationsRepository, resendService, flowService, purchasesService) {
         this.prisma = prisma;
         this.raffleSchedulerService = raffleSchedulerService;
         this.ticketReservationsRepository = ticketReservationsRepository;
+        this.resendService = resendService;
+        this.flowService = flowService;
+        this.purchasesService = purchasesService;
         this.logger = new common_1.Logger(JobsService_1.name);
         this.tasks = [];
     }
@@ -168,6 +174,13 @@ let JobsService = JobsService_1 = class JobsService {
                     userId: true,
                     totalAmount: true,
                     createdAt: true,
+                    raffle: { select: { title: true } },
+                    user: { select: { email: true, firstName: true, lastName: true } },
+                    paymentTransactions: {
+                        select: { providerTransactionId: true },
+                        take: 1,
+                        orderBy: { createdAt: 'desc' },
+                    },
                 },
             });
             if (purchasesToExpire.length === 0) {
@@ -175,17 +188,70 @@ let JobsService = JobsService_1 = class JobsService {
                 return;
             }
             for (const purchase of purchasesToExpire) {
-                await this.prisma.purchase.update({
-                    where: { id: purchase.id },
-                    data: { status: client_1.PurchaseStatus.failed },
-                });
-                await this.prisma.paymentTransaction.updateMany({
-                    where: { purchaseId: purchase.id },
-                    data: { status: 'rejected', idempotencyKey: null },
-                });
-                this.logger.log(`[JOB] Purchase ${purchase.id} expirada (creada: ${purchase.createdAt.toISOString()})`);
+                const token = purchase.paymentTransactions[0]?.providerTransactionId;
+                let flowStatus = 1;
+                if (token) {
+                    try {
+                        const paymentStatus = await this.flowService.getPaymentStatus(token);
+                        flowStatus = paymentStatus.status;
+                        this.logger.log(`[JOB] Flow status para purchase ${purchase.id}: ${flowStatus}`);
+                    }
+                    catch (err) {
+                        this.logger.error(`[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
+                    }
+                }
+                if (flowStatus === 2) {
+                    this.logger.log(`[JOB] Purchase ${purchase.id} está pagada en Flow. Confirmando...`);
+                    try {
+                        await this.purchasesService.confirmPayment(purchase.id, {
+                            providerTransactionId: token ?? 'unknown',
+                            provider: 'flow',
+                            status: 'approved',
+                        });
+                    }
+                    catch (err) {
+                        this.logger.error(`[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
+                    }
+                }
+                else {
+                    await this.prisma.purchase.update({
+                        where: { id: purchase.id },
+                        data: { status: client_1.PurchaseStatus.failed },
+                    });
+                    await this.prisma.paymentTransaction.updateMany({
+                        where: { purchaseId: purchase.id },
+                        data: { status: 'rejected', idempotencyKey: null },
+                    });
+                    try {
+                        const user = purchase.user;
+                        if (user?.email) {
+                            if (flowStatus === 3 || flowStatus === 4) {
+                                void this.resendService.sendFailedPaymentEmail({
+                                    toEmail: user.email,
+                                    toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                                    purchaseId: purchase.id,
+                                    raffleName: purchase.raffle?.title ?? null,
+                                    amount: Number(purchase.totalAmount ?? 0),
+                                });
+                            }
+                            else {
+                                void this.resendService.sendIncompletePaymentEmail({
+                                    toEmail: user.email,
+                                    toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                                    purchaseId: purchase.id,
+                                    raffleName: purchase.raffle?.title ?? null,
+                                    amount: Number(purchase.totalAmount ?? 0),
+                                });
+                            }
+                        }
+                    }
+                    catch (err) {
+                        this.logger.error(`Error enviando email desde job: ${err instanceof Error ? err.message : String(err)}`);
+                    }
+                    this.logger.log(`[JOB] Purchase ${purchase.id} marcada como failed (Flow status: ${flowStatus})`);
+                }
             }
-            this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} purchases marcadas como failed`);
+            this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} purchases procesadas`);
         }
         catch (error) {
             this.logger.error('[JOB] Error en expiración de purchases:', error);
@@ -262,6 +328,9 @@ exports.JobsService = JobsService = JobsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         raffle_scheduler_service_1.RaffleSchedulerService,
-        ticket_reservations_repository_1.TicketReservationsRepository])
+        ticket_reservations_repository_1.TicketReservationsRepository,
+        resend_service_1.ResendService,
+        flow_service_1.FlowService,
+        purchases_service_1.PurchasesService])
 ], JobsService);
 //# sourceMappingURL=jobs.service.js.map

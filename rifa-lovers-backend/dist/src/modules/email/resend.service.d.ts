@@ -28,6 +28,20 @@ export interface PurchaseConfirmationData {
     luckyPassCount: number;
     ticketNumbers: number[];
 }
+export interface FailedPaymentData {
+    toEmail: string;
+    toName: string;
+    purchaseId: string;
+    raffleName: string | null;
+    amount: number;
+}
+export interface IncompletePaymentData {
+    toEmail: string;
+    toName: string;
+    purchaseId: string;
+    raffleName: string | null;
+    amount: number;
+}
 export declare class ResendService {
     private readonly config;
     private readonly logger;
@@ -42,6 +56,10 @@ export declare class ResendService {
     private buildWinnerEmailTemplate;
     private buildContactFormTemplate;
     private buildContactConfirmationTemplate;
+    sendFailedPaymentEmail(data: FailedPaymentData): Promise<void>;
+    sendIncompletePaymentEmail(data: IncompletePaymentData): Promise<void>;
+    private buildFailedPaymentTemplate;
+    private buildIncompletePaymentTemplate;
     sendNewsletterEmail(data: NewsletterEmailData): Promise<void>;
     private buildNewsletterEmailTemplate;
 }

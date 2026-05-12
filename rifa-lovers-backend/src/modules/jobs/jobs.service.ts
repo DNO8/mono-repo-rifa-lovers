@@ -3,6 +3,9 @@ import { PrismaService } from '../../database/prisma.service'
 import { RaffleStatus, PurchaseStatus } from '@prisma/client'
 import { RaffleSchedulerService } from '../raffles/raffle-scheduler.service'
 import { TicketReservationsRepository } from '../ticket-reservations/ticket-reservations.repository'
+import { ResendService } from '../email/resend.service'
+import { FlowService } from '../payments/flow.service'
+import { PurchasesService } from '../purchases/purchases.service'
 import * as cron from 'node-cron'
 
 @Injectable()
@@ -14,6 +17,9 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly raffleSchedulerService: RaffleSchedulerService,
     private readonly ticketReservationsRepository: TicketReservationsRepository,
+    private readonly resendService: ResendService,
+    private readonly flowService: FlowService,
+    private readonly purchasesService: PurchasesService,
   ) {}
 
   onModuleInit() {
@@ -183,6 +189,13 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
           userId: true,
           totalAmount: true,
           createdAt: true,
+          raffle: { select: { title: true } },
+          user: { select: { email: true, firstName: true, lastName: true } },
+          paymentTransactions: {
+            select: { providerTransactionId: true },
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+          },
         },
       })
 
@@ -191,25 +204,82 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
         return
       }
 
-      // Expirar las purchases
+      // Procesar cada purchase según estado real en Flow
       for (const purchase of purchasesToExpire) {
-        await this.prisma.purchase.update({
-          where: { id: purchase.id },
-          data: { status: PurchaseStatus.failed },
-        })
+        // Consultar Flow API para confirmar estado real del pago
+        const token = purchase.paymentTransactions[0]?.providerTransactionId
+        let flowStatus = 1
 
-        // Actualizar payment_transactions asociadas a 'rejected' y limpiar idempotencyKey
-        await this.prisma.paymentTransaction.updateMany({
-          where: { purchaseId: purchase.id },
-          data: { status: 'rejected', idempotencyKey: null },
-        })
+        if (token) {
+          try {
+            const paymentStatus = await this.flowService.getPaymentStatus(token)
+            flowStatus = paymentStatus.status
+            this.logger.log(`[JOB] Flow status para purchase ${purchase.id}: ${flowStatus}`)
+          } catch (err) {
+            this.logger.error(`[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`)
+          }
+        }
 
-        this.logger.log(
-          `[JOB] Purchase ${purchase.id} expirada (creada: ${purchase.createdAt.toISOString()})`
-        )
+        if (flowStatus === 2) {
+          // Flow confirma que el pago fue exitoso → confirmar compra
+          this.logger.log(`[JOB] Purchase ${purchase.id} está pagada en Flow. Confirmando...`)
+          try {
+            await this.purchasesService.confirmPayment(purchase.id, {
+              providerTransactionId: token ?? 'unknown',
+              provider: 'flow',
+              status: 'approved',
+            })
+          } catch (err) {
+            this.logger.error(`[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`)
+          }
+        } else {
+          // Flow no confirma pago (1=pendiente, 3=rechazado, 4=anulado) → marcar como failed
+          await this.prisma.purchase.update({
+            where: { id: purchase.id },
+            data: { status: PurchaseStatus.failed },
+          })
+
+          // Actualizar payment_transactions asociadas a 'rejected' y limpiar idempotencyKey
+          await this.prisma.paymentTransaction.updateMany({
+            where: { purchaseId: purchase.id },
+            data: { status: 'rejected', idempotencyKey: null },
+          })
+
+          // Enviar email según estado real de Flow
+          try {
+            const user = purchase.user
+            if (user?.email) {
+              if (flowStatus === 3 || flowStatus === 4) {
+                // Flow confirma que el pago fue rechazado/anulado
+                void this.resendService.sendFailedPaymentEmail({
+                  toEmail: user.email,
+                  toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                  purchaseId: purchase.id,
+                  raffleName: purchase.raffle?.title ?? null,
+                  amount: Number(purchase.totalAmount ?? 0),
+                })
+              } else {
+                // flowStatus === 1 (pendiente) o error consultando Flow → pago incompleto
+                void this.resendService.sendIncompletePaymentEmail({
+                  toEmail: user.email,
+                  toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                  purchaseId: purchase.id,
+                  raffleName: purchase.raffle?.title ?? null,
+                  amount: Number(purchase.totalAmount ?? 0),
+                })
+              }
+            }
+          } catch (err) {
+            this.logger.error(`Error enviando email desde job: ${err instanceof Error ? err.message : String(err)}`)
+          }
+
+          this.logger.log(
+            `[JOB] Purchase ${purchase.id} marcada como failed (Flow status: ${flowStatus})`
+          )
+        }
       }
 
-      this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} purchases marcadas como failed`)
+      this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} purchases procesadas`)
     } catch (error) {
       this.logger.error('[JOB] Error en expiración de purchases:', error)
     }

@@ -42,6 +42,20 @@ export interface IncompletePaymentData {
     raffleName: string | null;
     amount: number;
 }
+export interface PendingPaymentData {
+    toEmail: string;
+    toName: string;
+    purchaseId: string;
+    raffleName: string | null;
+    amount: number;
+    paymentUrl: string;
+}
+export interface PromotedRoleData {
+    toEmail: string;
+    toName: string;
+    role: string;
+    frontendUrl: string;
+}
 export declare class ResendService {
     private readonly config;
     private readonly logger;
@@ -58,8 +72,12 @@ export declare class ResendService {
     private buildContactConfirmationTemplate;
     sendFailedPaymentEmail(data: FailedPaymentData): Promise<void>;
     sendIncompletePaymentEmail(data: IncompletePaymentData): Promise<void>;
+    sendPendingPaymentEmail(data: PendingPaymentData): Promise<void>;
     private buildFailedPaymentTemplate;
     private buildIncompletePaymentTemplate;
+    private buildPendingPaymentTemplate;
     sendNewsletterEmail(data: NewsletterEmailData): Promise<void>;
+    sendPromotedRoleEmail(data: PromotedRoleData): Promise<void>;
+    private buildPromotedRoleTemplate;
     private buildNewsletterEmailTemplate;
 }

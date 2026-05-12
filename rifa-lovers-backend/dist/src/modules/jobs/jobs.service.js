@@ -214,14 +214,20 @@ let JobsService = JobsService_1 = class JobsService {
                     }
                 }
                 else {
-                    await this.prisma.purchase.update({
-                        where: { id: purchase.id },
-                        data: { status: client_1.PurchaseStatus.failed },
-                    });
-                    await this.prisma.paymentTransaction.updateMany({
-                        where: { purchaseId: purchase.id },
-                        data: { status: 'rejected', idempotencyKey: null },
-                    });
+                    try {
+                        await this.prisma.purchase.update({
+                            where: { id: purchase.id },
+                            data: { status: client_1.PurchaseStatus.failed },
+                        });
+                        await this.prisma.paymentTransaction.updateMany({
+                            where: { purchaseId: purchase.id },
+                            data: { status: 'rejected', idempotencyKey: null },
+                        });
+                    }
+                    catch (dbErr) {
+                        this.logger.error(`[JOB] Error actualizando purchase ${purchase.id} a failed: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
+                        continue;
+                    }
                     try {
                         const user = purchase.user;
                         if (user?.email) {

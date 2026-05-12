@@ -234,16 +234,23 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
           }
         } else {
           // Flow no confirma pago (1=pendiente, 3=rechazado, 4=anulado) → marcar como failed
-          await this.prisma.purchase.update({
-            where: { id: purchase.id },
-            data: { status: PurchaseStatus.failed },
-          })
+          try {
+            await this.prisma.purchase.update({
+              where: { id: purchase.id },
+              data: { status: PurchaseStatus.failed },
+            })
 
-          // Actualizar payment_transactions asociadas a 'rejected' y limpiar idempotencyKey
-          await this.prisma.paymentTransaction.updateMany({
-            where: { purchaseId: purchase.id },
-            data: { status: 'rejected', idempotencyKey: null },
-          })
+            // Actualizar payment_transactions asociadas a 'rejected' y limpiar idempotencyKey
+            await this.prisma.paymentTransaction.updateMany({
+              where: { purchaseId: purchase.id },
+              data: { status: 'rejected', idempotencyKey: null },
+            })
+          } catch (dbErr) {
+            this.logger.error(
+              `[JOB] Error actualizando purchase ${purchase.id} a failed: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`
+            )
+            continue // Saltar al siguiente purchase si falla la actualización en BD
+          }
 
           // Enviar email según estado real de Flow
           try {

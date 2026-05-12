@@ -6,6 +6,7 @@ import { AuthGuard } from '@nestjs/passport'
 import { FlowService } from './flow.service'
 import { PurchasesService } from '../purchases/purchases.service'
 import { UsersService } from '../users/users.service'
+import { ResendService } from '../email/resend.service'
 import { CurrentUser } from '../../common/decorators'
 import { PrismaService } from '../../database/prisma.service'
 
@@ -23,6 +24,7 @@ export class PaymentsController {
     private readonly flowService: FlowService,
     private readonly purchasesService: PurchasesService,
     private readonly usersService: UsersService,
+    private readonly resendService: ResendService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -88,11 +90,27 @@ export class PaymentsController {
     })
     this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`)
 
+    const paymentUrl = `${flowOrder.url}?token=${flowOrder.token}`
+
+    // Enviar email de pago pendiente al usuario
+    try {
+      void this.resendService.sendPendingPaymentEmail({
+        toEmail: user.email,
+        toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+        purchaseId: purchase.id,
+        raffleName: purchase.raffleName ?? null,
+        amount: Number(purchase.totalAmount ?? 0),
+        paymentUrl,
+      })
+    } catch (err) {
+      this.logger.error(`Error enviando email de pago pendiente: ${err instanceof Error ? err.message : String(err)}`)
+    }
+
     // Flow docs: la URL de redirección = url + "?token=" + token
     return {
       purchaseId: purchase.id,
       flowOrderId: flowOrder.flowOrder.toString(),
-      paymentUrl: `${flowOrder.url}?token=${flowOrder.token}`,
+      paymentUrl,
       token: flowOrder.token,
     }
   }

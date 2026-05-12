@@ -21,14 +21,16 @@ const passport_1 = require("@nestjs/passport");
 const flow_service_1 = require("./flow.service");
 const purchases_service_1 = require("../purchases/purchases.service");
 const users_service_1 = require("../users/users.service");
+const resend_service_1 = require("../email/resend.service");
 const decorators_1 = require("../../common/decorators");
 const prisma_service_1 = require("../../database/prisma.service");
 let PaymentsController = PaymentsController_1 = class PaymentsController {
-    constructor(configService, flowService, purchasesService, usersService, prisma) {
+    constructor(configService, flowService, purchasesService, usersService, resendService, prisma) {
         this.configService = configService;
         this.flowService = flowService;
         this.purchasesService = purchasesService;
         this.usersService = usersService;
+        this.resendService = resendService;
         this.prisma = prisma;
         this.logger = new common_1.Logger(PaymentsController_1.name);
     }
@@ -67,10 +69,24 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
             },
         });
         this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`);
+        const paymentUrl = `${flowOrder.url}?token=${flowOrder.token}`;
+        try {
+            void this.resendService.sendPendingPaymentEmail({
+                toEmail: user.email,
+                toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                purchaseId: purchase.id,
+                raffleName: purchase.raffleName ?? null,
+                amount: Number(purchase.totalAmount ?? 0),
+                paymentUrl,
+            });
+        }
+        catch (err) {
+            this.logger.error(`Error enviando email de pago pendiente: ${err instanceof Error ? err.message : String(err)}`);
+        }
         return {
             purchaseId: purchase.id,
             flowOrderId: flowOrder.flowOrder.toString(),
-            paymentUrl: `${flowOrder.url}?token=${flowOrder.token}`,
+            paymentUrl,
             token: flowOrder.token,
         };
     }
@@ -153,6 +169,7 @@ exports.PaymentsController = PaymentsController = PaymentsController_1 = __decor
         flow_service_1.FlowService,
         purchases_service_1.PurchasesService,
         users_service_1.UsersService,
+        resend_service_1.ResendService,
         prisma_service_1.PrismaService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

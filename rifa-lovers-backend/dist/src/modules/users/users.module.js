@@ -14,6 +14,7 @@ const auth_controller_1 = require("./auth.controller");
 const users_service_1 = require("./users.service");
 const auth_service_1 = require("./auth.service");
 const supabase_module_1 = require("../../config/supabase.module");
+const email_module_1 = require("../email/email.module");
 const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const recaptcha_service_1 = require("../../common/services/recaptcha.service");
 let UsersModule = class UsersModule {
@@ -24,6 +25,7 @@ exports.UsersModule = UsersModule = __decorate([
         imports: [
             passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             supabase_module_1.SupabaseModule,
+            email_module_1.EmailModule,
         ],
         controllers: [users_controller_1.UsersController, auth_controller_1.AuthController],
         providers: [users_service_1.UsersService, auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, recaptcha_service_1.RecaptchaService],

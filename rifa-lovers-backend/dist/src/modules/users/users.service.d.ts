@@ -1,8 +1,13 @@
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
+import { ResendService } from '../email/resend.service';
 import { User, UserRole, Prisma } from '@prisma/client';
 export declare class UsersService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly resendService;
+    private readonly config;
+    private readonly logger;
+    constructor(prisma: PrismaService, resendService: ResendService, config: ConfigService);
     findAll(params: {
         skip?: number;
         take?: number;

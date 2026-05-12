@@ -378,7 +378,7 @@ let ResendService = ResendService_1 = class ResendService {
             const { error } = await this.resend.emails.send({
                 from: `RifaLovers <${from}>`,
                 to: data.toEmail,
-                subject: `⏳ Tu pago en ${raffle} quedó pendiente`,
+                subject: `🕐 Tu compra en ${raffle} no fue completada`,
                 html,
             });
             if (error) {
@@ -389,6 +389,43 @@ let ResendService = ResendService_1 = class ResendService {
         }
         catch (err) {
             this.logger.error(`Error enviando email de pago incompleto a ${data.toEmail}: ${err}`);
+        }
+    }
+    async sendPendingPaymentEmail(data) {
+        if (!this.resend) {
+            this.logger.warn(`[EMAIL SKIP] Pago pendiente: ${data.toEmail} — ${data.purchaseId}`);
+            return;
+        }
+        const from = this.getFromEmail('noreply');
+        const firstName = data.toName.split(' ')[0] || 'Participante';
+        const raffle = data.raffleName ?? 'RifaLovers';
+        const formattedAmount = data.amount.toLocaleString('es-CL', {
+            style: 'currency',
+            currency: 'CLP',
+            minimumFractionDigits: 0,
+        });
+        const html = this.buildPendingPaymentTemplate({
+            firstName,
+            raffle,
+            amount: formattedAmount,
+            paymentUrl: data.paymentUrl,
+            frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+        });
+        try {
+            const { error } = await this.resend.emails.send({
+                from: `RifaLovers <${from}>`,
+                to: data.toEmail,
+                subject: `💳 Tu pago en ${raffle} está en proceso`,
+                html,
+            });
+            if (error) {
+                this.logger.error(`Error enviando email de pago pendiente a ${data.toEmail}: ${error.message}`);
+                return;
+            }
+            this.logger.log(`Email de pago pendiente enviado a ${data.toEmail}`);
+        }
+        catch (err) {
+            this.logger.error(`Error enviando email de pago pendiente a ${data.toEmail}: ${err}`);
         }
     }
     buildFailedPaymentTemplate(params) {
@@ -425,24 +462,58 @@ let ResendService = ResendService_1 = class ResendService {
     buildIncompletePaymentTemplate(params) {
         return `<!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Pago pendiente</title></head>
+<head><meta charset="UTF-8"><title>Compra invalidada</title></head>
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:40px 32px;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">⏳</div>
+    <div style="background:linear-gradient(135deg,#6b7280,#4b5563);padding:40px 32px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:12px;">🕐</div>
       <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
-      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu pago quedó pendiente</p>
+      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu compra no fue completada</p>
     </div>
     <div style="padding:32px;">
-      <p style="color:#374151;line-height:1.6;font-size:15px;">Detectamos que iniciaste una participación en <strong>${params.raffle}</strong> pero no completaste el pago.</p>
-      <div style="background:#fffbeb;border:2px solid #fef3c7;border-radius:12px;padding:20px;text-align:center;margin:24px 0;">
-        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Monto pendiente</p>
-        <p style="margin:0;font-size:22px;font-weight:800;color:#d97706;">${params.amount}</p>
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Iniciaste una participación en <strong>${params.raffle}</strong>, pero el pago no se completó dentro del tiempo establecido.</p>
+      <div style="background:#f3f4f6;border:2px solid #e5e7eb;border-radius:12px;padding:20px;text-align:center;margin:24px 0;">
+        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Monto no cobrado</p>
+        <p style="margin:0;font-size:22px;font-weight:800;color:#4b5563;">${params.amount}</p>
       </div>
-      <p style="color:#374151;line-height:1.6;font-size:15px;">Puedes retomar tu compra desde tu cuenta. Si necesitas ayuda, contáctanos.</p>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin:20px 0;">
+        <p style="margin:0;font-size:14px;color:#1e40af;line-height:1.5;"><strong>No debes hacer nada.</strong> Nosotros nos encargamos de invalidar tu compra automáticamente. No se realizó ningún cobro a tu tarjeta o cuenta.</p>
+      </div>
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Si deseas participar nuevamente, puedes crear una nueva compra en la plataforma cuando lo desees.</p>
       <div style="margin-top:28px;text-align:center;">
-        <a href="${params.frontendUrl}/dashboard" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
-          Ir a mi cuenta
+        <a href="${params.frontendUrl}" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+          Volver a la página principal
+        </a>
+      </div>
+    </div>
+    <div style="padding:20px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;">RifaLovers · Chile · <a href="mailto:contacto@rifalovers.cl" style="color:#7c3aed;">contacto@rifalovers.cl</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+    }
+    buildPendingPaymentTemplate(params) {
+        return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Pago en proceso</title></head>
+<body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
+  <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:40px 32px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:12px;">💳</div>
+      <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu pago está en proceso</p>
+    </div>
+    <div style="padding:32px;">
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Hemos recibido tu solicitud para participar en <strong>${params.raffle}</strong>. Tu pago está siendo procesado por Flow.</p>
+      <div style="background:#ede9fe;border:2px solid #ddd6fe;border-radius:12px;padding:20px;text-align:center;margin:24px 0;">
+        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Monto a pagar</p>
+        <p style="margin:0;font-size:22px;font-weight:800;color:#7c3aed;">${params.amount}</p>
+      </div>
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Te enviaremos un correo de confirmación cuando tu pago sea aprobado. Si no completaste el pago, puedes continuar ahora:</p>
+      <div style="margin-top:28px;text-align:center;">
+        <a href="${params.paymentUrl}" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+          Continuar con el pago
         </a>
       </div>
     </div>
@@ -482,6 +553,94 @@ let ResendService = ResendService_1 = class ResendService {
             this.logger.error(`Error enviando newsletter a ${data.toEmail}: ${err}`);
             throw err;
         }
+    }
+    async sendPromotedRoleEmail(data) {
+        if (!this.resend) {
+            this.logger.warn(`[EMAIL SKIP] Rol promovido: ${data.toEmail} — ${data.role}`);
+            return;
+        }
+        const from = this.getFromEmail('contact');
+        const firstName = data.toName.split(' ')[0] || 'Usuario';
+        const roleLabel = data.role === 'admin' ? 'Administrador' : 'Operador';
+        const html = this.buildPromotedRoleTemplate({
+            firstName,
+            role: roleLabel,
+            frontendUrl: data.frontendUrl,
+        });
+        try {
+            const { error } = await this.resend.emails.send({
+                from: `RifaLovers <${from}>`,
+                to: data.toEmail,
+                subject: `🎉 Has sido promovido a ${roleLabel} en RifaLovers`,
+                html,
+            });
+            if (error) {
+                this.logger.error(`Error enviando email de rol promovido a ${data.toEmail}: ${error.message}`);
+                return;
+            }
+            this.logger.log(`Email de rol promovido enviado a ${data.toEmail}`);
+        }
+        catch (err) {
+            this.logger.error(`Error enviando email de rol promovido a ${data.toEmail}: ${err}`);
+        }
+    }
+    buildPromotedRoleTemplate(params) {
+        return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Has sido promovido</title></head>
+<body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
+  <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:40px 32px;text-align:center;">
+      <div style="font-size:56px;margin-bottom:12px;">🎉</div>
+      <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
+      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:16px;">Ahora eres <strong>${params.role}</strong> en RifaLovers</p>
+    </div>
+    <div style="padding:32px;">
+      <p style="color:#374151;line-height:1.6;font-size:15px;margin:0 0 20px;">Tu cuenta ha sido actualizada con permisos avanzados. A continuación te explicamos paso a paso cómo sacarle el máximo provecho a la plataforma.</p>
+
+      <div style="margin:24px 0;padding:20px;background:#f5f3ff;border-radius:12px;border-left:4px solid #7c3aed;">
+        <h3 style="margin:0 0 8px;color:#7c3aed;font-size:16px;font-weight:700;">Paso 1: Accede al Panel de Control</h3>
+        <p style="margin:0;color:#374151;font-size:14px;line-height:1.6;">Inicia sesión y dirígete a la sección <strong>"Admin"</strong> en el menú principal. Ahí verás el dashboard con métricas en tiempo real: ventas totales, rifas activas y participaciones recientes.</p>
+      </div>
+
+      <div style="margin:24px 0;padding:20px;background:#f5f3ff;border-radius:12px;border-left:4px solid #a855f7;">
+        <h3 style="margin:0 0 8px;color:#a855f7;font-size:16px;font-weight:700;">Paso 2: Crea tu Primera Rifa</h3>
+        <p style="margin:0;color:#374151;font-size:14px;line-height:1.6;">Haz clic en <strong>"Nueva Rifa"</strong>. Define un título atractivo, sube una imagen de portada, escribe una descripción clara y establece la <strong>fecha del sorteo</strong>. Recuerda: una buena imagen y descripción aumentan las ventas.</p>
+      </div>
+
+      <div style="margin:24px 0;padding:20px;background:#f5f3ff;border-radius:12px;border-left:4px solid #7c3aed;">
+        <h3 style="margin:0 0 8px;color:#7c3aed;font-size:16px;font-weight:700;">Paso 3: Configura los Packs</h3>
+        <p style="margin:0;color:#374151;font-size:14px;line-height:1.6;">Dentro de la rifa, ve a <strong>"Packs"</strong> y crea diferentes opciones de precio. Por ejemplo: 1 número por $5.000, 5 números por $20.000, 10 números por $35.000. Más opciones = más ventas.</p>
+      </div>
+
+      <div style="margin:24px 0;padding:20px;background:#f5f3ff;border-radius:12px;border-left:4px solid #a855f7;">
+        <h3 style="margin:0 0 8px;color:#a855f7;font-size:16px;font-weight:700;">Paso 4: Publica y Comparte</h3>
+        <p style="margin:0;color:#374151;font-size:14px;line-height:1.6;">Cambia el estado de la rifa a <strong>"Activa"</strong>. Copia el link público y compártelo en redes sociales, WhatsApp o email. Desde el panel podrás ver en tiempo real cuántos números se han vendido.</p>
+      </div>
+
+      <div style="margin:24px 0;padding:20px;background:#f5f3ff;border-radius:12px;border-left:4px solid #7c3aed;">
+        <h3 style="margin:0 0 8px;color:#7c3aed;font-size:16px;font-weight:700;">Paso 5: Monitorea y Cierra</h3>
+        <p style="margin:0;color:#374151;font-size:14px;line-height:1.6;">Usa el dashboard para ver ingresos, tickets vendidos y estado de pagos. Cuando llegue la fecha del sorteo, el sistema puede realizar el sorteo automáticamente o tú puedes hacerlo manualmente desde el panel.</p>
+      </div>
+
+      <div style="margin:28px 0;text-align:center;">
+        <a href="${params.frontendUrl}/admin" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+          Ir al Panel de Control
+        </a>
+      </div>
+
+      <div style="background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:16px;margin:20px 0;">
+        <p style="margin:0;font-size:13px;color:#854d0e;line-height:1.5;"><strong>Consejo pro:</strong> Responde rápido las preguntas de los participantes y usa imágenes de alta calidad en tus rifas. Las rifas con fotos profesionales venden hasta 3x más.</p>
+      </div>
+
+      <p style="color:#374151;line-height:1.6;font-size:15px;margin:20px 0 0;">¿Necesitas ayuda? Escríbenos a <a href="mailto:contacto@rifalovers.cl" style="color:#7c3aed;">contacto@rifalovers.cl</a> y te guiamos personalmente.</p>
+    </div>
+    <div style="padding:20px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;">RifaLovers · Chile · <a href="mailto:contacto@rifalovers.cl" style="color:#7c3aed;">contacto@rifalovers.cl</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
     }
     buildNewsletterEmailTemplate(params) {
         return `<!DOCTYPE html>

@@ -1,10 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
+import { ResendService } from '../email/resend.service';
 import { User, UserRole, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(UsersService.name)
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly resendService: ResendService,
+    private readonly config: ConfigService,
+  ) {}
 
   async findAll(params: {
     skip?: number;
@@ -36,10 +44,26 @@ export class UsersService {
   }
 
   async updateRole(userId: string, role: UserRole): Promise<User> {
-    return this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: { role },
     });
+
+    // Enviar email de promoción si el rol es admin u operator
+    if ((role === 'admin' || role === 'operator') && user.email) {
+      try {
+        void this.resendService.sendPromotedRoleEmail({
+          toEmail: user.email,
+          toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Usuario',
+          role,
+          frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+        })
+      } catch (err) {
+        this.logger.error(`Error enviando email de rol promovido: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
+
+    return user;
   }
 
   async blockUser(userId: string): Promise<User> {

@@ -8,13 +8,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var UsersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../database/prisma.service");
-let UsersService = class UsersService {
-    constructor(prisma) {
+const resend_service_1 = require("../email/resend.service");
+let UsersService = UsersService_1 = class UsersService {
+    constructor(prisma, resendService, config) {
         this.prisma = prisma;
+        this.resendService = resendService;
+        this.config = config;
+        this.logger = new common_1.Logger(UsersService_1.name);
     }
     async findAll(params) {
         const { skip, take, cursor, where, orderBy } = params;
@@ -37,10 +43,24 @@ let UsersService = class UsersService {
         });
     }
     async updateRole(userId, role) {
-        return this.prisma.user.update({
+        const user = await this.prisma.user.update({
             where: { id: userId },
             data: { role },
         });
+        if ((role === 'admin' || role === 'operator') && user.email) {
+            try {
+                void this.resendService.sendPromotedRoleEmail({
+                    toEmail: user.email,
+                    toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Usuario',
+                    role,
+                    frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+                });
+            }
+            catch (err) {
+                this.logger.error(`Error enviando email de rol promovido: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
+        return user;
     }
     async blockUser(userId) {
         return this.prisma.user.update({
@@ -56,8 +76,10 @@ let UsersService = class UsersService {
     }
 };
 exports.UsersService = UsersService;
-exports.UsersService = UsersService = __decorate([
+exports.UsersService = UsersService = UsersService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        resend_service_1.ResendService,
+        config_1.ConfigService])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

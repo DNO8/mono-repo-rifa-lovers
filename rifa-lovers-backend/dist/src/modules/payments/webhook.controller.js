@@ -40,6 +40,10 @@ let WebhookController = WebhookController_1 = class WebhookController {
             this.logger.error(`No se encontró compra con providerTransactionId: ${token}`);
             throw new common_1.BadRequestException('Compra no encontrada');
         }
+        if (purchase.status === 'failed') {
+            this.logger.warn(`Compra ${purchase.id} ya fue invalidada. Ignorando webhook de Flow.`);
+            return { message: 'Compra ya invalidada' };
+        }
         switch (status) {
             case 2: {
                 try {

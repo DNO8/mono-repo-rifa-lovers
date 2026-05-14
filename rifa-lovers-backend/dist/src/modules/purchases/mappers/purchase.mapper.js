@@ -7,6 +7,7 @@ function mapPurchaseToDto(purchase) {
         id: purchase.id,
         raffleId: purchase.raffleId || '',
         raffleName: purchase.raffle?.title || 'Rifa sin nombre',
+        userId: purchase.userId,
         totalAmount: purchase.totalAmount?.toNumber() || 0,
         status: purchase.status,
         createdAt: purchase.createdAt.toISOString(),

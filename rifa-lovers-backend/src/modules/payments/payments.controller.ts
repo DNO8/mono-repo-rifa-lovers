@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger, NotFoundException, UseGuards, Res, ConflictException } from '@nestjs/common'
+import { Controller, Post, Body, Logger, NotFoundException, UseGuards, Res, ConflictException, BadRequestException } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import type { Response } from 'express'
 import { ConfigService } from '@nestjs/config'
@@ -92,7 +92,7 @@ export class PaymentsController {
 
     const paymentUrl = `${flowOrder.url}?token=${flowOrder.token}`
 
-    // Enviar email de pago pendiente al usuario
+    // Enviar email de pago pendiente al usuario (solo informativo, sin link de pago)
     try {
       void this.resendService.sendPendingPaymentEmail({
         toEmail: user.email,
@@ -100,7 +100,6 @@ export class PaymentsController {
         purchaseId: purchase.id,
         raffleName: purchase.raffleName ?? null,
         amount: Number(purchase.totalAmount ?? 0),
-        paymentUrl,
       })
     } catch (err) {
       this.logger.error(`Error enviando email de pago pendiente: ${err instanceof Error ? err.message : String(err)}`)
@@ -127,6 +126,69 @@ export class PaymentsController {
       : `${frontendUrl}/payment/return`
     res.setHeader('Content-Type', 'text/html')
     res.send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"><script>window.location.replace("${redirectUrl}");</script></head><body></body></html>`)
+  }
+
+  /**
+   * Crea una nueva orden de pago en Flow para una compra pendiente
+   * Permite al usuario reintentar el pago con un token fresco
+   */
+  @Post('retry')
+  @UseGuards(AuthGuard('jwt'))
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async retryPayment(
+    @CurrentUser('id') userId: string,
+    @Body('purchaseId') purchaseId: string,
+  ) {
+    this.logger.debug(`Retry de pago para purchase: ${purchaseId}, user: ${userId}`)
+
+    if (!purchaseId) {
+      throw new NotFoundException('purchaseId requerido')
+    }
+
+    const purchase = await this.purchasesService.findById(purchaseId)
+    if (!purchase) {
+      throw new NotFoundException('Compra no encontrada')
+    }
+    if (purchase.userId !== userId) {
+      throw new BadRequestException('La compra no pertenece al usuario')
+    }
+    if (purchase.status !== 'pending') {
+      throw new BadRequestException(`Solo se pueden reintentar compras pendientes. Estado actual: ${purchase.status}`)
+    }
+
+    const user = await this.usersService.findOne(userId)
+    if (!user || !user.email) {
+      throw new NotFoundException('Usuario no encontrado o sin email')
+    }
+
+    const backendUrl = this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000'
+
+    // Crear nueva orden en Flow
+    const flowOrder = await this.flowService.createPaymentOrder(
+      purchase.id,
+      `Rifa Lovers - ${purchase.raffleName}`,
+      purchase.totalAmount,
+      user.email,
+      `${backendUrl}/payments/return`,
+      `${backendUrl}/webhooks/flow`,
+    )
+
+    this.logger.log(`Retry Flow creado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`)
+
+    // Actualizar PaymentTransaction con el nuevo token
+    await this.prisma.paymentTransaction.updateMany({
+      where: { purchaseId: purchase.id },
+      data: { providerTransactionId: flowOrder.token, idempotencyKey: null },
+    })
+
+    const paymentUrl = `${flowOrder.url}?token=${flowOrder.token}`
+
+    return {
+      purchaseId: purchase.id,
+      flowOrderId: flowOrder.flowOrder.toString(),
+      paymentUrl,
+      token: flowOrder.token,
+    }
   }
 
   @Post('verify-flow-status')

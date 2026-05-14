@@ -46,6 +46,13 @@ export class WebhookController {
     }
 
     // Flow status: 1=pendiente, 2=pagada, 3=rechazada, 4=anulada
+
+    // Guarda de seguridad: si la compra ya fue invalidada, ignorar el webhook
+    if (purchase.status === 'failed') {
+      this.logger.warn(`Compra ${purchase.id} ya fue invalidada. Ignorando webhook de Flow.`)
+      return { message: 'Compra ya invalidada' }
+    }
+
     switch (status) {
       case 2: {
         // Pago exitoso - confirmar compra y generar LuckyPasses

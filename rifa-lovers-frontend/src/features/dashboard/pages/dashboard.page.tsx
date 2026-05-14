@@ -22,8 +22,11 @@ import { OperatorPanel } from '../components/operator-panel'
 import { NewsletterPanel } from '../components/newsletter-panel'
 import { NewsletterDashboardCard } from '../components/newsletter-dashboard-card'
 import { getAllRaffles } from '@/api/admin.api'
-import type { Raffle, RaffleProgress, Purchase, LuckyPass } from '@/types/domain.types'
+import { getPublicRaffles } from '@/api/raffles.api'
+import { retryPayment } from '@/api/purchases.api'
+import type { Raffle, RaffleProgress, Purchase } from '@/types/domain.types'
 import { useAsyncData } from '@/hooks/use-async-data'
+import { toast } from 'react-toastify'
 
 function buildImpact(raffle: Raffle | null, progress: RaffleProgress | null): CollectiveImpact {
   const milestones = raffle?.milestones ?? []
@@ -66,39 +69,17 @@ const mapStatus = (status: string): 'confirmado' | 'pendiente' | 'fallido' => {
   }
 }
 
-// Helper to transform purchases to history items — group by raffleId
-// Uses REAL lucky pass count from passes array (not purchase.luckyPassCount which may be stale)
-const transformPurchasesToHistory = (purchases: Purchase[], passes: LuckyPass[]): HistoryItem[] => {
-  const grouped = new Map<string, HistoryItem>()
-  
-  // Pre-calcular conteo REAL de LP por rifa
-  const realCountByRaffle = new Map<string, number>()
-  for (const pass of passes) {
-    if (pass.status === 'cancelled') continue
-    const current = realCountByRaffle.get(pass.raffleId) || 0
-    realCountByRaffle.set(pass.raffleId, current + 1)
-  }
-  
-  for (const p of purchases) {
-    if (p.status !== 'paid') continue
-    const existing = grouped.get(p.raffleId)
-    // Usar conteo REAL si está disponible, sino fallback a luckyPassCount
-    const realCount = realCountByRaffle.get(p.raffleId) || 0
-    const lpCount = realCount > 0 ? realCount : (p.luckyPassCount || 0)
-    
-    if (existing) {
-      // Ya procesamos esta rifa, no sumar de nuevo
-      continue
-    } else {
-      grouped.set(p.raffleId, {
-        id: p.raffleId,
-        name: p.raffleName,
-        status: mapStatus(p.status),
-        tickets: lpCount,
-      })
-    }
-  }
-  return Array.from(grouped.values())
+// Transform purchases to history items — include ALL statuses, individual purchases
+const transformPurchasesToHistory = (purchases: Purchase[], onRetry?: (id: string) => void): HistoryItem[] => {
+  return purchases.map((p) => ({
+    id: p.id,
+    name: p.raffleName || 'Rifa sin nombre',
+    status: mapStatus(p.status),
+    tickets: p.luckyPassCount || 0,
+    amount: p.totalAmount,
+    purchaseId: p.id,
+    onRetry,
+  }))
 }
 
 // Helper to transform raffle to card data
@@ -150,6 +131,15 @@ export default function DashboardPage() {
   const { raffle, progress, isLoading: isLoadingRaffle } = useActiveRaffle()
   const { raffles: userRaffles, isLoading: isLoadingUserRaffles } = useUserRaffles()
 
+  // Fetch public raffles for all users to see active ones
+  const { data: publicRaffles, isLoading: isLoadingPublicRaffles } = useAsyncData<Raffle[]>(
+    async () => {
+      const result = await getPublicRaffles()
+      return result.filter((r) => r.status === 'active')
+    },
+    [],
+  )
+
   // Operator/admin: load all raffles for the operator panel
   const isOperatorOrAdmin = user?.role === 'operator' || user?.role === 'admin'
   const { data: allRaffles, isLoading: isLoadingAllRaffles } = useAsyncData<Raffle[]>(
@@ -174,13 +164,25 @@ export default function DashboardPage() {
     navigate('/')
   }
 
+  const handleRetry = async (purchaseId: string) => {
+    try {
+      const result = await retryPayment(purchaseId)
+      toast.success('Redirigiendo a Flow para completar el pago...')
+       
+      window.location.assign(result.paymentUrl)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al reintentar el pago'
+      toast.error(msg)
+    }
+  }
+
   if (!user) return null
 
-  const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles || (isOperatorOrAdmin && isLoadingAllRaffles)
+  const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles || isLoadingPublicRaffles || (isOperatorOrAdmin && isLoadingAllRaffles)
   const totalTickets = luckyPassSummary?.totalPasses || 0
   const points = totalTickets // Puntos = misma cantidad de LuckyPasses totales
-   
-  const historyItems = transformPurchasesToHistory(purchases, passes)
+
+  const historyItems = transformPurchasesToHistory(purchases, handleRetry)
 
   return (
     <>
@@ -270,8 +272,8 @@ export default function DashboardPage() {
 
               {/* Main content */}
               <main className="order-1 lg:order-2 space-y-6">
-                {/* User raffles (active and drawn) */}
-                {userRaffles.length > 0 ? (
+                {/* User raffles with LuckyPasses */}
+                {userRaffles.length > 0 && (
                   <div className="space-y-4">
                     <h2 className="text-lg font-semibold text-text-primary">Mis Rifas</h2>
                     <div className="space-y-4">
@@ -286,9 +288,27 @@ export default function DashboardPage() {
                       })}
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-text-secondary">
-                    No tienes rifas activas ni sorteadas
+                )}
+
+                {/* Public active raffles — visible to everyone */}
+                {publicRaffles && publicRaffles.length > 0 && (
+                  <div className="space-y-4">
+                    <h2 className="text-lg font-semibold text-text-primary">Rifas Disponibles</h2>
+                    <div className="space-y-4">
+                      {publicRaffles.map((pubRaffle) => {
+                        const raffleTickets = passes.filter(
+                          (p) => p.raffleId === pubRaffle.id && p.status !== 'cancelled'
+                        ).length
+                        const cardData = transformRaffleToCardData(pubRaffle, raffleTickets)
+                        const alreadyOwned = userRaffles.some((ur) => ur.id === pubRaffle.id)
+                        if (!cardData || alreadyOwned) return null
+                        return (
+                          <div key={pubRaffle.id} className="relative">
+                            <RaffleHeroCard raffle={cardData} />
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
                 

@@ -1,6 +1,8 @@
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import { RaffleStatus } from '@prisma/client';
 import { CreateRaffleDto, UpdateRaffleDto, UpdateRaffleStatusDto, UpdateUserRoleDto, UpdateUserStatusDto } from './dto';
+import { ResendService } from '../email/resend.service';
 export interface KpiData {
     totalSales: number;
     packsSold: number;
@@ -37,8 +39,10 @@ export interface Participant {
 }
 export declare class AdminService {
     private readonly prisma;
+    private readonly resendService;
+    private readonly configService;
     private readonly logger;
-    constructor(prisma: PrismaService);
+    constructor(prisma: PrismaService, resendService: ResendService, configService: ConfigService);
     createRaffle(adminId: string, dto: CreateRaffleDto): Promise<RaffleWithStats>;
     updateRaffle(raffleId: string, dto: UpdateRaffleDto): Promise<{
         id: string;

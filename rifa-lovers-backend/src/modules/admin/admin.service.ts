@@ -1,7 +1,9 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../../database/prisma.service'
 import { RaffleStatus, UserStatus, Prisma } from '@prisma/client'
 import { CreateRaffleDto, UpdateRaffleDto, UpdateRaffleStatusDto, UpdateUserRoleDto, UpdateUserStatusDto } from './dto'
+import { ResendService } from '../email/resend.service'
 
 export interface KpiData {
   totalSales: number
@@ -44,7 +46,11 @@ export interface Participant {
 export class AdminService {
   private readonly logger = new Logger(AdminService.name)
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly resendService: ResendService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // ==================== GESTIÓN DE RIFAS ====================
 
@@ -402,6 +408,20 @@ export class AdminService {
       where: { id: userId },
       data: { role: dto.role },
     })
+
+    // Enviar email de promoción si el rol es admin u operator
+    if ((dto.role === 'admin' || dto.role === 'operator') && user.email) {
+      try {
+        void this.resendService.sendPromotedRoleEmail({
+          toEmail: user.email,
+          toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Usuario',
+          role: dto.role,
+          frontendUrl: this.configService.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+        })
+      } catch (err) {
+        this.logger.error(`Error enviando email de rol promovido: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    }
 
     this.logger.log(`Rol actualizado: ${user.role} → ${dto.role}`)
     return updated

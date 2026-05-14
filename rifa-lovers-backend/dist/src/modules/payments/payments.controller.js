@@ -77,7 +77,6 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
                 purchaseId: purchase.id,
                 raffleName: purchase.raffleName ?? null,
                 amount: Number(purchase.totalAmount ?? 0),
-                paymentUrl,
             });
         }
         catch (err) {
@@ -98,6 +97,40 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
             : `${frontendUrl}/payment/return`;
         res.setHeader('Content-Type', 'text/html');
         res.send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"><script>window.location.replace("${redirectUrl}");</script></head><body></body></html>`);
+    }
+    async retryPayment(userId, purchaseId) {
+        this.logger.debug(`Retry de pago para purchase: ${purchaseId}, user: ${userId}`);
+        if (!purchaseId) {
+            throw new common_1.NotFoundException('purchaseId requerido');
+        }
+        const purchase = await this.purchasesService.findById(purchaseId);
+        if (!purchase) {
+            throw new common_1.NotFoundException('Compra no encontrada');
+        }
+        if (purchase.userId !== userId) {
+            throw new common_1.BadRequestException('La compra no pertenece al usuario');
+        }
+        if (purchase.status !== 'pending') {
+            throw new common_1.BadRequestException(`Solo se pueden reintentar compras pendientes. Estado actual: ${purchase.status}`);
+        }
+        const user = await this.usersService.findOne(userId);
+        if (!user || !user.email) {
+            throw new common_1.NotFoundException('Usuario no encontrado o sin email');
+        }
+        const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+        const flowOrder = await this.flowService.createPaymentOrder(purchase.id, `Rifa Lovers - ${purchase.raffleName}`, purchase.totalAmount, user.email, `${backendUrl}/payments/return`, `${backendUrl}/webhooks/flow`);
+        this.logger.log(`Retry Flow creado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`);
+        await this.prisma.paymentTransaction.updateMany({
+            where: { purchaseId: purchase.id },
+            data: { providerTransactionId: flowOrder.token, idempotencyKey: null },
+        });
+        const paymentUrl = `${flowOrder.url}?token=${flowOrder.token}`;
+        return {
+            purchaseId: purchase.id,
+            flowOrderId: flowOrder.flowOrder.toString(),
+            paymentUrl,
+            token: flowOrder.token,
+        };
     }
     async verifyFlowPaymentStatus(token) {
         this.logger.debug(`Verificando estado de pago en Flow con token: ${token}`);
@@ -155,6 +188,16 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "handleFlowReturn", null);
+__decorate([
+    (0, common_1.Post)('retry'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, throttler_1.Throttle)({ default: { limit: 10, ttl: 60000 } }),
+    __param(0, (0, decorators_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)('purchaseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PaymentsController.prototype, "retryPayment", null);
 __decorate([
     (0, common_1.Post)('verify-flow-status'),
     (0, throttler_1.Throttle)({ default: { limit: 20, ttl: 60000 } }),

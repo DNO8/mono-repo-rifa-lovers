@@ -99,6 +99,7 @@ export class PurchasesService {
         id: result.purchase.id,
         raffleId: raffle.id,
         raffleName: raffle.title || 'Rifa sin nombre',
+        userId,
         totalAmount,
         status: 'pending',
         createdAt: result.purchase.createdAt.toISOString(),
@@ -182,6 +183,10 @@ export class PurchasesService {
     if (existing.status === 'paid') {
       this.logger.warn(`Compra ${purchaseId} ya fue confirmada, ignorando duplicado`)
       return mapPurchaseToDto(existing as PurchaseWithRaffle)
+    }
+    if (existing.status === 'failed') {
+      this.logger.warn(`Compra ${purchaseId} ya fue invalidada, rechazando confirmación`)
+      throw new BadRequestException('Esta compra ya fue invalidada. Crea una nueva compra para participar.')
     }
 
     // Transacción única: marcar como paid + generar LuckyPasses (atomicidad total)
@@ -526,6 +531,7 @@ export class PurchasesService {
         id: result.purchase.id,
         raffleId: raffle.id,
         raffleName: raffle.title || 'Rifa sin nombre',
+        userId,
         totalAmount: 0,
         status: 'paid',
         createdAt: result.purchase.createdAt.toISOString(),

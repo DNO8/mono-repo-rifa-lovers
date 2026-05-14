@@ -57,7 +57,7 @@ export interface PendingPaymentData {
   purchaseId: string
   raffleName: string | null
   amount: number
-  paymentUrl: string
+  paymentUrl?: string
 }
 
 export interface PromotedRoleData {
@@ -144,7 +144,7 @@ export class ResendService {
       const { error } = await this.resend.emails.send({
         from: `RifaLovers Contacto <${from}>`,
         to,
-        subject: `📩 Nuevo mensaje de contacto de ${data.name}`,
+        subject: `Nuevo mensaje de contacto de ${data.name}`,
         replyTo: data.email,
         html,
       })
@@ -217,7 +217,7 @@ export class ResendService {
       const { error } = await this.resend.emails.send({
         from: `RifaLovers <${from}>`,
         to: data.toEmail,
-        subject: `✅ Compra confirmada - ${data.raffleName}`,
+        subject: `Compra confirmada - ${data.raffleName}`,
         html,
       })
 
@@ -268,9 +268,7 @@ export class ResendService {
           <!-- Logo Header -->
           <tr>
             <td align="center" style="padding:40px 32px 24px;border-bottom:1px solid #f3f4f6;">
-              <div style="font-size:48px;margin-bottom:8px;">
-              <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;">
-              </div>
+              <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;margin:0 auto 16px;">
             </td>
           </tr>
           <!-- Content -->
@@ -334,7 +332,7 @@ export class ResendService {
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:40px 32px;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">🏆</div>
+      <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;margin:0 auto 16px;">
       <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">¡Felicitaciones, ${params.firstName}!</h1>
       <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu LuckyPass fue seleccionado en el sorteo</p>
     </div>
@@ -370,7 +368,8 @@ export class ResendService {
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:32px;text-align:center;">
-      <h1 style="color:#000;margin:0;font-size:24px;font-weight:800;">📩 Nuevo mensaje de contacto</h1>
+      <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;margin:0 auto 16px;">
+      <h1 style="color:#000;margin:0;font-size:24px;font-weight:800;">Nuevo mensaje de contacto</h1>
     </div>
     <div style="padding:32px;">
       <div style="margin-bottom:24px;">
@@ -403,7 +402,6 @@ export class ResendService {
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:32px;text-align:center;">
-      <div style="font-size:48px;margin-bottom:12px;">📬</div>
       <h1 style="color:#fff;margin:0;font-size:24px;font-weight:800;">¡Gracias por contactarnos!</h1>
     </div>
     <div style="padding:32px;">
@@ -449,7 +447,7 @@ export class ResendService {
       const { error } = await this.resend.emails.send({
         from: `RifaLovers <${from}>`,
         to: data.toEmail,
-        subject: `❌ Tu pago en ${raffle} no pudo ser procesado`,
+        subject: `Tu pago en ${raffle} no pudo ser procesado`,
         html,
       })
 
@@ -524,7 +522,6 @@ export class ResendService {
       firstName,
       raffle,
       amount: formattedAmount,
-      paymentUrl: data.paymentUrl,
       frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
     })
 
@@ -532,7 +529,7 @@ export class ResendService {
       const { error } = await this.resend.emails.send({
         from: `RifaLovers <${from}>`,
         to: data.toEmail,
-        subject: `💳 Tu pago en ${raffle} está en proceso`,
+        subject: `Compra registrada: ${raffle}`,
         html,
       })
 
@@ -559,7 +556,7 @@ export class ResendService {
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#ef4444,#dc2626);padding:40px 32px;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">❌</div>
+      <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;margin:0 auto 16px;">
       <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
       <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu pago no pudo ser procesado</p>
     </div>
@@ -596,7 +593,7 @@ export class ResendService {
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#6b7280,#4b5563);padding:40px 32px;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">🕐</div>
+      <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;margin:0 auto 16px;">
       <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
       <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu compra no fue completada</p>
     </div>
@@ -628,29 +625,31 @@ export class ResendService {
     firstName: string
     raffle: string
     amount: string
-    paymentUrl: string
     frontendUrl: string
   }): string {
     return `<!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Pago en proceso</title></head>
+<head><meta charset="UTF-8"><title>Compra registrada</title></head>
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:40px 32px;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">💳</div>
+      <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;margin:0 auto 16px;">
       <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
-      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Tu pago está en proceso</p>
+      <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">Compra registrada</p>
     </div>
     <div style="padding:32px;">
-      <p style="color:#374151;line-height:1.6;font-size:15px;">Hemos recibido tu solicitud para participar en <strong>${params.raffle}</strong>. Tu pago está siendo procesado por Flow.</p>
+      <p style="color:#374151;line-height:1.6;font-size:15px;">Hemos recibido tu solicitud para participar en <strong>${params.raffle}</strong>. Pronto recibirás instrucciones para completar tu pago.</p>
       <div style="background:#ede9fe;border:2px solid #ddd6fe;border-radius:12px;padding:20px;text-align:center;margin:24px 0;">
-        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Monto a pagar</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Monto de la compra</p>
         <p style="margin:0;font-size:22px;font-weight:800;color:#7c3aed;">${params.amount}</p>
       </div>
-      <p style="color:#374151;line-height:1.6;font-size:15px;">Te enviaremos un correo de confirmación cuando tu pago sea aprobado. Si no completaste el pago, puedes continuar ahora:</p>
-      <div style="margin-top:28px;text-align:center;">
-        <a href="${params.paymentUrl}" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
-          Continuar con el pago
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px;margin:20px 0;">
+        <p style="margin:0;font-size:14px;color:#1e40af;line-height:1.5;">Te enviaremos un correo de confirmación cuando tu pago sea aprobado. Si la compra no se completa, nosotros nos encargaremos de invalidarla automáticamente. No se realizará ningún cobro en ese caso.</p>
+      </div>
+      <p style="color:#6b7280;line-height:1.6;font-size:14px;">Puedes revisar el estado de tu compra en cualquier momento desde tu cuenta en RifaLovers.</p>
+      <div style="text-align:center;margin-top:28px;">
+        <a href="${params.frontendUrl}/dashboard" style="background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+          Ir a mi cuenta
         </a>
       </div>
     </div>
@@ -716,7 +715,7 @@ export class ResendService {
       const { error } = await this.resend.emails.send({
         from: `RifaLovers <${from}>`,
         to: data.toEmail,
-        subject: `🎉 Has sido promovido a ${roleLabel} en RifaLovers`,
+        subject: `Has sido promovido a ${roleLabel} en RifaLovers`,
         html,
       })
 
@@ -742,7 +741,7 @@ export class ResendService {
 <body style="font-family:Arial,sans-serif;background:#f9f5ff;margin:0;padding:0;">
   <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
     <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:40px 32px;text-align:center;">
-      <div style="font-size:56px;margin-bottom:12px;">🎉</div>
+      <img src="https://www.rifalovers.cl/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;margin:0 auto 16px;">
       <h1 style="color:#fff;margin:0;font-size:28px;font-weight:800;">Hola ${params.firstName}</h1>
       <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:16px;">Ahora eres <strong>${params.role}</strong> en RifaLovers</p>
     </div>

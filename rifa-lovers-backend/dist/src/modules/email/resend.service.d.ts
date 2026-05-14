@@ -48,7 +48,7 @@ export interface PendingPaymentData {
     purchaseId: string;
     raffleName: string | null;
     amount: number;
-    paymentUrl: string;
+    paymentUrl?: string;
 }
 export interface PromotedRoleData {
     toEmail: string;

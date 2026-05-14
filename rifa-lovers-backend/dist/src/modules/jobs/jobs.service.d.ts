@@ -20,6 +20,7 @@ export declare class JobsService implements OnModuleInit, OnModuleDestroy {
     autoSoldOut(): Promise<void>;
     autoClosed(): Promise<void>;
     expirePendingPurchases(): Promise<void>;
+    checkPendingPaymentsStatus(): Promise<void>;
     closeExpiredRafflesByEndDate(): Promise<void>;
     expireTicketReservations(): Promise<void>;
     runJobManually(jobName: 'sold_out' | 'closed' | 'expire_purchases'): Promise<{

@@ -2,6 +2,7 @@ export class CreatePurchaseResponseDto {
   id: string
   raffleId: string
   raffleName: string
+  userId: string
   totalAmount: number
   status: string
   createdAt: string

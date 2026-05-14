@@ -72,6 +72,9 @@ let JobsService = JobsService_1 = class JobsService {
         this.tasks.push(cron.schedule('2-59/5 * * * *', () => {
             void this.autoClosed();
         }));
+        this.tasks.push(cron.schedule('*/3 * * * *', () => {
+            void this.checkPendingPaymentsStatus();
+        }));
         this.tasks.push(cron.schedule('*/15 * * * *', () => {
             void this.expirePendingPurchases();
         }));
@@ -84,6 +87,7 @@ let JobsService = JobsService_1 = class JobsService {
         this.logger.log('✅ Jobs automáticos iniciados:');
         this.logger.log('   • Auto SOLD_OUT: cada 5 minutos');
         this.logger.log('   • Auto CLOSED: cada 5 minutos');
+        this.logger.log('   • Check Pending Payments: cada 3 minutos');
         this.logger.log('   • Expire Purchases: cada 15 minutos');
         this.logger.log('   • Close by EndDate: cada minuto');
         this.logger.log('   • Expire Ticket Reservations: cada minuto');
@@ -261,6 +265,99 @@ let JobsService = JobsService_1 = class JobsService {
         }
         catch (error) {
             this.logger.error('[JOB] Error en expiración de purchases:', error);
+        }
+    }
+    async checkPendingPaymentsStatus() {
+        this.logger.log('[JOB] Ejecutando verificación temprana de pagos pendientes...');
+        try {
+            const now = Date.now();
+            const threeMinutesAgo = new Date(now - 3 * 60 * 1000);
+            const fifteenMinutesAgo = new Date(now - 15 * 60 * 1000);
+            const purchasesToCheck = await this.prisma.purchase.findMany({
+                where: {
+                    status: client_1.PurchaseStatus.pending,
+                    createdAt: {
+                        gte: fifteenMinutesAgo,
+                        lt: threeMinutesAgo,
+                    },
+                },
+                select: {
+                    id: true,
+                    userId: true,
+                    totalAmount: true,
+                    createdAt: true,
+                    raffle: { select: { title: true } },
+                    user: { select: { email: true, firstName: true, lastName: true } },
+                    paymentTransactions: {
+                        select: { providerTransactionId: true },
+                        take: 1,
+                        orderBy: { createdAt: 'desc' },
+                    },
+                },
+            });
+            if (purchasesToCheck.length === 0) {
+                return;
+            }
+            this.logger.log(`[JOB] Verificando ${purchasesToCheck.length} pagos pendientes con Flow...`);
+            for (const purchase of purchasesToCheck) {
+                const token = purchase.paymentTransactions[0]?.providerTransactionId;
+                if (!token)
+                    continue;
+                let flowStatus = 1;
+                try {
+                    const paymentStatus = await this.flowService.getPaymentStatus(token);
+                    flowStatus = paymentStatus.status;
+                    this.logger.log(`[JOB] Flow status temprano para purchase ${purchase.id}: ${flowStatus}`);
+                }
+                catch (err) {
+                    this.logger.error(`[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
+                    continue;
+                }
+                if (flowStatus === 2) {
+                    this.logger.log(`[JOB] Purchase ${purchase.id} pagada en Flow. Confirmando...`);
+                    try {
+                        await this.purchasesService.confirmPayment(purchase.id, {
+                            providerTransactionId: token,
+                            provider: 'flow',
+                            status: 'approved',
+                        });
+                    }
+                    catch (err) {
+                        this.logger.error(`[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
+                    }
+                }
+                else if (flowStatus === 3 || flowStatus === 4) {
+                    this.logger.log(`[JOB] Purchase ${purchase.id} rechazada/anulada en Flow. Marcando failed...`);
+                    try {
+                        await this.prisma.purchase.update({
+                            where: { id: purchase.id },
+                            data: { status: client_1.PurchaseStatus.failed },
+                        });
+                        await this.prisma.paymentTransaction.updateMany({
+                            where: { purchaseId: purchase.id },
+                            data: { status: 'rejected', idempotencyKey: null },
+                        });
+                    }
+                    catch (dbErr) {
+                        this.logger.error(`[JOB] Error actualizando purchase ${purchase.id}: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
+                        continue;
+                    }
+                    const user = purchase.user;
+                    if (user?.email) {
+                        void this.resendService.sendFailedPaymentEmail({
+                            toEmail: user.email,
+                            toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                            purchaseId: purchase.id,
+                            raffleName: purchase.raffle?.title ?? null,
+                            amount: Number(purchase.totalAmount ?? 0),
+                        });
+                    }
+                }
+            }
+            this.logger.log(`[JOB] Verificación temprana completada: ${purchasesToCheck.length} purchases revisadas`);
+        }
+        catch (error) {
+            this.logger.error('[JOB] Error en verificación temprana de pagos:', error);
         }
     }
     async closeExpiredRafflesByEndDate() {

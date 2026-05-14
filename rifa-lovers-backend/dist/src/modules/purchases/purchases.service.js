@@ -114,6 +114,7 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 id: result.purchase.id,
                 raffleId: raffle.id,
                 raffleName: raffle.title || 'Rifa sin nombre',
+                userId,
                 totalAmount,
                 status: 'pending',
                 createdAt: result.purchase.createdAt.toISOString(),
@@ -160,6 +161,10 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
         if (existing.status === 'paid') {
             this.logger.warn(`Compra ${purchaseId} ya fue confirmada, ignorando duplicado`);
             return (0, purchase_mapper_1.mapPurchaseToDto)(existing);
+        }
+        if (existing.status === 'failed') {
+            this.logger.warn(`Compra ${purchaseId} ya fue invalidada, rechazando confirmación`);
+            throw new common_1.BadRequestException('Esta compra ya fue invalidada. Crea una nueva compra para participar.');
         }
         await this.prisma.$transaction(async (tx) => {
             await tx.purchase.update({
@@ -421,6 +426,7 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 id: result.purchase.id,
                 raffleId: raffle.id,
                 raffleName: raffle.title || 'Rifa sin nombre',
+                userId,
                 totalAmount: 0,
                 status: 'paid',
                 createdAt: result.purchase.createdAt.toISOString(),

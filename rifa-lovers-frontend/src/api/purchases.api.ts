@@ -31,6 +31,10 @@ export async function getPurchaseStatus(id: string): Promise<{ id: string; statu
   return apiClient.get<{ id: string; status: string }>(ENDPOINTS.purchases.detail(id))
 }
 
+export async function retryPayment(purchaseId: string): Promise<{ purchaseId: string; flowOrderId: string; paymentUrl: string; token: string }> {
+  return apiClient.post<{ purchaseId: string; flowOrderId: string; paymentUrl: string; token: string }>(ENDPOINTS.payments.retry, { purchaseId })
+}
+
 export async function checkTicketAvailability(
   raffleId: string,
   ticketNumber: number,

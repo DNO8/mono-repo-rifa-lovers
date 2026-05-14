@@ -12,11 +12,15 @@ var AdminService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminService = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../database/prisma.service");
 const client_1 = require("@prisma/client");
+const resend_service_1 = require("../email/resend.service");
 let AdminService = AdminService_1 = class AdminService {
-    constructor(prisma) {
+    constructor(prisma, resendService, configService) {
         this.prisma = prisma;
+        this.resendService = resendService;
+        this.configService = configService;
         this.logger = new common_1.Logger(AdminService_1.name);
     }
     async createRaffle(adminId, dto) {
@@ -303,6 +307,19 @@ let AdminService = AdminService_1 = class AdminService {
             where: { id: userId },
             data: { role: dto.role },
         });
+        if ((dto.role === 'admin' || dto.role === 'operator') && user.email) {
+            try {
+                void this.resendService.sendPromotedRoleEmail({
+                    toEmail: user.email,
+                    toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Usuario',
+                    role: dto.role,
+                    frontendUrl: this.configService.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+                });
+            }
+            catch (err) {
+                this.logger.error(`Error enviando email de rol promovido: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
         this.logger.log(`Rol actualizado: ${user.role} → ${dto.role}`);
         return updated;
     }
@@ -348,6 +365,8 @@ let AdminService = AdminService_1 = class AdminService {
 exports.AdminService = AdminService;
 exports.AdminService = AdminService = AdminService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        resend_service_1.ResendService,
+        config_1.ConfigService])
 ], AdminService);
 //# sourceMappingURL=admin.service.js.map

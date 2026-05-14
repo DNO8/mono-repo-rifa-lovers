@@ -1,7 +1,10 @@
 import type { Purchase, Raffle, UserPack, Pack } from '@prisma/client'
 import type { PurchaseResponseDto } from '../dto'
 
-type PurchaseWithRaffle = Purchase & { raffle: Raffle | null; userPacks?: (UserPack & { pack: Pack | null })[] }
+type PurchaseWithRaffle = Purchase & {
+  raffle: Raffle | null
+  userPacks?: (UserPack & { pack: Pack | null })[]
+}
 
 export function mapPurchaseToDto(purchase: PurchaseWithRaffle): PurchaseResponseDto {
   const luckyPassCount =
@@ -13,6 +16,7 @@ export function mapPurchaseToDto(purchase: PurchaseWithRaffle): PurchaseResponse
     id: purchase.id,
     raffleId: purchase.raffleId || '',
     raffleName: purchase.raffle?.title || 'Rifa sin nombre',
+    userId: purchase.userId!, // DB has NOT NULL constraint, safe to assert
     totalAmount: purchase.totalAmount?.toNumber() || 0,
     status: purchase.status,
     createdAt: purchase.createdAt.toISOString(),

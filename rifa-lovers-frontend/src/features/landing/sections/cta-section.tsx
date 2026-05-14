@@ -1,13 +1,7 @@
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
-
-function scrollToPricing() {
-  const el = document.getElementById('pricing')
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
-  }
-}
+import { scrollToPricing } from '@/lib/utils'
 
 export function CTASection() {
   const sectionRef = useGsapScroll<HTMLElement>()

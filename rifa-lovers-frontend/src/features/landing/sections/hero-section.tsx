@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LazyHeroModelViewer } from '../components/lazy-hero-model-viewer'
 import { useActiveRaffle } from '@/hooks/use-raffles'
+import { scrollToPricing } from '@/lib/utils'
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
@@ -17,10 +18,6 @@ export function HeroSection() {
   const drawTime = raffle?.endDate
     ? new Date(raffle.endDate).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
     : null
-
-  const scrollToPricing = () => {
-    document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const spot = spotlightRef.current

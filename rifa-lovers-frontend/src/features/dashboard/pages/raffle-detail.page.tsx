@@ -4,6 +4,7 @@ import { ArrowLeft, ShoppingCart, Hand, Calendar, Hash,Trophy, Star, Eye } from 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth.store'
+import { goToPricing } from '@/lib/utils'
 import { LazyTicketModelViewer } from '../components/lazy-ticket-model-viewer'
 import { useRaffleById } from '@/hooks/use-raffle-by-id'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
@@ -229,12 +230,10 @@ export default function RaffleDetailPage() {
 
             {canPurchase && (
               <div className="mt-4 pt-4 border-t border-border-light">
-                <Link to="/#pricing">
-                  <Button variant="secondary" size="md" className="w-full">
-                    <ShoppingCart className="size-4" />
-                    Activar más LuckyPass
-                  </Button>
-                </Link>
+                <Button variant="secondary" size="md" className="w-full" onClick={goToPricing}>
+                  <ShoppingCart className="size-4" />
+                  Activar más LuckyPass
+                </Button>
               </div>
             )}
           </div>

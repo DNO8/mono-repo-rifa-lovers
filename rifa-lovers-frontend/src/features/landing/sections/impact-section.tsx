@@ -8,13 +8,7 @@ import { MilestoneCard } from '@/components/shared/milestone-card'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { ConfettiCanvas, type ConfettiRef } from '@/components/shared/confetti-canvas'
 import type { Milestone, ImpactMetric } from '@/types/domain.types'
-
-function scrollToPricing() {
-  const el = document.getElementById('pricing')
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
-  }
-}
+import { scrollToPricing } from '@/lib/utils'
 
 function buildMilestones(raffle: ReturnType<typeof useActiveRaffle>['raffle']): Milestone[] {
   const milestones = raffle?.milestones ?? []

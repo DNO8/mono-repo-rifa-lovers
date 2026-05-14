@@ -41,6 +41,7 @@ export interface RaffleWithStats {
   endDate: string | null
   createdAt: string
   updatedAt: string
+  coverImageUrl: string | null
   packsSold: number
   progressPercentage: number
   totalRevenue: number

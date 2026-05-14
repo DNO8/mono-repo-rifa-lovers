@@ -85,6 +85,17 @@ export default function RaffleDetailPage() {
           Volver al Dashboard
         </Link>
 
+        {/* Cover Image Banner */}
+        {raffle?.coverImageUrl && (
+          <div className="rounded-xl overflow-hidden mb-6 max-h-[300px]">
+            <img
+              src={raffle.coverImageUrl}
+              alt={raffle.title ?? 'Rifa'}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         {/* Raffle info header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
           <div>

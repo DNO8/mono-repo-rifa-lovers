@@ -36,6 +36,7 @@ const LazyPackMomPage = lazy(() => import('@/features/pack-mom/pages/pack-mom.pa
 // const LazyPackPreventaPage = lazy(() => import('@/features/pack-preventa/pages/pack-preventa.page'))
 // const LazyCheckoutPreventaPage = lazy(() => import('@/features/pack-preventa/pages/checkout-preventa.page'))
 const LazyAdminDashboardPage = lazy(() => import('@/features/admin/pages/admin-dashboard.page').then(m => ({ default: m.AdminDashboardPage })))
+const LazyOperatorDashboardPage = lazy(() => import('@/features/operator/pages/operator-dashboard.page'))
 const LazyNotFoundPage = lazy(() => import('@/features/errors/pages/not-found.page'))
 const LazyWinnersPage = lazy(() => import('@/features/raffles/pages/winners.page'))
 const LazyStreamingPage = lazy(() => import('@/features/streaming/pages/streaming.page'))
@@ -230,6 +231,17 @@ export const router = createBrowserRouter([
       <PageWithSuspense fallback={<DashboardPageSkeleton />}>
         <ProtectedRoute requiredRole="admin">
           <LazyAdminDashboardPage />
+        </ProtectedRoute>
+      </PageWithSuspense>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/operator',
+    element: (
+      <PageWithSuspense fallback={<DashboardPageSkeleton />}>
+        <ProtectedRoute allowedRoles={['operator', 'admin']}>
+          <LazyOperatorDashboardPage />
         </ProtectedRoute>
       </PageWithSuspense>
     ),

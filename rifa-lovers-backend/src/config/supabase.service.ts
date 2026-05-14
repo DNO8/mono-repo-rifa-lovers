@@ -110,4 +110,30 @@ export class SupabaseService {
   async deleteUser(userId: string) {
     return this.supabase.auth.admin.deleteUser(userId);
   }
+
+  // ==================== STORAGE ====================
+
+  async uploadFile(bucket: string, path: string, file: Buffer, contentType: string): Promise<string> {
+    const { error } = await this.supabase.storage.from(bucket).upload(path, file, {
+      contentType,
+      upsert: true,
+    });
+    if (error) {
+      throw new Error(`Error uploading file: ${error.message}`);
+    }
+    const { data } = this.supabase.storage.from(bucket).getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async deleteFile(bucket: string, path: string): Promise<void> {
+    const { error } = await this.supabase.storage.from(bucket).remove([path]);
+    if (error) {
+      throw new Error(`Error deleting file: ${error.message}`);
+    }
+  }
+
+  getPublicUrl(bucket: string, path: string): string {
+    const { data } = this.supabase.storage.from(bucket).getPublicUrl(path);
+    return data.publicUrl;
+  }
 }

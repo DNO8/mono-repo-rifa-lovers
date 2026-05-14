@@ -25,4 +25,9 @@ __decorate([
     (0, class_validator_1.MinLength)(1),
     __metadata("design:type", String)
 ], SendCampaignDto.prototype, "body", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], SendCampaignDto.prototype, "coverImageUrl", void 0);
 //# sourceMappingURL=send-campaign.dto.js.map

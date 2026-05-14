@@ -6,6 +6,7 @@ export declare class UserResponseDto {
     phone: number;
     role: string;
     status: string;
+    organizationId?: string | null;
     createdAt: Date;
 }
 export declare class AuthResponseDto {

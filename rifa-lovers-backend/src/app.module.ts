@@ -15,6 +15,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { DrawModule } from './modules/draw/draw.module';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { OperatorModule } from './modules/operator/operator.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { TicketReservationsModule } from './modules/ticket-reservations/ticket-reservations.module';
 import { ContactModule } from './modules/contact/contact.module'
@@ -48,6 +49,7 @@ import { RecaptchaService } from './common/services/recaptcha.service';
     DrawModule,
     TestimonialsModule,
     AdminModule,
+    OperatorModule,
     JobsModule,
     TicketReservationsModule,
     ContactModule,

@@ -10,6 +10,7 @@ export function mapUserToDto(user: User): UserResponseDto {
     phone: user.phone ?? 0,
     role: user.role,
     status: user.status,
+    organizationId: user.organizationId,
     createdAt: user.createdAt,
   }
 }

@@ -119,6 +119,7 @@ export interface Raffle {
   status: RaffleStatus
   createdAt: string
   endDate: string | null
+  coverImageUrl?: string | null
   milestones?: RaffleMilestone[]
 }
 
@@ -248,6 +249,7 @@ export interface User {
   phone: string
   role: UserRole
   status: UserStatus
+  organizationId?: string | null
   createdAt: string
 }
 

@@ -16,6 +16,7 @@ export interface NewsletterEmailData {
     toName?: string;
     subject: string;
     bodyHtml: string;
+    coverImageUrl?: string | null;
 }
 export interface PurchaseConfirmationData {
     toEmail: string;

@@ -122,6 +122,7 @@ model Raffle {
   status          RaffleStatus @default(draft)
   startDate       DateTime?    @map("start_date")
   endDate         DateTime?    @map("end_date")
+  coverImageUrl   String?      @map("cover_image_url") @db.Text
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at")
 
@@ -134,6 +135,7 @@ model Raffle {
   progress          RaffleProgress?
   testimonials      Testimonial[]
   ticketReservations TicketReservation[]
+  packs             Pack[]
 
   @@map("raffles")
   @@schema("public")
@@ -146,8 +148,10 @@ model Pack {
   luckyPassQuantity   Int      @map("lucky_pass_quantity")
   isFeatured          Boolean  @default(false) @map("is_featured")
   isPreSale           Boolean  @default(false) @map("is_pre_sale")
+  raffleId            String?  @map("raffle_id") @db.Uuid
   createdAt           DateTime @default(now()) @map("created_at")
 
+  raffle    Raffle?    @relation(fields: [raffleId], references: [id])
   userPacks UserPack[]
 
   @@map("packs")

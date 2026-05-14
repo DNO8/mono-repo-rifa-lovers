@@ -33,6 +33,12 @@ __decorate([
     __metadata("design:type", Number)
 ], UpdateRaffleDto.prototype, "goalPacks", void 0);
 __decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], UpdateRaffleDto.prototype, "maxTicketNumber", void 0);
+__decorate([
     (0, class_validator_1.IsDateString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)

@@ -535,6 +535,7 @@ let ResendService = ResendService_1 = class ResendService {
             bodyHtml: data.bodyHtml,
             toName: data.toName,
             frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
+            coverImageUrl: data.coverImageUrl,
         });
         try {
             const { error } = await this.resend.emails.send({
@@ -656,6 +657,7 @@ let ResendService = ResendService_1 = class ResendService {
               <img src="${params.frontendUrl}/images/logos/logov2.png" alt="RifaLovers" width="180" style="display:block;max-width:180px;height:auto;">
             </td>
           </tr>
+          ${params.coverImageUrl ? `<tr><td style="padding:0 32px 16px;"><img src="${params.coverImageUrl}" style="width:100%;border-radius:8px;display:block;" alt="Portada"></td></tr>` : ''}
           <tr>
             <td style="padding:32px;">
               ${params.toName ? `<p style="margin:0 0 16px;font-size:16px;color:#374151;">Hola ${params.toName},</p>` : ''}

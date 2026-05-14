@@ -51,6 +51,22 @@ export const ENDPOINTS = {
     userBlock: (id: string) => `/admin/users/${id}/block`,
   },
 
+  operator: {
+    organization: '/operator/organization',
+    kpis: '/operator/kpis',
+    raffles: '/operator/raffles',
+    raffle: (id: string) => `/operator/raffles/${id}`,
+    raffleStatus: (id: string) => `/operator/raffles/${id}/status`,
+    uploadCover: (id: string) => `/operator/raffles/${id}/upload-cover`,
+    packs: (raffleId: string) => `/operator/raffles/${raffleId}/packs`,
+    pack: (id: string) => `/operator/packs/${id}`,
+    participants: (raffleId: string) => `/operator/raffles/${raffleId}/participants`,
+    drawStatus: (raffleId: string) => `/operator/raffles/${raffleId}/draw/status`,
+    drawExecute: (raffleId: string) => `/operator/raffles/${raffleId}/draw`,
+    newsletterCampaigns: '/operator/newsletter/campaigns',
+    newsletterSend: '/operator/newsletter/send',
+  },
+
   packs: {
     list: '/packs',
     detail: (id: string) => `/packs/${id}`,

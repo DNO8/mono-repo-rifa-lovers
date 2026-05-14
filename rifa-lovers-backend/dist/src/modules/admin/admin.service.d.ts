@@ -54,6 +54,7 @@ export declare class AdminService {
         status: import("@prisma/client").$Enums.RaffleStatus;
         startDate: Date | null;
         endDate: Date | null;
+        coverImageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -67,6 +68,7 @@ export declare class AdminService {
         status: import("@prisma/client").$Enums.RaffleStatus;
         startDate: Date | null;
         endDate: Date | null;
+        coverImageUrl: string | null;
         createdAt: Date;
         updatedAt: Date;
     }>;

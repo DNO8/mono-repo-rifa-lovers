@@ -9,19 +9,15 @@ import type { RaffleCardData } from '../components/raffle-hero-card'
 import { TicketHistory } from '../components/ticket-history'
 import type { HistoryItem } from '../components/ticket-history'
 import { SocialImpactBanner } from '../components/social-impact-banner'
-import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { LogOut, Eye, LayoutDashboard, UserCog } from 'lucide-react'
+import { LogOut, LayoutDashboard, UserCog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { usePurchases } from '@/hooks/use-purchases'
 import { useLuckyPasses } from '@/hooks/use-lucky-passes'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { useUserRaffles } from '@/hooks/use-user-raffles'
 import { Spinner } from '@/components/ui/spinner'
-import { OperatorPanel } from '../components/operator-panel'
-import { NewsletterPanel } from '../components/newsletter-panel'
 import { NewsletterDashboardCard } from '../components/newsletter-dashboard-card'
-import { getAllRaffles } from '@/api/admin.api'
 import { getPublicRaffles } from '@/api/raffles.api'
 import { retryPayment } from '@/api/purchases.api'
 import type { Raffle, RaffleProgress, Purchase } from '@/types/domain.types'
@@ -124,7 +120,6 @@ export default function DashboardPage() {
     useShallow((s) => ({ user: s.user, logout: s.logout }))
   )
   const navigate = useNavigate()
-  const [viewMode, setViewMode] = useState<'operator' | 'customer'>('operator')
 
   const { purchases, isLoading: isLoadingPurchases } = usePurchases()
   const { passes, summary: luckyPassSummary, isLoading: isLoadingPasses } = useLuckyPasses()
@@ -140,24 +135,7 @@ export default function DashboardPage() {
     [],
   )
 
-  // Operator/admin: load all raffles for the operator panel
   const isOperatorOrAdmin = user?.role === 'operator' || user?.role === 'admin'
-  const { data: allRaffles, isLoading: isLoadingAllRaffles } = useAsyncData<Raffle[]>(
-    isOperatorOrAdmin ? (async () => {
-      const result = await getAllRaffles()
-      return result.map(r => ({
-        id: r.id,
-        title: r.title ?? '',
-        description: r.description,
-        goalPacks: r.goalPacks,
-        maxTicketNumber: 0,
-        status: r.status as Raffle['status'],
-        createdAt: r.createdAt,
-        endDate: r.endDate,
-      }))
-    }) : async () => [],
-    [],
-  )
 
   const handleLogout = () => {
     logout()
@@ -178,7 +156,7 @@ export default function DashboardPage() {
 
   if (!user) return null
 
-  const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles || isLoadingPublicRaffles || (isOperatorOrAdmin && isLoadingAllRaffles)
+  const isLoading = isLoadingPurchases || isLoadingPasses || isLoadingRaffle || isLoadingUserRaffles || isLoadingPublicRaffles
   const totalTickets = luckyPassSummary?.totalPasses || 0
   const points = totalTickets // Puntos = misma cantidad de LuckyPasses totales
 
@@ -189,30 +167,19 @@ export default function DashboardPage() {
       <SEOHead title="Dashboard" noindex />
     <div className="px-4 md:px-8 py-8 md:py-12">
       <div className="mx-auto max-w-[1200px]">
-        {/* Header con logout + toggle modo cliente */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">
-            {viewMode === 'customer' ? 'Mi Dashboard' : 'Mi Dashboard'}
-          </h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Mi Dashboard</h1>
           <div className="flex flex-wrap items-center gap-2">
             {isOperatorOrAdmin && (
               <Button
                 variant="outline-primary"
                 size="sm"
                 className="shrink-0"
-                onClick={() => setViewMode(viewMode === 'operator' ? 'customer' : 'operator')}
+                onClick={() => navigate('/operator')}
               >
-                {viewMode === 'operator' ? (
-                  <>
-                    <Eye className="size-4 mr-1.5" />
-                    <span className="hidden sm:inline">Modo Cliente</span>
-                  </>
-                ) : (
-                  <>
-                    <LayoutDashboard className="size-4 mr-1.5" />
-                    <span className="hidden sm:inline">Modo Operador</span>
-                  </>
-                )}
+                <LayoutDashboard className="size-4 mr-1.5" />
+                <span className="hidden sm:inline">Panel Operador</span>
               </Button>
             )}
             <Button
@@ -244,17 +211,6 @@ export default function DashboardPage() {
               points={points}
             />
 
-            {/* Operator/Admin Panel (only in operator mode) */}
-            {isOperatorOrAdmin && viewMode === 'operator' && (
-              <>
-                <div className="mb-8">
-                  <OperatorPanel raffles={allRaffles} />
-                </div>
-                <div className="mb-8">
-                  <NewsletterPanel />
-                </div>
-              </>
-            )}
 
             {/* Main layout: sidebar left + main right */}
             <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-8">

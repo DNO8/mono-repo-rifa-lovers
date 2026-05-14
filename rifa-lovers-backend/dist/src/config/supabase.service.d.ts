@@ -62,4 +62,7 @@ export declare class SupabaseService {
         error: null;
     }>;
     deleteUser(userId: string): Promise<import("@supabase/supabase-js").UserResponse>;
+    uploadFile(bucket: string, path: string, file: Buffer, contentType: string): Promise<string>;
+    deleteFile(bucket: string, path: string): Promise<void>;
+    getPublicUrl(bucket: string, path: string): string;
 }

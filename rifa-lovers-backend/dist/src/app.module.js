@@ -24,6 +24,7 @@ const payments_module_1 = require("./modules/payments/payments.module");
 const draw_module_1 = require("./modules/draw/draw.module");
 const testimonials_module_1 = require("./modules/testimonials/testimonials.module");
 const admin_module_1 = require("./modules/admin/admin.module");
+const operator_module_1 = require("./modules/operator/operator.module");
 const jobs_module_1 = require("./modules/jobs/jobs.module");
 const ticket_reservations_module_1 = require("./modules/ticket-reservations/ticket-reservations.module");
 const contact_module_1 = require("./modules/contact/contact.module");
@@ -56,6 +57,7 @@ exports.AppModule = AppModule = __decorate([
             draw_module_1.DrawModule,
             testimonials_module_1.TestimonialsModule,
             admin_module_1.AdminModule,
+            operator_module_1.OperatorModule,
             jobs_module_1.JobsModule,
             ticket_reservations_module_1.TicketReservationsModule,
             contact_module_1.ContactModule,

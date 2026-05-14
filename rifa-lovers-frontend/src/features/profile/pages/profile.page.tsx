@@ -16,6 +16,7 @@ import {
 import { ProfilePersonalCard } from '../components/profile-personal-card'
 import { ProfilePasswordCard } from '../components/profile-password-card'
 import { ProfileFormActions } from '../components/profile-form-actions'
+import { OrganizationCard } from '../components/organization-card'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
@@ -122,6 +123,15 @@ export default function ProfilePage() {
               Mi Perfil
             </h1>
           </div>
+
+          {user?.role === 'operator' && (
+            <div className="mb-6">
+              <OrganizationCard
+                hasOrganization={!!user?.organizationId}
+                onCreated={() => refreshUser()}
+              />
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <ProfilePersonalCard

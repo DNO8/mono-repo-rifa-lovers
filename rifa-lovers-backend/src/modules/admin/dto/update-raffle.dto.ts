@@ -16,6 +16,11 @@ export class UpdateRaffleDto {
   @IsOptional()
   goalPacks?: number
 
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  maxTicketNumber?: number
+
   @IsDateString()
   @IsOptional()
   startDate?: string

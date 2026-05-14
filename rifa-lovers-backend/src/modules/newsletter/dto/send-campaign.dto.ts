@@ -1,4 +1,4 @@
-import { IsString, MaxLength, MinLength } from 'class-validator'
+import { IsString, MaxLength, MinLength, IsOptional } from 'class-validator'
 
 export class SendCampaignDto {
   @IsString()
@@ -9,4 +9,8 @@ export class SendCampaignDto {
   @IsString()
   @MinLength(1)
   body: string
+
+  @IsString()
+  @IsOptional()
+  coverImageUrl?: string
 }

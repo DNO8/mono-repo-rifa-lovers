@@ -10,6 +10,7 @@ function mapUserToDto(user) {
         phone: user.phone ?? 0,
         role: user.role,
         status: user.status,
+        organizationId: user.organizationId,
         createdAt: user.createdAt,
     };
 }

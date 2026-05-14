@@ -71,6 +71,7 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
                     toName: subscriber.name ?? undefined,
                     subject: dto.subject,
                     bodyHtml: dto.body,
+                    coverImageUrl: dto.coverImageUrl,
                 });
                 sentCount++;
             }

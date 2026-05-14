@@ -1,0 +1,506 @@
+import { useState } from 'react'
+import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router'
+import { useAuthStore } from '@/stores/auth.store'
+import { SEOHead } from '@/components/shared/seo/helmet-wrapper'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { KpiCard } from '@/features/shared/components/kpi-card'
+import { RaffleStatusBadge } from '@/features/shared/components/raffle-status-badge'
+import { OperatorCharts } from '../components/operator-charts'
+import {
+  useOperatorOrg,
+  useOperatorKPIs,
+  useOperatorRaffles,
+  useOperatorPacks,
+  useOperatorNewsletter,
+  useUploadRaffleCover,
+} from '../hooks/use-operator'
+import type { PackWithStats } from '@/api/operator.api'
+import {
+  TrendingUp,
+  Calendar,
+  Package,
+  Mail,
+  Plus,
+  Pencil,
+  Trash2,
+  Send,
+  Users,
+  ArrowLeft,
+  LogOut,
+  Building2,
+  ImagePlus,
+  Link2,
+} from 'lucide-react'
+
+type Tab = 'overview' | 'raffles' | 'packs' | 'newsletter'
+
+// ─── Pack Form Modal ──────────────────────────────────────────────────────────
+
+function PackFormModal({
+  initial,
+  onClose,
+  onSubmit,
+}: {
+  initial?: Partial<PackWithStats>
+  onClose: () => void
+  onSubmit: (data: { name: string; price: number; luckyPassQuantity: number }) => Promise<void>
+}) {
+  const [form, setForm] = useState({
+    name: initial?.name || '',
+    price: initial?.price?.toString() || '',
+    luckyPassQuantity: initial?.luckyPassQuantity?.toString() || '1',
+  })
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await onSubmit({
+        name: form.name,
+        price: parseInt(form.price, 10),
+        luckyPassQuantity: parseInt(form.luckyPassQuantity, 10),
+      })
+      onClose()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al guardar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div className="p-6 border-b">
+          <h2 className="text-lg font-bold">{initial?.id ? 'Editar Pack' : 'Nuevo Pack'}</h2>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+            <input
+              required
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="Ej: Pack Premium 5 numeros"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Precio (CLP) *</label>
+            <input
+              required
+              type="number"
+              min={0}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={form.price}
+              onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
+              placeholder="5000"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad de LuckyPasses *</label>
+            <input
+              required
+              type="number"
+              min={1}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={form.luckyPassQuantity}
+              onChange={e => setForm(f => ({ ...f, luckyPassQuantity: e.target.value }))}
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="primary" className="flex-1" loading={saving}>
+              {initial?.id ? 'Guardar' : 'Crear'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export default function OperatorDashboardPage() {
+  const navigate = useNavigate()
+  const logout = useAuthStore((s) => s.logout)
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null)
+  const [packModal, setPackModal] = useState<'create' | PackWithStats | null>(null)
+
+  const { org } = useOperatorOrg()
+  const { kpis } = useOperatorKPIs()
+  const { raffles } = useOperatorRaffles()
+  const { packs, create: createPack, update: updatePack, remove: deletePack } = useOperatorPacks(selectedRaffleId || '')
+  const { campaigns, send: sendCampaign } = useOperatorNewsletter()
+  const { upload: uploadCover, isUploading: isUploadingCover } = useUploadRaffleCover()
+
+  // Newsletter form state
+  const [newsletterSubject, setNewsletterSubject] = useState('')
+  const [newsletterBody, setNewsletterBody] = useState('')
+  const [sendingNewsletter, setSendingNewsletter] = useState(false)
+
+  const handleLogout = () => { logout(); navigate('/') }
+
+  const handleSendNewsletter = async () => {
+    if (!newsletterSubject.trim() || !newsletterBody.trim()) return
+    setSendingNewsletter(true)
+    try {
+      const result = await sendCampaign({ subject: newsletterSubject.trim(), body: newsletterBody.trim() })
+      toast.success(result.message)
+      setNewsletterSubject('')
+      setNewsletterBody('')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al enviar')
+    } finally {
+      setSendingNewsletter(false)
+    }
+  }
+
+  return (
+    <>
+      <SEOHead title="Panel de Operador" noindex />
+      <div className="px-3 py-4 sm:p-6 space-y-4 sm:space-y-6 max-w-[1400px] mx-auto">
+        {/* Header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-primary" />
+              Panel de Operador
+            </h1>
+            {org && (
+              <p className="text-sm text-text-secondary mt-1">{org.name}</p>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none items-center">
+            {(['overview', 'raffles', 'packs', 'newsletter'] as Tab[]).map(tab => (
+              <Button
+                key={tab}
+                variant={activeTab === tab ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setActiveTab(tab)}
+                className="shrink-0"
+              >
+                {tab === 'overview' && <TrendingUp className="w-4 h-4 mr-1.5" />}
+                {tab === 'raffles' && <Calendar className="w-4 h-4 mr-1.5" />}
+                {tab === 'packs' && <Package className="w-4 h-4 mr-1.5" />}
+                {tab === 'newsletter' && <Mail className="w-4 h-4 mr-1.5" />}
+                {tab === 'overview' ? 'Resumen' : tab === 'raffles' ? 'Rifas' : tab === 'packs' ? 'Packs' : 'Newsletter'}
+              </Button>
+            ))}
+            <Button variant="outline-primary" size="sm" onClick={() => navigate('/dashboard')}>
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
+              Dashboard
+            </Button>
+            <Button variant="outline-primary" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-1.5" />
+              Salir
+            </Button>
+          </div>
+        </div>
+
+        {/* ── Overview ── */}
+        {activeTab === 'overview' && kpis && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <KpiCard title="Ventas Totales" value={kpis.totalSales} icon={TrendingUp} color="green" suffix=" CLP" />
+              <KpiCard title="Packs Vendidos" value={kpis.packsSold} icon={Package} color="blue" />
+              <KpiCard title="Rifas Activas" value={kpis.activeRaffles} icon={Calendar} color="orange" />
+              <KpiCard title="Compras" value={kpis.totalPurchases} icon={Users} color="purple" />
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <KpiCard title="Pendientes" value={kpis.pendingPurchases} icon={Calendar} color="orange" />
+              <KpiCard title="Completadas" value={kpis.completedPurchases} icon={TrendingUp} color="green" />
+              <KpiCard title="LuckyPasses" value={kpis.totalLuckyPasses} icon={Package} color="blue" />
+              <KpiCard title="Ganadores" value={kpis.winnersCount} icon={Users} color="purple" />
+            </div>
+            <OperatorCharts kpis={kpis} raffles={raffles} />
+          </div>
+        )}
+
+        {/* ── Rifas ── */}
+        {activeTab === 'raffles' && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Gestion de Rifas</CardTitle>
+                <Button variant="primary" size="sm" onClick={() => navigate('/admin')}>
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Nueva Rifa (usar admin)
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 sm:p-6">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-gray-500">
+                      <th className="py-3 px-4">Titulo</th>
+                      <th className="py-3 px-4">Portada</th>
+                      <th className="py-3 px-4">Estado</th>
+                      <th className="py-3 px-4">Packs Vendidos</th>
+                      <th className="py-3 px-4">Ingresos</th>
+                      <th className="py-3 px-4">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {raffles.map((raffle) => (
+                      <tr key={raffle.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="font-medium">{raffle.title || 'Sin titulo'}</div>
+                          <div className="text-xs text-gray-400">Meta: {raffle.goalPacks} packs</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          {raffle.coverImageUrl ? (
+                            <img src={raffle.coverImageUrl} alt="" className="w-12 h-8 object-cover rounded" />
+                          ) : (
+                            <span className="text-xs text-gray-400">Sin portada</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <RaffleStatusBadge status={raffle.status} />
+                        </td>
+                        <td className="py-3 px-4">{raffle.packsSold}</td>
+                        <td className="py-3 px-4">${raffle.totalRevenue.toLocaleString('es-CL')}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2">
+                            <label
+                              className="p-1.5 rounded hover:bg-purple-50 text-purple-500 cursor-pointer"
+                              title="Subir portada"
+                            >
+                              <ImagePlus className="w-4 h-4" />
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (!file) return
+                                  try {
+                                    await uploadCover(raffle.id, file)
+                                    toast.success('Portada actualizada')
+                                  } catch {
+                                    toast.error('Error al subir la portada')
+                                  }
+                                  e.target.value = ''
+                                }}
+                                disabled={isUploadingCover}
+                              />
+                            </label>
+                            <button
+                              className="p-1.5 rounded hover:bg-blue-50 text-blue-500"
+                              title="Copiar link"
+                              onClick={() => {
+                                navigator.clipboard.writeText(`${window.location.origin}/raffle/${raffle.id}`)
+                                toast.success('Link copiado al portapapeles')
+                              }}
+                            >
+                              <Link2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              className="p-1.5 rounded hover:bg-blue-50 text-blue-500"
+                              title="Ver packs"
+                              onClick={() => { setSelectedRaffleId(raffle.id); setActiveTab('packs') }}
+                            >
+                              <Package className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {raffles.length === 0 && (
+                      <tr><td colSpan={6} className="py-12 text-center text-gray-400">No hay rifas registradas</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Packs ── */}
+        {activeTab === 'packs' && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              {selectedRaffleId ? (
+                <>
+                  <span className="text-sm text-gray-500">
+                    Rifa: {raffles.find(r => r.id === selectedRaffleId)?.title || 'Seleccionada'}
+                  </span>
+                  <Button variant="secondary" size="sm" onClick={() => setSelectedRaffleId(null)}>
+                    Cambiar rifa
+                  </Button>
+                </>
+              ) : (
+                <span className="text-sm text-gray-500">Selecciona una rifa en la pestana Rifas para ver sus packs</span>
+              )}
+            </div>
+
+            {selectedRaffleId && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Packs de la Rifa</CardTitle>
+                    <Button variant="primary" size="sm" onClick={() => setPackModal('create')}>
+                      <Plus className="w-4 h-4 mr-1.5" />
+                      Nuevo Pack
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 sm:p-6">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left text-gray-500">
+                          <th className="py-3 px-4">Nombre</th>
+                          <th className="py-3 px-4">Precio</th>
+                          <th className="py-3 px-4">LuckyPasses</th>
+                          <th className="py-3 px-4">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {packs.map((pack) => (
+                          <tr key={pack.id} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-4">{pack.name || 'Sin nombre'}</td>
+                            <td className="py-3 px-4">${pack.price.toLocaleString('es-CL')}</td>
+                            <td className="py-3 px-4">{pack.luckyPassQuantity}</td>
+                            <td className="py-3 px-4">
+                              <div className="flex gap-2">
+                                <button
+                                  className="p-1.5 rounded hover:bg-blue-50 text-blue-500"
+                                  title="Editar"
+                                  onClick={() => setPackModal(pack)}
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button
+                                  className="p-1.5 rounded hover:bg-red-50 text-red-500"
+                                  title="Eliminar"
+                                  onClick={async () => {
+                                    if (confirm('Eliminar este pack?')) {
+                                      try { await deletePack(pack.id); toast.success('Pack eliminado') }
+                                      catch { toast.error('Error al eliminar') }
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {packs.length === 0 && (
+                          <tr><td colSpan={4} className="py-12 text-center text-gray-400">No hay packs</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {packModal && (
+              <PackFormModal
+                initial={packModal === 'create' ? undefined : packModal}
+                onClose={() => setPackModal(null)}
+                onSubmit={async (data) => {
+                  if (packModal === 'create') {
+                    await createPack(data)
+                    toast.success('Pack creado')
+                  } else {
+                    await updatePack(packModal.id, data)
+                    toast.success('Pack actualizado')
+                  }
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* ── Newsletter ── */}
+        {activeTab === 'newsletter' && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-primary" />
+                  Enviar Newsletter
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Asunto</label>
+                  <input
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    value={newsletterSubject}
+                    onChange={e => setNewsletterSubject(e.target.value)}
+                    placeholder="Novedades de tu rifa..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
+                  <textarea
+                    rows={6}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                    value={newsletterBody}
+                    onChange={e => setNewsletterBody(e.target.value)}
+                    placeholder="Escribe el contenido del correo..."
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  onClick={handleSendNewsletter}
+                  loading={sendingNewsletter}
+                  disabled={!newsletterSubject.trim() || !newsletterBody.trim()}
+                  className="w-full sm:w-auto"
+                >
+                  <Send className="w-4 h-4 mr-1.5" />
+                  Enviar Campana
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Historial de Campanas</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 sm:p-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-gray-500">
+                        <th className="py-3 px-4">Asunto</th>
+                        <th className="py-3 px-4">Destinatarios</th>
+                        <th className="py-3 px-4">Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {campaigns.map((camp) => (
+                        <tr key={camp.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4 font-medium">{camp.subject}</td>
+                          <td className="py-3 px-4">{camp.recipientCount}</td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {new Date(camp.createdAt).toLocaleDateString('es-CL')}
+                          </td>
+                        </tr>
+                      ))}
+                      {campaigns.length === 0 && (
+                        <tr><td colSpan={3} className="py-12 text-center text-gray-400">No has enviado campanas aun</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}

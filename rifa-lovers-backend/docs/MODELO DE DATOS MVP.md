@@ -63,7 +63,9 @@ CREATE TABLE public.packs (
   is_featured boolean DEFAULT false,
   is_pre_sale boolean DEFAULT false,
   created_at timestamp without time zone DEFAULT now(),
-  CONSTRAINT packs_pkey PRIMARY KEY (id)
+  raffle_id uuid,
+  CONSTRAINT packs_pkey PRIMARY KEY (id),
+  CONSTRAINT packs_raffle_id_fkey FOREIGN KEY (raffle_id) REFERENCES public.raffles(id)
 );
 CREATE TABLE public.payment_transactions (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -73,7 +75,6 @@ CREATE TABLE public.payment_transactions (
   amount numeric,
   status USER-DEFINED DEFAULT 'created'::payment_status,
   created_at timestamp without time zone DEFAULT now(),
-  idempotencyKey uuid,
   CONSTRAINT payment_transactions_pkey PRIMARY KEY (id),
   CONSTRAINT payment_transactions_purchase_id_fkey FOREIGN KEY (purchase_id) REFERENCES public.purchases(id)
 );
@@ -192,7 +193,7 @@ CREATE TABLE public.users (
   status USER-DEFINED DEFAULT 'active'::user_status,
   created_at timestamp without time zone DEFAULT now(),
   updated_at timestamp without time zone DEFAULT now(),
-  phone_number character varying NOT NULL,
+  phone_number numeric NOT NULL,
   address character varying,
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id),

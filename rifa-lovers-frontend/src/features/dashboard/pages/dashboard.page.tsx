@@ -261,7 +261,7 @@ export default function DashboardPage() {
               {/* Sidebar */}
               <aside className="order-2 lg:order-1 space-y-5">
                 <TicketHistory items={historyItems.length > 0 ? historyItems : []} />
-                <SocialImpactBanner />
+                <SocialImpactBanner paidCount={purchases.filter(p => p.status === 'paid').length} />
                 {user?.email && (
                   <NewsletterDashboardCard
                     email={user.email}

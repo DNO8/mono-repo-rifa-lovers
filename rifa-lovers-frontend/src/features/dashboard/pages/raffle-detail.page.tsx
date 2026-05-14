@@ -218,7 +218,7 @@ export default function RaffleDetailPage() {
 
             {canPurchase && (
               <div className="mt-4 pt-4 border-t border-border-light">
-                <Link to={`/checkout?raffle=${raffleId}&tickets=1`}>
+                <Link to="/#pricing">
                   <Button variant="secondary" size="md" className="w-full">
                     <ShoppingCart className="size-4" />
                     Activar más LuckyPass

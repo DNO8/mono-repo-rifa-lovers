@@ -1,12 +1,16 @@
 import { Heart } from 'lucide-react'
 
 interface SocialImpactBannerProps {
-  message?: string
+  paidCount?: number
 }
 
 export function SocialImpactBanner({
-  message = 'Has ayudado a 12 familias este mes.',
+  paidCount = 0,
 }: SocialImpactBannerProps) {
+  const message = paidCount > 0
+    ? `Has ayudado a ${paidCount} ${paidCount === 1 ? 'familia' : 'familias'} con tus compras.`
+    : 'Tu primera compra ayudará a una familia. ¡Participa en una rifa!'
+
   return (
     <div className="gradient-rl rounded-2xl p-5 text-white">
       <div className="flex items-center gap-1.5 mb-2">

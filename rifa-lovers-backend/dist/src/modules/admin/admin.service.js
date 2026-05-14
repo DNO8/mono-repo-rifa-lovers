@@ -352,14 +352,36 @@ let AdminService = AdminService_1 = class AdminService {
                     role: true,
                     status: true,
                     createdAt: true,
+                    purchases: {
+                        select: { status: true },
+                    },
                     _count: {
-                        select: { purchases: true, luckyPasses: true },
+                        select: { luckyPasses: true },
                     },
                 },
             }),
             this.prisma.user.count(),
         ]);
-        return { users, total, skip, take };
+        const usersWithCounts = users.map((user) => {
+            const paid = user.purchases.filter((p) => p.status === 'paid').length;
+            const pending = user.purchases.filter((p) => p.status === 'pending').length;
+            const failed = user.purchases.filter((p) => p.status === 'failed').length;
+            const refunded = user.purchases.filter((p) => p.status === 'refunded').length;
+            return {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                status: user.status,
+                createdAt: user.createdAt,
+                _count: {
+                    purchases: { paid, pending, failed, refunded },
+                    luckyPasses: user._count.luckyPasses,
+                },
+            };
+        });
+        return { users: usersWithCounts, total, skip, take };
     }
 };
 exports.AdminService = AdminService;

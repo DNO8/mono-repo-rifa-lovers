@@ -69,7 +69,12 @@ export interface UserWithStats {
   status: string
   createdAt: string
   _count: {
-    purchases: number
+    purchases: {
+      paid: number
+      pending: number
+      failed: number
+      refunded: number
+    }
     luckyPasses: number
   }
 }

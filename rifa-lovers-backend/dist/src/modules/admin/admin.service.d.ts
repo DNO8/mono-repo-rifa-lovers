@@ -114,16 +114,21 @@ export declare class AdminService {
     getAllUsers(skip?: number, take?: number): Promise<{
         users: {
             id: string;
-            status: import("@prisma/client").$Enums.UserStatus;
-            createdAt: Date;
-            _count: {
-                purchases: number;
-                luckyPasses: number;
-            };
             email: string | null;
             firstName: string | null;
             lastName: string | null;
             role: import("@prisma/client").$Enums.UserRole;
+            status: import("@prisma/client").$Enums.UserStatus;
+            createdAt: Date;
+            _count: {
+                purchases: {
+                    paid: number;
+                    pending: number;
+                    failed: number;
+                    refunded: number;
+                };
+                luckyPasses: number;
+            };
         }[];
         total: number;
         skip: number;

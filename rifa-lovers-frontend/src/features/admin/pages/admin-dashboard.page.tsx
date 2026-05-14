@@ -726,12 +726,18 @@ export function AdminDashboardPage() {
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <span className="flex items-center flex-wrap gap-1.5">
                       Compras:
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-semibold">{user._count.purchases.paid}</span>
-                      {user._count.purchases.pending > 0 && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold">{user._count.purchases.pending}</span>
-                      )}
-                      {user._count.purchases.failed > 0 && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-semibold">{user._count.purchases.failed}</span>
+                      {typeof user._count.purchases === 'number' ? (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-semibold">{user._count.purchases}</span>
+                      ) : (
+                        <>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-semibold" title="Pagadas">{user._count.purchases.paid}</span>
+                          {user._count.purchases.pending > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-semibold" title="Pendientes">{user._count.purchases.pending}</span>
+                          )}
+                          {user._count.purchases.failed > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-semibold" title="Rechazadas">{user._count.purchases.failed}</span>
+                          )}
+                        </>
                       )}
                     </span>
                     <span className="shrink-0">LPs: <strong className="text-gray-800">{user._count.luckyPasses}</strong></span>
@@ -810,15 +816,21 @@ export function AdminDashboardPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-1.5">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-green-100 text-green-700 text-xs font-semibold" title="Pagadas">{user._count.purchases.paid}</span>
-                          {user._count.purchases.pending > 0 && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-semibold" title="Pendientes">{user._count.purchases.pending}</span>
-                          )}
-                          {user._count.purchases.failed > 0 && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-100 text-red-700 text-xs font-semibold" title="Rechazadas">{user._count.purchases.failed}</span>
-                          )}
-                          {user._count.purchases.refunded > 0 && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-semibold" title="Reembolsadas">{user._count.purchases.refunded}</span>
+                          {typeof user._count.purchases === 'number' ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-semibold">{user._count.purchases}</span>
+                          ) : (
+                            <>
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-green-100 text-green-700 text-xs font-semibold" title="Pagadas">{user._count.purchases.paid}</span>
+                              {user._count.purchases.pending > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-semibold" title="Pendientes">{user._count.purchases.pending}</span>
+                              )}
+                              {user._count.purchases.failed > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-red-100 text-red-700 text-xs font-semibold" title="Rechazadas">{user._count.purchases.failed}</span>
+                              )}
+                              {user._count.purchases.refunded > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-semibold" title="Reembolsadas">{user._count.purchases.refunded}</span>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>

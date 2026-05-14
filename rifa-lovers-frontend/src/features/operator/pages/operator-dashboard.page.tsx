@@ -35,6 +35,7 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react'
+import { RaffleFormModal } from '@/features/shared/components/raffle-form-modal'
 
 type Tab = 'overview' | 'raffles' | 'packs' | 'newsletter'
 
@@ -127,138 +128,6 @@ function PackFormModal({
   )
 }
 
-// ─── Raffle Form Modal ────────────────────────────────────────────────────────
-
-function RaffleFormModal({
-  onClose,
-  onSubmit,
-}: {
-  onClose: () => void
-  onSubmit: (data: { title: string; goalPacks: number; description: string; endDate: string; prizes: { name: string; description: string }[] }) => Promise<void>
-}) {
-  const [form, setForm] = useState({
-    title: '',
-    goalPacks: '',
-    description: '',
-    endDate: '',
-    prizes: [{ name: '', description: '' }],
-  })
-  const [saving, setSaving] = useState(false)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.title.trim() || !form.goalPacks.trim()) return
-    setSaving(true)
-    try {
-      await onSubmit({
-        title: form.title.trim(),
-        goalPacks: parseInt(form.goalPacks, 10),
-        description: form.description.trim(),
-        endDate: form.endDate,
-        prizes: form.prizes.filter(p => p.name.trim()),
-      })
-      onClose()
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Error al guardar')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const addPrize = () => setForm(f => ({ ...f, prizes: [...f.prizes, { name: '', description: '' }] }))
-  const removePrize = (idx: number) => setForm(f => ({ ...f, prizes: f.prizes.filter((_, i) => i !== idx) }))
-  const updatePrize = (idx: number, field: 'name' | 'description', value: string) =>
-    setForm(f => ({ ...f, prizes: f.prizes.map((p, i) => i === idx ? { ...p, [field]: value } : p) }))
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b">
-          <h2 className="text-lg font-bold">Nueva Rifa</h2>
-        </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Titulo *</label>
-            <input
-              required
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              value={form.title}
-              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              placeholder="Ej: Rifa Benefica de Verano"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Meta de Packs *</label>
-            <input
-              required
-              type="number"
-              min={1}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              value={form.goalPacks}
-              onChange={e => setForm(f => ({ ...f, goalPacks: e.target.value }))}
-              placeholder="100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descripcion</label>
-            <textarea
-              rows={3}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-              value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Describe la rifa y su proposito..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de cierre</label>
-            <input
-              type="datetime-local"
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              value={form.endDate}
-              onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Premios</label>
-            {form.prizes.map((prize, idx) => (
-              <div key={idx} className="flex gap-2 items-start">
-                <input
-                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="Nombre del premio"
-                  value={prize.name}
-                  onChange={e => updatePrize(idx, 'name', e.target.value)}
-                />
-                <input
-                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="Descripcion"
-                  value={prize.description}
-                  onChange={e => updatePrize(idx, 'description', e.target.value)}
-                />
-                {form.prizes.length > 1 && (
-                  <button type="button" onClick={() => removePrize(idx)} className="text-red-500 hover:text-red-700 p-2">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button type="button" onClick={addPrize} className="text-sm text-primary hover:text-primary/80 font-medium">
-              + Agregar premio
-            </button>
-          </div>
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="primary" className="flex-1" loading={saving}>
-              Crear Rifa
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function OperatorDashboardPage() {
@@ -307,7 +176,7 @@ export default function OperatorDashboardPage() {
     }
   }
 
-  const handleCreateRaffle = async (data: { title: string; goalPacks: number; description: string; endDate: string; prizes: { name: string; description: string }[] }) => {
+  const handleCreateRaffle = async (data: Parameters<typeof createRaffle>[0]) => {
     await createRaffle(data)
     toast.success('Rifa creada exitosamente')
     await refreshRaffles()

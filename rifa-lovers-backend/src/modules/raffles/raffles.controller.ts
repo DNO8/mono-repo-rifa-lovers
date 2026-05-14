@@ -35,7 +35,6 @@ export class RafflesController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'), CustomerOwnershipGuard)
   async getCustomerRaffle(@Param('id') id: string): Promise<RaffleResponseDto> {
     return await this.rafflesService.findById(id)
   }

@@ -71,7 +71,6 @@ __decorate([
 ], RafflesController.prototype, "getUserRaffles", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), customer_ownership_guard_1.CustomerOwnershipGuard),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

@@ -32,6 +32,8 @@ import {
   Building2,
   ImagePlus,
   Link2,
+  AlertTriangle,
+  Sparkles,
 } from 'lucide-react'
 
 type Tab = 'overview' | 'raffles' | 'packs' | 'newsletter'
@@ -125,6 +127,138 @@ function PackFormModal({
   )
 }
 
+// ─── Raffle Form Modal ────────────────────────────────────────────────────────
+
+function RaffleFormModal({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void
+  onSubmit: (data: { title: string; goalPacks: number; description: string; endDate: string; prizes: { name: string; description: string }[] }) => Promise<void>
+}) {
+  const [form, setForm] = useState({
+    title: '',
+    goalPacks: '',
+    description: '',
+    endDate: '',
+    prizes: [{ name: '', description: '' }],
+  })
+  const [saving, setSaving] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.title.trim() || !form.goalPacks.trim()) return
+    setSaving(true)
+    try {
+      await onSubmit({
+        title: form.title.trim(),
+        goalPacks: parseInt(form.goalPacks, 10),
+        description: form.description.trim(),
+        endDate: form.endDate,
+        prizes: form.prizes.filter(p => p.name.trim()),
+      })
+      onClose()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al guardar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const addPrize = () => setForm(f => ({ ...f, prizes: [...f.prizes, { name: '', description: '' }] }))
+  const removePrize = (idx: number) => setForm(f => ({ ...f, prizes: f.prizes.filter((_, i) => i !== idx) }))
+  const updatePrize = (idx: number, field: 'name' | 'description', value: string) =>
+    setForm(f => ({ ...f, prizes: f.prizes.map((p, i) => i === idx ? { ...p, [field]: value } : p) }))
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b">
+          <h2 className="text-lg font-bold">Nueva Rifa</h2>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Titulo *</label>
+            <input
+              required
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={form.title}
+              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+              placeholder="Ej: Rifa Benefica de Verano"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Meta de Packs *</label>
+            <input
+              required
+              type="number"
+              min={1}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={form.goalPacks}
+              onChange={e => setForm(f => ({ ...f, goalPacks: e.target.value }))}
+              placeholder="100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descripcion</label>
+            <textarea
+              rows={3}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+              value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              placeholder="Describe la rifa y su proposito..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de cierre</label>
+            <input
+              type="datetime-local"
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={form.endDate}
+              onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">Premios</label>
+            {form.prizes.map((prize, idx) => (
+              <div key={idx} className="flex gap-2 items-start">
+                <input
+                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Nombre del premio"
+                  value={prize.name}
+                  onChange={e => updatePrize(idx, 'name', e.target.value)}
+                />
+                <input
+                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Descripcion"
+                  value={prize.description}
+                  onChange={e => updatePrize(idx, 'description', e.target.value)}
+                />
+                {form.prizes.length > 1 && (
+                  <button type="button" onClick={() => removePrize(idx)} className="text-red-500 hover:text-red-700 p-2">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button type="button" onClick={addPrize} className="text-sm text-primary hover:text-primary/80 font-medium">
+              + Agregar premio
+            </button>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" variant="primary" className="flex-1" loading={saving}>
+              Crear Rifa
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function OperatorDashboardPage() {
@@ -133,13 +267,21 @@ export default function OperatorDashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null)
   const [packModal, setPackModal] = useState<'create' | PackWithStats | null>(null)
+  const [showRaffleModal, setShowRaffleModal] = useState(false)
 
-  const { org } = useOperatorOrg()
+  // Org creation form state
+  const [orgName, setOrgName] = useState('')
+  const [orgSlug, setOrgSlug] = useState('')
+  const [creatingOrg, setCreatingOrg] = useState(false)
+
+  const { org, isLoading: isLoadingOrg, create: createOrg, refresh: refreshOrg } = useOperatorOrg()
   const { kpis } = useOperatorKPIs()
-  const { raffles } = useOperatorRaffles()
+  const { raffles, create: createRaffle, refresh: refreshRaffles } = useOperatorRaffles()
   const { packs, create: createPack, update: updatePack, remove: deletePack } = useOperatorPacks(selectedRaffleId || '')
   const { campaigns, send: sendCampaign } = useOperatorNewsletter()
   const { upload: uploadCover, isUploading: isUploadingCover } = useUploadRaffleCover()
+
+  const hasOrg = !!org
 
   // Newsletter form state
   const [newsletterSubject, setNewsletterSubject] = useState('')
@@ -147,6 +289,29 @@ export default function OperatorDashboardPage() {
   const [sendingNewsletter, setSendingNewsletter] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/') }
+
+  const handleCreateOrg = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!orgName.trim()) return
+    setCreatingOrg(true)
+    try {
+      await createOrg({ name: orgName.trim(), slug: orgSlug.trim() || undefined })
+      toast.success('Organizacion creada exitosamente')
+      setOrgName('')
+      setOrgSlug('')
+      await refreshOrg()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al crear la organizacion')
+    } finally {
+      setCreatingOrg(false)
+    }
+  }
+
+  const handleCreateRaffle = async (data: { title: string; goalPacks: number; description: string; endDate: string; prizes: { name: string; description: string }[] }) => {
+    await createRaffle(data)
+    toast.success('Rifa creada exitosamente')
+    await refreshRaffles()
+  }
 
   const handleSendNewsletter = async () => {
     if (!newsletterSubject.trim() || !newsletterBody.trim()) return
@@ -179,21 +344,26 @@ export default function OperatorDashboardPage() {
             )}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none items-center">
-            {(['overview', 'raffles', 'packs', 'newsletter'] as Tab[]).map(tab => (
-              <Button
-                key={tab}
-                variant={activeTab === tab ? 'primary' : 'secondary'}
-                size="sm"
-                onClick={() => setActiveTab(tab)}
-                className="shrink-0"
-              >
-                {tab === 'overview' && <TrendingUp className="w-4 h-4 mr-1.5" />}
-                {tab === 'raffles' && <Calendar className="w-4 h-4 mr-1.5" />}
-                {tab === 'packs' && <Package className="w-4 h-4 mr-1.5" />}
-                {tab === 'newsletter' && <Mail className="w-4 h-4 mr-1.5" />}
-                {tab === 'overview' ? 'Resumen' : tab === 'raffles' ? 'Rifas' : tab === 'packs' ? 'Packs' : 'Newsletter'}
-              </Button>
-            ))}
+            {(['overview', 'raffles', 'packs', 'newsletter'] as Tab[]).map(tab => {
+              const isDisabled = !hasOrg && tab !== 'overview'
+              return (
+                <Button
+                  key={tab}
+                  variant={activeTab === tab ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => !isDisabled && setActiveTab(tab)}
+                  disabled={isDisabled}
+                  className={`shrink-0 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title={isDisabled ? 'Completa tu perfil de empresa primero' : undefined}
+                >
+                  {tab === 'overview' && <TrendingUp className="w-4 h-4 mr-1.5" />}
+                  {tab === 'raffles' && <Calendar className="w-4 h-4 mr-1.5" />}
+                  {tab === 'packs' && <Package className="w-4 h-4 mr-1.5" />}
+                  {tab === 'newsletter' && <Mail className="w-4 h-4 mr-1.5" />}
+                  {tab === 'overview' ? 'Resumen' : tab === 'raffles' ? 'Rifas' : tab === 'packs' ? 'Packs' : 'Newsletter'}
+                </Button>
+              )
+            })}
             <Button variant="outline-primary" size="sm" onClick={() => navigate('/dashboard')}>
               <ArrowLeft className="w-4 h-4 mr-1.5" />
               Dashboard
@@ -205,8 +375,50 @@ export default function OperatorDashboardPage() {
           </div>
         </div>
 
+        {/* ── Onboarding Banner (when no org) ── */}
+        {!hasOrg && !isLoadingOrg && (
+          <div className="rounded-2xl bg-linear-to-r from-primary to-secondary p-6 sm:p-8 text-white shadow-lg">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 bg-white/20 rounded-xl p-3">
+                <AlertTriangle className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold mb-1">Completa tu perfil de empresa</h2>
+                <p className="text-white/90 text-sm sm:text-base mb-4">
+                  Debes crear tu organizacion para comenzar a gestionar rifas, packs y enviar newsletters.
+                </p>
+                <form onSubmit={handleCreateOrg} className="flex flex-col sm:flex-row gap-3 max-w-xl">
+                  <input
+                    required
+                    placeholder="Nombre de tu empresa *"
+                    className="flex-1 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    value={orgName}
+                    onChange={e => setOrgName(e.target.value)}
+                  />
+                  <input
+                    placeholder="Slug (opcional)"
+                    className="flex-1 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    value={orgSlug}
+                    onChange={e => setOrgSlug(e.target.value)}
+                  />
+                  <Button
+                    type="submit"
+                    variant="outline-primary"
+                    size="sm"
+                    loading={creatingOrg}
+                    className="shrink-0 bg-white text-primary hover:bg-white/90 border-white"
+                  >
+                    <Sparkles className="w-4 h-4 mr-1.5" />
+                    Crear Organizacion
+                  </Button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Overview ── */}
-        {activeTab === 'overview' && kpis && (
+        {activeTab === 'overview' && hasOrg && kpis && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <KpiCard title="Ventas Totales" value={kpis.totalSales} icon={TrendingUp} color="green" suffix=" CLP" />
@@ -230,9 +442,15 @@ export default function OperatorDashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Gestion de Rifas</CardTitle>
-                <Button variant="primary" size="sm" onClick={() => navigate('/admin')}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setShowRaffleModal(true)}
+                  disabled={!hasOrg}
+                  title={!hasOrg ? 'Completa tu perfil de empresa primero' : undefined}
+                >
                   <Plus className="w-4 h-4 mr-1.5" />
-                  Nueva Rifa (usar admin)
+                  Nueva Rifa
                 </Button>
               </div>
             </CardHeader>
@@ -421,6 +639,14 @@ export default function OperatorDashboardPage() {
               />
             )}
           </div>
+        )}
+
+        {/* ── Raffle Modal ── */}
+        {showRaffleModal && (
+          <RaffleFormModal
+            onClose={() => setShowRaffleModal(false)}
+            onSubmit={handleCreateRaffle}
+          />
         )}
 
         {/* ── Newsletter ── */}

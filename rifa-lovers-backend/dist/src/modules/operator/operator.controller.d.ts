@@ -24,7 +24,12 @@ export declare class OperatorController {
     createRaffle(userId: string, dto: CreateRaffleDto): Promise<import("./operator.service").RaffleWithStats>;
     updateRaffle(userId: string, raffleId: string, dto: UpdateRaffleDto): Promise<import("./operator.service").RaffleWithStats>;
     updateRaffleStatus(userId: string, raffleId: string, dto: UpdateRaffleStatusDto): Promise<import("./operator.service").RaffleWithStats>;
-    uploadCover(userId: string, raffleId: string, file: Express.Multer.File): Promise<{
+    uploadCover(userId: string, raffleId: string, file: {
+        buffer: Buffer;
+        mimetype: string;
+        originalname: string;
+        size: number;
+    }): Promise<{
         coverImageUrl: string;
     }>;
     getPacks(userId: string, raffleId: string): Promise<import("./operator.service").PackWithStats[]>;

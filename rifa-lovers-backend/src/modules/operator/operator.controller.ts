@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Logger, ForbiddenException, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Logger, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
@@ -75,7 +75,7 @@ export class OperatorController {
   async uploadCover(
     @CurrentUser('id') userId: string,
     @Param('id') raffleId: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string; originalname: string; size: number },
   ) {
     if (!file) throw new BadRequestException('No se envió ningún archivo')
     const allowed = ['image/jpeg', 'image/png', 'image/webp']

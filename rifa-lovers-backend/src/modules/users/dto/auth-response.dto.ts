@@ -7,6 +7,7 @@ export class UserResponseDto {
   role: string;
   status: string;
   organizationId?: string | null;
+  organizationName?: string | null;
   createdAt: Date;
 }
 

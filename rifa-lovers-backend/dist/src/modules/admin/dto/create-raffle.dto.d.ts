@@ -2,6 +2,8 @@ import { RaffleStatus } from '@prisma/client';
 export declare class CreatePrizeDto {
     name: string;
     description?: string;
+    valueEstimated?: number;
+    quantity?: number;
 }
 export declare class CreateRaffleDto {
     title: string;

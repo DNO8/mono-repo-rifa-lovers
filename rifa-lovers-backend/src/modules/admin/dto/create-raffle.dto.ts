@@ -10,6 +10,16 @@ export class CreatePrizeDto {
   @IsString()
   @IsOptional()
   description?: string
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  valueEstimated?: number
+
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  quantity?: number
 }
 
 export class CreateRaffleDto {

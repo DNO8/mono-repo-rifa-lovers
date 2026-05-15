@@ -58,7 +58,8 @@ let AdminService = AdminService_1 = class AdminService {
                         type: 'milestone',
                         name: prizeDto.name,
                         description: prizeDto.description ?? null,
-                        quantity: 1,
+                        quantity: prizeDto.quantity ?? 1,
+                        valueEstimated: prizeDto.valueEstimated ?? null,
                     },
                 });
             }

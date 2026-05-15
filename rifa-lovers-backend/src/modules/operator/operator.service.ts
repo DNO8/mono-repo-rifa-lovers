@@ -231,8 +231,8 @@ export class OperatorService {
             description: prizeDto.description,
             raffleId: raffle.id,
             type: 'milestone',
-            quantity: 1,
-            valueEstimated: 0,
+            quantity: prizeDto.quantity ?? 1,
+            valueEstimated: prizeDto.valueEstimated ?? null,
           },
         })
         await tx.milestone.create({

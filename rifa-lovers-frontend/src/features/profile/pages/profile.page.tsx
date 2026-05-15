@@ -128,6 +128,7 @@ export default function ProfilePage() {
             <div className="mb-6">
               <OrganizationCard
                 hasOrganization={!!user?.organizationId}
+                organizationName={user?.organizationName}
                 onCreated={() => refreshUser()}
               />
             </div>

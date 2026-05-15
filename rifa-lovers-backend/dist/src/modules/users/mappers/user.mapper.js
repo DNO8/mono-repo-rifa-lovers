@@ -11,6 +11,7 @@ function mapUserToDto(user) {
         role: user.role,
         status: user.status,
         organizationId: user.organizationId,
+        organizationName: user.organization?.name ?? null,
         createdAt: user.createdAt,
     };
 }

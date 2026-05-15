@@ -35,7 +35,7 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react'
-import { RaffleFormModal } from '@/features/shared/components/raffle-form-modal'
+import { RaffleWizardModal } from '@/features/shared/components/raffle-wizard-modal'
 
 type Tab = 'overview' | 'raffles' | 'packs' | 'newsletter'
 
@@ -176,11 +176,6 @@ export default function OperatorDashboardPage() {
     }
   }
 
-  const handleCreateRaffle = async (data: Parameters<typeof createRaffle>[0]) => {
-    await createRaffle(data)
-    toast.success('Rifa creada exitosamente')
-    await refreshRaffles()
-  }
 
   const handleSendNewsletter = async () => {
     if (!newsletterSubject.trim() || !newsletterBody.trim()) return
@@ -512,9 +507,13 @@ export default function OperatorDashboardPage() {
 
         {/* ── Raffle Modal ── */}
         {showRaffleModal && (
-          <RaffleFormModal
+          <RaffleWizardModal
             onClose={() => setShowRaffleModal(false)}
-            onSubmit={handleCreateRaffle}
+            onSuccess={() => {
+              toast.success('Rifa creada exitosamente')
+              refreshRaffles()
+            }}
+            createRaffle={createRaffle}
           />
         )}
 

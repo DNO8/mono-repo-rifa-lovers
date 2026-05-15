@@ -63,6 +63,7 @@ let AuthService = class AuthService {
         }
         const user = await this.prisma.user.findUnique({
             where: { id: supabaseData.user.id },
+            include: { organization: true },
         });
         if (!user) {
             throw new common_1.UnauthorizedException('Usuario no encontrado en el sistema');
@@ -88,6 +89,7 @@ let AuthService = class AuthService {
     async getProfile(userId) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
+            include: { organization: true },
         });
         if (!user) {
             throw new common_1.NotFoundException('Usuario no encontrado');

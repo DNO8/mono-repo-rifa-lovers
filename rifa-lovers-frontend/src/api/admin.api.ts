@@ -5,6 +5,8 @@ import { ENDPOINTS } from './endpoints'
 export interface PrizeInput {
   name: string
   description?: string
+  valueEstimated?: number
+  quantity?: number
 }
 
 export interface CreateRaffleRequest {

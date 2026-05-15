@@ -250,6 +250,7 @@ export interface User {
   role: UserRole
   status: UserStatus
   organizationId?: string | null
+  organizationName?: string | null
   createdAt: string
 }
 

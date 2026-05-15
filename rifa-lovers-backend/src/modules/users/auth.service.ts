@@ -74,6 +74,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: supabaseData.user.id },
+      include: { organization: true },
     });
 
     if (!user) {
@@ -106,6 +107,7 @@ export class AuthService {
   async getProfile(userId: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: { organization: true },
     });
 
     if (!user) {

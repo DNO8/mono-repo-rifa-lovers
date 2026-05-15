@@ -29,8 +29,9 @@ import {
   UserCheck,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import type { RaffleWithStats, CreateRaffleRequest, UpdateRaffleRequest, UpdateRaffleStatusRequest } from '@/api/admin.api'
+import type { RaffleWithStats, UpdateRaffleRequest, UpdateRaffleStatusRequest } from '@/api/admin.api'
 import { RaffleFormModal } from '@/features/shared/components/raffle-form-modal'
+import { RaffleWizardModal } from '@/features/shared/components/raffle-wizard-modal'
 
 // ─── KPI Card ────────────────────────────────────────────────────────────────
 
@@ -669,9 +670,13 @@ export function AdminDashboardPage() {
         />
       )}
       {raffleModal === 'create' && (
-        <RaffleFormModal
+        <RaffleWizardModal
           onClose={() => setRaffleModal(null)}
-          onSubmit={(data) => create(data as CreateRaffleRequest).then(() => {})}
+          onSuccess={() => {
+            toast.success('Rifa creada exitosamente')
+            refreshRaffles()
+          }}
+          createRaffle={create}
         />
       )}
       {drawRaffleId && (

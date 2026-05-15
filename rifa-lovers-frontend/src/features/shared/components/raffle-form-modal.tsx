@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { toastError } from '@/lib/errors'
+import { toUTC, parseInitialDateTime } from '@/lib/utils'
 import type { RaffleWithStats } from '@/api/admin.api'
 
 interface RaffleFormModalProps {
@@ -11,16 +12,6 @@ interface RaffleFormModalProps {
 }
 
 export function RaffleFormModal({ initial, onClose, onSubmit }: RaffleFormModalProps) {
-  const parseInitialDateTime = (dateStr: string | null | undefined) => {
-    if (!dateStr) return { date: '', time: '' }
-    const date = new Date(dateStr)
-    const chileDate = new Date(date.getTime() - (4 * 60 * 60 * 1000))
-    return {
-      date: chileDate.toISOString().slice(0, 10),
-      time: chileDate.toISOString().slice(11, 16),
-    }
-  }
-
   const initialStart = parseInitialDateTime(initial?.startDate)
   const initialEnd = parseInitialDateTime(initial?.endDate)
 
@@ -43,14 +34,6 @@ export function RaffleFormModal({ initial, onClose, onSubmit }: RaffleFormModalP
     e.preventDefault()
     setSaving(true)
     try {
-      const toUTC = (date: string, time: string) => {
-        if (!date) return undefined
-        const [year, month, day] = date.split('-').map(Number)
-        const [hours, minutes] = time.split(':').map(Number)
-        const chileDate = new Date(Date.UTC(year, month - 1, day, hours + 4, minutes))
-        return chileDate.toISOString()
-      }
-
       const filteredPrizes = prizes
         .map(p => ({ name: p.name.trim(), description: p.description.trim() || undefined }))
         .filter(p => p.name.length > 0)

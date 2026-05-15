@@ -1,7 +1,7 @@
 import type { User } from '@prisma/client'
 import type { UserResponseDto } from '../dto'
 
-export function mapUserToDto(user: User): UserResponseDto {
+export function mapUserToDto(user: User & { organization?: { name: string } | null }): UserResponseDto {
   return {
     id: user.id,
     email: user.email ?? '',
@@ -11,6 +11,7 @@ export function mapUserToDto(user: User): UserResponseDto {
     role: user.role,
     status: user.status,
     organizationId: user.organizationId,
+    organizationName: user.organization?.name ?? null,
     createdAt: user.createdAt,
   }
 }

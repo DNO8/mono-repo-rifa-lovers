@@ -67,6 +67,10 @@ export class WebhookController {
           const msg = err instanceof Error ? err.message : String(err)
           const stack = err instanceof Error ? err.stack : undefined
           this.logger.error(`ERROR en confirmPayment para ${purchase.id}: ${msg}`, stack)
+          // Propagar error a Flow para que reintente el webhook
+          throw new BadRequestException(
+            `Error procesando confirmación de pago: ${msg}`,
+          )
         }
         break
       }

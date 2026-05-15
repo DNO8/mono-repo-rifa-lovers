@@ -81,13 +81,23 @@ export class PaymentsController {
     this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`)
 
     // Actualizar PaymentTransaction existente con el token de Flow y idempotencyKey
-    await this.prisma.paymentTransaction.updateMany({
+    const updateResult = await this.prisma.paymentTransaction.updateMany({
       where: { purchaseId: purchase.id },
       data: {
         providerTransactionId: flowOrder.token,
         ...(dto.idempotencyKey && { idempotencyKey: dto.idempotencyKey }),
       },
     })
+
+    if (updateResult.count === 0) {
+      this.logger.error(
+        `No se encontró PaymentTransaction para actualizar: purchaseId=${purchase.id}`,
+      )
+      throw new BadRequestException(
+        'No se encontró la transacción de pago asociada a esta compra',
+      )
+    }
+
     this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`)
 
     const paymentUrl = `${flowOrder.url}?token=${flowOrder.token}`
@@ -115,12 +125,25 @@ export class PaymentsController {
   }
 
   @Post('return')
-  handleFlowReturn(
+  async handleFlowReturn(
     @Body('token') token: string,
     @Res() res: Response,
-  ): void {
+  ): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173'
     this.logger.debug(`Flow return recibido con token: ${token}`)
+
+    // Validate token exists in our database before redirecting
+    if (token) {
+      const purchase = await this.purchasesService.findByProviderTransactionId(token)
+      if (!purchase) {
+        this.logger.warn(`Token de Flow no encontrado en BD: ${token}`)
+        const redirectUrl = `${frontendUrl}/payment/return?error=not_found`
+        res.setHeader('Content-Type', 'text/html')
+        res.send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"><script>window.location.replace("${redirectUrl}");</script></head><body></body></html>`)
+        return
+      }
+    }
+
     const redirectUrl = token
       ? `${frontendUrl}/payment/return?token=${token}`
       : `${frontendUrl}/payment/return`
@@ -212,15 +235,15 @@ export class PaymentsController {
     const MAX_RETRIES = 5
     const RETRY_DELAY_MS = 3000
     let finalStatus = 1
-    let commerceOrder = ''
+    let flowOrderId = 0
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const paymentStatus = await this.flowService.getPaymentStatus(token)
       finalStatus = paymentStatus.status
-      commerceOrder = paymentStatus.commerceOrder
+      flowOrderId = paymentStatus.flowOrder
 
       this.logger.log(
-        `Flow status intento ${attempt + 1}/${MAX_RETRIES}: order=${commerceOrder}, status=${finalStatus}`,
+        `Flow status intento ${attempt + 1}/${MAX_RETRIES}: order=${paymentStatus.commerceOrder}, status=${finalStatus}`,
       )
 
       if (finalStatus !== 1) {
@@ -234,16 +257,34 @@ export class PaymentsController {
       }
     }
 
+    // Si Flow indica que el pago fue exitoso, confirmar la compra
+    if (finalStatus === 2) {
+      try {
+        await this.purchasesService.confirmPayment(purchase.id, {
+          providerTransactionId: String(flowOrderId),
+          provider: 'flow',
+          status: 'paid',
+        })
+        this.logger.log(`Pago confirmado tras verificación manual: ${purchase.id}`)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        this.logger.error(`Error confirmando pago verificado: ${msg}`)
+      }
+    }
+
     // Si Flow indica que el pago fue rechazado o anulado, actualizar el estado de la compra
     if (finalStatus === 3 || finalStatus === 4) {
       await this.purchasesService.updateStatus(purchase.id, 'failed')
       this.logger.log(`Pago marcado como failed por Flow status ${finalStatus}: ${purchase.id}`)
     }
 
+    // Re-fetch purchase to return the latest status
+    const updatedPurchase = await this.purchasesService.findById(purchase.id)
+
     // Retornar el estado final de Flow y el estado actual de la compra
     return {
       flowStatus: finalStatus,
-      purchaseStatus: purchase.status,
+      purchaseStatus: updatedPurchase.status,
       purchaseId: purchase.id,
     }
   }

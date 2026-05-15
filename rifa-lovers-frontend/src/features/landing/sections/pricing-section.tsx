@@ -5,17 +5,18 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { usePacks } from '@/hooks/use-packs'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
+import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
 
 const SHOW_PACK_MOM = true
 
 export function PricingSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.15 })
   const navigate = useNavigate()
-  const { isLoading, error } = usePacks()
+  const { packs, isLoading, error } = usePacks()
 
-  // Mapear packs de API a PricingTiers, filtrando todos los packs (deshabilitado temporalmente)
-  // Cuando se habilite, usar: const pricingTiers = mapPacksToPricingTiers(packs.filter(p => p.name?.toUpperCase() !== 'EXCLUSIVO PREVENTA'))
-  const pricingTiers: never[] = [] // Deshabilitado temporalmente
+  const pricingTiers = mapPacksToPricingTiers(
+    packs.filter((p) => p.name?.toUpperCase() !== 'EXCLUSIVO PREVENTA'),
+  )
 
   return (
     <section

@@ -41,7 +41,7 @@ let AuthService = class AuthService {
                 email: email.toLowerCase(),
                 firstName,
                 lastName,
-                phone: parseFloat(phone),
+                phone: this.parsePhone(phone),
                 role: 'customer',
                 address,
             },
@@ -50,6 +50,7 @@ let AuthService = class AuthService {
             user: (0, user_mapper_1.mapUserToDto)(user),
             accessToken: supabaseData.session?.access_token || '',
             refreshToken: supabaseData.session?.refresh_token || '',
+            requiresEmailConfirmation: !supabaseData.session,
         };
     }
     async login(loginDto) {
@@ -151,13 +152,10 @@ let AuthService = class AuthService {
     parsePhone(phone, fallback = null) {
         if (phone === undefined || phone === null || phone === '')
             return fallback ?? undefined;
-        const cleaned = phone.replace(/[^\d]/g, '');
+        const cleaned = phone.replace(/[^\d+]/g, '');
         if (!cleaned)
             return fallback ?? undefined;
-        const parsed = parseFloat(cleaned);
-        if (isNaN(parsed))
-            return fallback ?? undefined;
-        return parsed;
+        return cleaned;
     }
     async refreshToken(refreshToken) {
         const { data, error } = await this.supabaseService.refreshToken(refreshToken);

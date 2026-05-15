@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Ticket, Heart, Radio, Shield, MessageCircle, Mail, Phone, Send, Clock } from 'lucide-react'
+import { toast } from 'react-toastify'
+import { Ticket, Heart, Radio, Shield, MessageCircle, Mail, Phone, Send, Clock, CheckCircle, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { FAQItem } from '@/components/shared/faq-item'
 import { FAQS } from '@/lib/constants'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
+import { submitContactForm } from '@/api/contact.api'
 import type { IconMap } from '@/types/ui.types'
 
 const FAQ_ICONS: IconMap = {
@@ -15,14 +17,48 @@ const FAQ_ICONS: IconMap = {
   Shield,
 }
 
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 export function FAQContactSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.1 })
   const [formData, setFormData] = useState({ name: '', email: '', message: '' })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: wire to backend
-    setFormData({ name: '', email: '', message: '' })
+
+    if (!formData.name.trim()) {
+      toast.error('Por favor ingresa tu nombre')
+      return
+    }
+    if (!formData.email.trim() || !isValidEmail(formData.email)) {
+      toast.error('Por favor ingresa un correo válido')
+      return
+    }
+    if (!formData.message.trim()) {
+      toast.error('Por favor escribe un mensaje')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await submitContactForm({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        message: formData.message.trim(),
+      })
+      setSubmitSuccess(true)
+      setFormData({ name: '', email: '', message: '' })
+      toast.success('Mensaje enviado exitosamente')
+      setTimeout(() => setSubmitSuccess(false), 5000)
+    } catch {
+      toast.error('Error al enviar el mensaje. Intenta de nuevo.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -92,9 +128,15 @@ export function FAQContactSection() {
                     className="w-full px-3 py-2.5 rounded-xl border border-border bg-white text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
                   />
                 </div>
-                <Button variant="primary" size="lg" className="w-full">
-                  <Send className="size-4" />
-                  Enviar mensaje
+                <Button variant="primary" size="lg" className="w-full" disabled={isSubmitting || submitSuccess}>
+                  {isSubmitting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : submitSuccess ? (
+                    <CheckCircle className="size-4" />
+                  ) : (
+                    <Send className="size-4" />
+                  )}
+                  {isSubmitting ? 'Enviando...' : submitSuccess ? '¡Enviado!' : 'Enviar mensaje'}
                 </Button>
               </form>
 

@@ -42,7 +42,7 @@ export class AuthService {
         email: email.toLowerCase(),
         firstName,
         lastName,
-        phone: parseFloat(phone),
+        phone: this.parsePhone(phone),
         role: 'customer',
         address,
       },
@@ -52,6 +52,7 @@ export class AuthService {
       user: mapUserToDto(user),
       accessToken: supabaseData.session?.access_token || '',
       refreshToken: supabaseData.session?.refresh_token || '',
+      requiresEmailConfirmation: !supabaseData.session,
     };
   }
 
@@ -184,13 +185,11 @@ export class AuthService {
     return mapUserToDto(updatedUser);
   }
 
-  private parsePhone(phone?: string, fallback: number | null = null): number | undefined {
+  private parsePhone(phone?: string, fallback: string | null = null): string | undefined {
     if (phone === undefined || phone === null || phone === '') return fallback ?? undefined;
-    const cleaned = phone.replace(/[^\d]/g, '');
+    const cleaned = phone.replace(/[^\d+]/g, '');
     if (!cleaned) return fallback ?? undefined;
-    const parsed = parseFloat(cleaned);
-    if (isNaN(parsed)) return fallback ?? undefined;
-    return parsed;
+    return cleaned;
   }
 
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {

@@ -3,7 +3,7 @@ export declare class UserResponseDto {
     email: string;
     firstName: string;
     lastName: string;
-    phone: number;
+    phone: string | null;
     role: string;
     status: string;
     organizationId?: string | null;
@@ -13,5 +13,6 @@ export declare class UserResponseDto {
 export declare class AuthResponseDto {
     user: UserResponseDto;
     accessToken: string;
-    refreshToken?: string;
+    refreshToken: string;
+    requiresEmailConfirmation?: boolean;
 }

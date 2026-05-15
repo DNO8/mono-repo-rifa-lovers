@@ -17,19 +17,22 @@ function ScrollToTop() {
   useEffect(() => {
     if (hash) {
       const id = hash.slice(1)
-      let attempts = 0
-      const interval = setInterval(() => {
+      const startTime = performance.now()
+      const MAX_WAIT_MS = 3000
+
+      let rafId: number
+      const tryScroll = () => {
         const el = document.getElementById(id)
         if (el) {
           el.scrollIntoView({ behavior: 'smooth' })
-          clearInterval(interval)
+          return
         }
-        attempts++
-        if (attempts >= 30) {
-          clearInterval(interval)
+        if (performance.now() - startTime < MAX_WAIT_MS) {
+          rafId = requestAnimationFrame(tryScroll)
         }
-      }, 100)
-      return () => clearInterval(interval)
+      }
+      rafId = requestAnimationFrame(tryScroll)
+      return () => cancelAnimationFrame(rafId)
     } else {
       window.scrollTo(0, 0)
     }

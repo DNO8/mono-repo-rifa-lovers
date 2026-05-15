@@ -188,14 +188,20 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
 
   // Initial fetch - use ref to track if we've already fetched
   const hasFetchedRef = useRef(false)
-  
+  const prevRaffleIdRef = useRef(raffleId)
+
   useEffect(() => {
+    if (raffleId !== prevRaffleIdRef.current) {
+      hasFetchedRef.current = false
+      prevRaffleIdRef.current = raffleId
+    }
     if (raffleId && !hasFetchedRef.current) {
       hasFetchedRef.current = true
       void refreshRaffle()
       void refreshParticipants()
       void refreshDrawStatus()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [raffleId])
 
   return {

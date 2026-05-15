@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getErrorMessage } from '@/lib/errors'
 
 export interface AsyncState<T> {
@@ -25,18 +25,25 @@ export function useAsyncData<T>(
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const fetcherRef = useRef(fetcher)
+
+  // Keep ref in sync with latest fetcher without triggering re-renders
+  useEffect(() => {
+    fetcherRef.current = fetcher
+  })
+
   const run = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
-      const result = await fetcher()
+      const result = await fetcherRef.current()
       setData(result)
     } catch (err: unknown) {
       setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps, react-compiler/react-compiler
   }, deps)
 
   useEffect(() => {

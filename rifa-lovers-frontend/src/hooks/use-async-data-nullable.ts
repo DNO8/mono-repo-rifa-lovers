@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getErrorMessage } from '@/lib/errors'
 
 export interface AsyncState<T> {
@@ -19,23 +19,31 @@ export interface AsyncState<T> {
 export function useAsyncDataNullable<T>(
   fetcher: () => Promise<T>,
   initialData: T,
+  deps: unknown[] = [],
 ): AsyncState<T> {
   const [data, setData] = useState<T>(initialData)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const fetcherRef = useRef(fetcher)
+
+  useEffect(() => {
+    fetcherRef.current = fetcher
+  })
+
   const run = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
-      const result = await fetcher()
+      const result = await fetcherRef.current()
       setData(result)
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }
-  }, [fetcher])
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-compiler/react-compiler
+  }, deps)
 
   useEffect(() => {
     run()

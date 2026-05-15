@@ -9,10 +9,15 @@ interface UseCarouselOptions {
 export function useCarousel({ total, autoAdvanceMs = 5000 }: UseCarouselOptions) {
   const trackRef = useRef<HTMLDivElement>(null)
   const [current, setCurrent] = useState(0)
+  const currentRef = useRef(current)
   const [isPaused, setIsPaused] = useState(false)
   const isDragging = useRef(false)
   const startX = useRef(0)
   const trackX = useRef(0)
+
+  useEffect(() => {
+    currentRef.current = current
+  })
 
   const getSnapX = (track: HTMLDivElement, index: number) => {
     const card = track.children[index] as HTMLElement | undefined
@@ -79,10 +84,11 @@ export function useCarousel({ total, autoAdvanceMs = 5000 }: UseCarouselOptions)
     isDragging.current = false
     const dx = e.clientX - startX.current
     const threshold = 60
+    const currentIdx = currentRef.current
 
-    let next = current
-    if (dx < -threshold && current < total - 1) next = current + 1
-    else if (dx > threshold && current > 0) next = current - 1
+    let next = currentIdx
+    if (dx < -threshold && currentIdx < total - 1) next = currentIdx + 1
+    else if (dx > threshold && currentIdx > 0) next = currentIdx - 1
 
     snapTo(next)
     setIsPaused(false)

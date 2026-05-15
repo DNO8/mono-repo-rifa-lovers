@@ -83,17 +83,20 @@ let AuthController = AuthController_1 = class AuthController {
         return { message: 'Email de recuperación enviado. Revisa tu bandeja de entrada.' };
     }
     async resetPassword(token, email, password) {
-        const { data: userData, error: userError } = await this.supabaseService.getUser(token);
-        if (userError || !userData.user) {
-            this.logger.warn(`Invalid or expired token for password reset: ${email}`);
+        if (!token || !email || !password) {
+            return { success: false, message: 'Token, email y contraseña son requeridos.' };
+        }
+        const { data: verifyData, error: verifyError } = await this.supabaseService.verifyOTP(email, token, 'recovery');
+        if (verifyError || !verifyData.user) {
+            this.logger.warn(`Invalid or expired recovery token for password reset: ${email}`);
             return { success: false, message: 'Token inválido o expirado.' };
         }
-        const { error: updateError } = await this.supabaseService.updateUser(userData.user.id, { password });
+        const { error: updateError } = await this.supabaseService.updateUser(verifyData.user.id, { password });
         if (updateError) {
-            this.logger.error(`Failed to update password for user ${userData.user.id}: ${updateError.message}`);
+            this.logger.error(`Failed to update password for user ${verifyData.user.id}: ${updateError.message}`);
             return { success: false, message: 'Error al actualizar la contraseña. Intenta de nuevo.' };
         }
-        this.logger.log(`Password successfully updated for user: ${userData.user.id}`);
+        this.logger.log(`Password successfully updated for user: ${verifyData.user.id}`);
         return { success: true, message: 'Contraseña actualizada exitosamente.' };
     }
 };

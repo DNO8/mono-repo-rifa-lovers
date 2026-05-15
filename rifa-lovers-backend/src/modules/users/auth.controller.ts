@@ -138,23 +138,31 @@ export class AuthController {
     @Body('email') email: string,
     @Body('password') password: string,
   ): Promise<{ success: boolean; message: string }> {
-    // Verify the access token and get user
-    const { data: userData, error: userError } = await this.supabaseService.getUser(token);
+    if (!token || !email || !password) {
+      return { success: false, message: 'Token, email y contraseña son requeridos.' }
+    }
 
-    if (userError || !userData.user) {
-      this.logger.warn(`Invalid or expired token for password reset: ${email}`);
-      return { success: false, message: 'Token inválido o expirado.' };
+    // Verify the recovery OTP token (this is NOT an access token)
+    const { data: verifyData, error: verifyError } = await this.supabaseService.verifyOTP(
+      email,
+      token,
+      'recovery',
+    )
+
+    if (verifyError || !verifyData.user) {
+      this.logger.warn(`Invalid or expired recovery token for password reset: ${email}`)
+      return { success: false, message: 'Token inválido o expirado.' }
     }
 
     // Update the password using admin client
-    const { error: updateError } = await this.supabaseService.updateUser(userData.user.id, { password });
+    const { error: updateError } = await this.supabaseService.updateUser(verifyData.user.id, { password })
 
     if (updateError) {
-      this.logger.error(`Failed to update password for user ${userData.user.id}: ${updateError.message}`);
-      return { success: false, message: 'Error al actualizar la contraseña. Intenta de nuevo.' };
+      this.logger.error(`Failed to update password for user ${verifyData.user.id}: ${updateError.message}`)
+      return { success: false, message: 'Error al actualizar la contraseña. Intenta de nuevo.' }
     }
 
-    this.logger.log(`Password successfully updated for user: ${userData.user.id}`);
-    return { success: true, message: 'Contraseña actualizada exitosamente.' };
+    this.logger.log(`Password successfully updated for user: ${verifyData.user.id}`)
+    return { success: true, message: 'Contraseña actualizada exitosamente.' }
   }
 }

@@ -7,7 +7,7 @@ export function mapUserToDto(user: User & { organization?: { name: string } | nu
     email: user.email ?? '',
     firstName: user.firstName ?? '',
     lastName: user.lastName ?? '',
-    phone: user.phone ?? 0,
+    phone: user.phone ?? null,
     role: user.role,
     status: user.status,
     organizationId: user.organizationId,

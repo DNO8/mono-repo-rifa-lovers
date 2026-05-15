@@ -191,81 +191,100 @@ let JobsService = JobsService_1 = class JobsService {
                 this.logger.log('[JOB] No hay purchases para expirar');
                 return;
             }
-            for (const purchase of purchasesToExpire) {
-                const token = purchase.paymentTransactions[0]?.providerTransactionId;
-                let flowStatus = 1;
-                if (token) {
-                    try {
-                        const paymentStatus = await this.flowService.getPaymentStatus(token);
-                        flowStatus = paymentStatus.status;
-                        this.logger.log(`[JOB] Flow status para purchase ${purchase.id}: ${flowStatus}`);
+            const CONCURRENCY = 5;
+            const results = { confirmed: 0, failed: 0, errors: 0 };
+            for (let i = 0; i < purchasesToExpire.length; i += CONCURRENCY) {
+                const batch = purchasesToExpire.slice(i, i + CONCURRENCY);
+                const batchResults = await Promise.allSettled(batch.map((purchase) => this.processExpiredPurchase(purchase)));
+                batchResults.forEach((result) => {
+                    if (result.status === 'fulfilled') {
+                        if (result.value === 'confirmed')
+                            results.confirmed++;
+                        else if (result.value === 'failed')
+                            results.failed++;
                     }
-                    catch (err) {
-                        this.logger.error(`[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
+                    else {
+                        results.errors++;
+                        this.logger.error(`[JOB] Error procesando purchase: ${result.reason}`);
                     }
-                }
-                if (flowStatus === 2) {
-                    this.logger.log(`[JOB] Purchase ${purchase.id} está pagada en Flow. Confirmando...`);
-                    try {
-                        await this.purchasesService.confirmPayment(purchase.id, {
-                            providerTransactionId: token ?? 'unknown',
-                            provider: 'flow',
-                            status: 'approved',
-                        });
-                    }
-                    catch (err) {
-                        this.logger.error(`[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
-                    }
-                }
-                else {
-                    try {
-                        await this.prisma.purchase.update({
-                            where: { id: purchase.id },
-                            data: { status: client_1.PurchaseStatus.failed },
-                        });
-                        await this.prisma.paymentTransaction.updateMany({
-                            where: { purchaseId: purchase.id },
-                            data: { status: 'rejected', idempotencyKey: null },
-                        });
-                    }
-                    catch (dbErr) {
-                        this.logger.error(`[JOB] Error actualizando purchase ${purchase.id} a failed: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
-                        continue;
-                    }
-                    try {
-                        const user = purchase.user;
-                        if (user?.email) {
-                            if (flowStatus === 3 || flowStatus === 4) {
-                                void this.resendService.sendFailedPaymentEmail({
-                                    toEmail: user.email,
-                                    toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
-                                    purchaseId: purchase.id,
-                                    raffleName: purchase.raffle?.title ?? null,
-                                    amount: Number(purchase.totalAmount ?? 0),
-                                });
-                            }
-                            else {
-                                void this.resendService.sendIncompletePaymentEmail({
-                                    toEmail: user.email,
-                                    toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
-                                    purchaseId: purchase.id,
-                                    raffleName: purchase.raffle?.title ?? null,
-                                    amount: Number(purchase.totalAmount ?? 0),
-                                });
-                            }
-                        }
-                    }
-                    catch (err) {
-                        this.logger.error(`Error enviando email desde job: ${err instanceof Error ? err.message : String(err)}`);
-                    }
-                    this.logger.log(`[JOB] Purchase ${purchase.id} marcada como failed (Flow status: ${flowStatus})`);
-                }
+                });
             }
-            this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} purchases procesadas`);
+            this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} procesadas — confirmadas=${results.confirmed}, failed=${results.failed}, errores=${results.errors}`);
         }
         catch (error) {
             this.logger.error('[JOB] Error en expiración de purchases:', error);
         }
+    }
+    async processExpiredPurchase(purchase) {
+        const token = purchase.paymentTransactions[0]?.providerTransactionId;
+        let flowStatus = 1;
+        if (token) {
+            try {
+                const paymentStatus = await this.flowService.getPaymentStatus(token);
+                flowStatus = paymentStatus.status;
+                this.logger.log(`[JOB] Flow status para purchase ${purchase.id}: ${flowStatus}`);
+            }
+            catch (err) {
+                this.logger.error(`[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
+        if (flowStatus === 2) {
+            this.logger.log(`[JOB] Purchase ${purchase.id} está pagada en Flow. Confirmando...`);
+            try {
+                await this.purchasesService.confirmPayment(purchase.id, {
+                    providerTransactionId: token ?? 'unknown',
+                    provider: 'flow',
+                    status: 'approved',
+                });
+                return 'confirmed';
+            }
+            catch (err) {
+                this.logger.error(`[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
+                throw err;
+            }
+        }
+        try {
+            await this.prisma.purchase.update({
+                where: { id: purchase.id },
+                data: { status: client_1.PurchaseStatus.failed },
+            });
+            await this.prisma.paymentTransaction.updateMany({
+                where: { purchaseId: purchase.id },
+                data: { status: 'rejected', idempotencyKey: null },
+            });
+        }
+        catch (dbErr) {
+            this.logger.error(`[JOB] Error actualizando purchase ${purchase.id} a failed: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
+            throw dbErr;
+        }
+        try {
+            const user = purchase.user;
+            if (user?.email) {
+                if (flowStatus === 3 || flowStatus === 4) {
+                    void this.resendService.sendFailedPaymentEmail({
+                        toEmail: user.email,
+                        toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                        purchaseId: purchase.id,
+                        raffleName: purchase.raffle?.title ?? null,
+                        amount: Number(purchase.totalAmount ?? 0),
+                    });
+                }
+                else {
+                    void this.resendService.sendIncompletePaymentEmail({
+                        toEmail: user.email,
+                        toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                        purchaseId: purchase.id,
+                        raffleName: purchase.raffle?.title ?? null,
+                        amount: Number(purchase.totalAmount ?? 0),
+                    });
+                }
+            }
+        }
+        catch (err) {
+            this.logger.error(`Error enviando email desde job: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        this.logger.log(`[JOB] Purchase ${purchase.id} marcada como failed (Flow status: ${flowStatus})`);
+        return 'failed';
     }
     async checkPendingPaymentsStatus() {
         this.logger.log('[JOB] Ejecutando verificación temprana de pagos pendientes...');

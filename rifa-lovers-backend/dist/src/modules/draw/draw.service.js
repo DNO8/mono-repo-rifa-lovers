@@ -89,26 +89,30 @@ let DrawService = DrawService_1 = class DrawService {
             throw new common_1.BadRequestException('Este premio ya tiene un ganador asignado');
         }
         this.logger.log(`Sorteando premio: ${prizeToDraw.name}`);
-        const usedPassIdsRaw = await this.prisma.prizeWinner.findMany({
-            where: {
-                prize: { raffleId: raffleId },
-            },
-            select: { luckyPassId: true },
-        });
-        const usedPassIds = new Set(usedPassIdsRaw.map(w => w.luckyPassId).filter((id) => id !== null));
-        const activePasses = await this.prisma.luckyPass.findMany({
-            where: {
-                raffleId: raffleId,
-                status: 'active',
-                id: { notIn: Array.from(usedPassIds) },
-            },
-            include: { user: true },
-        });
-        if (activePasses.length === 0) {
-            throw new common_1.BadRequestException('No hay LuckyPasses activos disponibles para el sorteo');
-        }
-        this.logger.log(`${activePasses.length} LuckyPasses activos participando`);
+        const prize = prizeToDraw;
         const { winner, isComplete } = await this.prisma.$transaction(async (tx) => {
+            await tx.$queryRaw `
+        SELECT id FROM public.raffles WHERE id = ${raffleId}::uuid FOR UPDATE
+      `;
+            const usedPassIdsRaw = await tx.prizeWinner.findMany({
+                where: {
+                    prize: { raffleId: raffleId },
+                },
+                select: { luckyPassId: true },
+            });
+            const usedPassIds = new Set(usedPassIdsRaw.map(w => w.luckyPassId).filter((id) => id !== null));
+            const activePasses = await tx.luckyPass.findMany({
+                where: {
+                    raffleId: raffleId,
+                    status: 'active',
+                    id: { notIn: Array.from(usedPassIds) },
+                },
+                include: { user: true },
+            });
+            if (activePasses.length === 0) {
+                throw new common_1.BadRequestException('No hay LuckyPasses activos disponibles para el sorteo');
+            }
+            this.logger.log(`${activePasses.length} LuckyPasses activos participando (dentro de transacción)`);
             const winnerIndex = (0, crypto_1.randomInt)(0, activePasses.length);
             const winnerPassId = activePasses[winnerIndex].id;
             const winnerPassWithUser = await tx.luckyPass.findUnique({
@@ -121,7 +125,7 @@ let DrawService = DrawService_1 = class DrawService {
             const winnerPass = winnerPassWithUser;
             await tx.prizeWinner.create({
                 data: {
-                    prizeId: prizeToDraw.id,
+                    prizeId: prize.id,
                     luckyPassId: winnerPass.id,
                     userId: winnerPass.userId,
                 },
@@ -134,7 +138,7 @@ let DrawService = DrawService_1 = class DrawService {
                 },
             });
             const userFullName = this.buildUserFullName(winnerPass.user);
-            this.logger.log(`Ganador asignado: Prize=${prizeToDraw.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email ?? 'N/A'}`);
+            this.logger.log(`Ganador asignado: Prize=${prize.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email ?? 'N/A'}`);
             const pendingPrizes = await tx.prize.count({
                 where: {
                     raffleId: raffleId,
@@ -162,9 +166,9 @@ let DrawService = DrawService_1 = class DrawService {
             }
             return {
                 winner: {
-                    prizeId: prizeToDraw.id,
-                    prizeName: prizeToDraw.name || 'Premio sin nombre',
-                    prizeDescription: prizeToDraw.description,
+                    prizeId: prize.id,
+                    prizeName: prize.name || 'Premio sin nombre',
+                    prizeDescription: prize.description,
                     luckyPassId: winnerPass.id,
                     passNumber: winnerPass.ticketNumber ?? 0,
                     userId: winnerPass.userId ?? '',

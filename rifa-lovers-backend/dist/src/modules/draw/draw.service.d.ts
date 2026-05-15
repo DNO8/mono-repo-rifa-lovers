@@ -25,7 +25,7 @@ export interface DrawResult {
 }
 export interface AdminDrawResult extends DrawResult {
     winners: (DrawResult['winners'][number] & {
-        userPhone: number | null;
+        userPhone: string | null;
         userAddress: string | null;
     })[];
 }

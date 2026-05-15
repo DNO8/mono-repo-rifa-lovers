@@ -29,7 +29,7 @@ export interface DrawResult {
 
 export interface AdminDrawResult extends DrawResult {
   winners: (DrawResult['winners'][number] & {
-    userPhone: number | null
+    userPhone: string | null
     userAddress: string | null
   })[]
 }
@@ -132,32 +132,40 @@ export class DrawService {
 
     this.logger.log(`Sorteando premio: ${prizeToDraw.name}`)
 
-    // 4. Obtener LuckyPasses activos para esta rifa (excluyendo los que ya ganaron)
-    const usedPassIdsRaw = await this.prisma.prizeWinner.findMany({
-      where: {
-        prize: { raffleId: raffleId },
-      },
-      select: { luckyPassId: true },
-    })
-    const usedPassIds = new Set(usedPassIdsRaw.map(w => w.luckyPassId).filter((id): id is string => id !== null))
+    // Safety: prizeToDraw is guaranteed non-null at this point
+    const prize = prizeToDraw
 
-    const activePasses = await this.prisma.luckyPass.findMany({
-      where: {
-        raffleId: raffleId,
-        status: 'active',
-        id: { notIn: Array.from(usedPassIds) },
-      },
-      include: { user: true },
-    })
-
-    if (activePasses.length === 0) {
-      throw new BadRequestException('No hay LuckyPasses activos disponibles para el sorteo')
-    }
-
-    this.logger.log(`${activePasses.length} LuckyPasses activos participando`)
-
-    // 5. Ejecutar sorteo para el premio
+    // 5. Ejecutar sorteo para el premio (todo dentro de la transacción para atomicidad)
     const { winner, isComplete } = await this.prisma.$transaction(async (tx) => {
+      // 5.1 Lock de la rifa para prevenir sorteos concurrentes
+      await tx.$queryRaw`
+        SELECT id FROM public.raffles WHERE id = ${raffleId}::uuid FOR UPDATE
+      `
+
+      // 5.2 Obtener LuckyPasses activos para esta rifa (excluyendo los que ya ganaron)
+      const usedPassIdsRaw = await tx.prizeWinner.findMany({
+        where: {
+          prize: { raffleId: raffleId },
+        },
+        select: { luckyPassId: true },
+      })
+      const usedPassIds = new Set(usedPassIdsRaw.map(w => w.luckyPassId).filter((id): id is string => id !== null))
+
+      const activePasses = await tx.luckyPass.findMany({
+        where: {
+          raffleId: raffleId,
+          status: 'active',
+          id: { notIn: Array.from(usedPassIds) },
+        },
+        include: { user: true },
+      })
+
+      if (activePasses.length === 0) {
+        throw new BadRequestException('No hay LuckyPasses activos disponibles para el sorteo')
+      }
+
+      this.logger.log(`${activePasses.length} LuckyPasses activos participando (dentro de transacción)`)
+
       // Seleccionar ganador aleatoriamente y obtener con usuario
       const winnerIndex = randomInt(0, activePasses.length)
       const winnerPassId = activePasses[winnerIndex].id
@@ -176,7 +184,7 @@ export class DrawService {
       // Crear registro de ganador
       await tx.prizeWinner.create({
         data: {
-          prizeId: prizeToDraw.id,
+          prizeId: prize.id,
           luckyPassId: winnerPass.id,
           userId: winnerPass.userId,
         },
@@ -193,7 +201,7 @@ export class DrawService {
 
       const userFullName = this.buildUserFullName(winnerPass.user)
 
-      this.logger.log(`Ganador asignado: Prize=${prizeToDraw.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email ?? 'N/A'}`)
+      this.logger.log(`Ganador asignado: Prize=${prize.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email ?? 'N/A'}`)
 
       // Verificar si quedan premios pendientes (dentro de la transacción para atomicidad)
       const pendingPrizes = await tx.prize.count({
@@ -229,9 +237,9 @@ export class DrawService {
 
       return {
         winner: {
-          prizeId: prizeToDraw.id,
-          prizeName: prizeToDraw.name || 'Premio sin nombre',
-          prizeDescription: prizeToDraw.description,
+          prizeId: prize.id,
+          prizeName: prize.name || 'Premio sin nombre',
+          prizeDescription: prize.description,
           luckyPassId: winnerPass.id,
           passNumber: winnerPass.ticketNumber ?? 0,
           userId: winnerPass.userId ?? '',

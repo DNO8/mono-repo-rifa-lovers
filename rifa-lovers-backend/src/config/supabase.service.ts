@@ -49,6 +49,7 @@ export class SupabaseService {
 
   // Email verification methods for custom redirect URLs
 
+  /** @deprecated Not used in auth flow; controller uses verifyOTP directly */
   async verifyEmailWithRedirect(email: string, token: string, redirectTo: string) {
     return this.supabase.auth.verifyOtp({
       email,
@@ -60,6 +61,7 @@ export class SupabaseService {
     });
   }
 
+  /** @deprecated Not used anywhere; prefer admin.getUserByEmail if available */
   async getUserByEmail(email: string) {
     return this.supabase.auth.admin.listUsers().then(({ data, error }) => {
       if (error) return { data: null, error };
@@ -113,16 +115,32 @@ export class SupabaseService {
 
   // ==================== STORAGE ====================
 
-  async uploadFile(bucket: string, path: string, file: Buffer, contentType: string): Promise<string> {
+  async uploadFile(
+    bucket: string,
+    path: string,
+    file: Buffer,
+    contentType: string,
+    allowOverwrite = true,
+  ): Promise<string> {
+    if (!allowOverwrite) {
+      // Check if file already exists
+      const { data: existing } = await this.supabase.storage.from(bucket).list(path.split('/').slice(0, -1).join('/') || '', {
+        search: path.split('/').pop(),
+      })
+      if (existing && existing.length > 0) {
+        throw new Error(`File already exists at ${path}. Use allowOverwrite=true to overwrite.`)
+      }
+    }
+
     const { error } = await this.supabase.storage.from(bucket).upload(path, file, {
       contentType,
-      upsert: true,
-    });
+      upsert: allowOverwrite,
+    })
     if (error) {
-      throw new Error(`Error uploading file: ${error.message}`);
+      throw new Error(`Error uploading file: ${error.message}`)
     }
-    const { data } = this.supabase.storage.from(bucket).getPublicUrl(path);
-    return data.publicUrl;
+    const { data } = this.supabase.storage.from(bucket).getPublicUrl(path)
+    return data.publicUrl
   }
 
   async deleteFile(bucket: string, path: string): Promise<void> {

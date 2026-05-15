@@ -99,10 +99,18 @@ let SupabaseService = class SupabaseService {
     async deleteUser(userId) {
         return this.supabase.auth.admin.deleteUser(userId);
     }
-    async uploadFile(bucket, path, file, contentType) {
+    async uploadFile(bucket, path, file, contentType, allowOverwrite = true) {
+        if (!allowOverwrite) {
+            const { data: existing } = await this.supabase.storage.from(bucket).list(path.split('/').slice(0, -1).join('/') || '', {
+                search: path.split('/').pop(),
+            });
+            if (existing && existing.length > 0) {
+                throw new Error(`File already exists at ${path}. Use allowOverwrite=true to overwrite.`);
+            }
+        }
         const { error } = await this.supabase.storage.from(bucket).upload(path, file, {
             contentType,
-            upsert: true,
+            upsert: allowOverwrite,
         });
         if (error) {
             throw new Error(`Error uploading file: ${error.message}`);

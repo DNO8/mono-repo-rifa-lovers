@@ -12,11 +12,28 @@ function DefaultFallback() {
 }
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
 
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
+    if (hash) {
+      const id = hash.slice(1)
+      let attempts = 0
+      const interval = setInterval(() => {
+        const el = document.getElementById(id)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' })
+          clearInterval(interval)
+        }
+        attempts++
+        if (attempts >= 30) {
+          clearInterval(interval)
+        }
+      }, 100)
+      return () => clearInterval(interval)
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [pathname, hash])
 
   return null
 }

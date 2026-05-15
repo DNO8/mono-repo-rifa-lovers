@@ -38,6 +38,7 @@ export interface RaffleWithStats {
   title: string | null
   description: string | null
   goalPacks: number
+  maxTicketNumber: number
   status: string
   startDate: string | null
   endDate: string | null

@@ -78,7 +78,6 @@ __decorate([
     __metadata("design:type", String)
 ], CreateRaffleDto.prototype, "status", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.ValidateNested)({ each: true }),
     (0, class_transformer_1.Type)(() => CreatePrizeDto),
     (0, class_validator_1.ArrayMinSize)(1, { message: 'Debe incluir al menos un premio' }),

@@ -498,6 +498,7 @@ export function RaffleWizardModal({ onClose, onSuccess, createRaffle }: RaffleWi
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitProgress, setSubmitProgress] = useState('')
+  const [partialRaffleId, setPartialRaffleId] = useState<string | null>(null)
 
   const validateStep = (): boolean => {
     switch (step) {
@@ -511,6 +512,14 @@ export function RaffleWizardModal({ onClose, onSuccess, createRaffle }: RaffleWi
           const end = new Date(`${data.endDate}T${data.endTime}`)
           if (end <= start) {
             toastError(new Error('La fecha de cierre debe ser posterior a la de inicio'))
+            return false
+          }
+        }
+        if (data.startDate) {
+          const start = new Date(`${data.startDate}T${data.startTime}`)
+          const now = new Date()
+          if (start < now) {
+            toastError(new Error('La fecha de inicio debe ser posterior a la fecha actual'))
             return false
           }
         }
@@ -549,34 +558,39 @@ export function RaffleWizardModal({ onClose, onSuccess, createRaffle }: RaffleWi
   const handleSubmit = async () => {
     setSubmitting(true)
     setSubmitError(null)
+    let raffleId = partialRaffleId
     try {
-      setSubmitProgress('Creando rifa...')
-      const raffleData: CreateRaffleRequest = {
-        title: data.title.trim(),
-        description: data.description.trim() || undefined,
-        goalPacks: parseInt(data.goalPacks, 10),
-        maxTicketNumber: parseInt(data.maxTicketNumber, 10) || 30000,
-        startDate: toUTC(data.startDate, data.startTime),
-        endDate: toUTC(data.endDate, data.endTime),
-        status: 'draft',
-        prizes: data.prizes
-          .filter(p => p.name.trim())
-          .map(p => ({
-            name: p.name.trim(),
-            description: p.description.trim() || undefined,
-            valueEstimated: p.valueEstimated ? parseInt(p.valueEstimated, 10) : undefined,
-            quantity: p.quantity ? parseInt(p.quantity, 10) : undefined,
-          })),
+      if (!raffleId) {
+        setSubmitProgress('Creando rifa...')
+        const raffleData: CreateRaffleRequest = {
+          title: data.title.trim(),
+          description: data.description.trim() || undefined,
+          goalPacks: parseInt(data.goalPacks, 10),
+          maxTicketNumber: parseInt(data.maxTicketNumber, 10) || 30000,
+          startDate: toUTC(data.startDate, data.startTime),
+          endDate: toUTC(data.endDate, data.endTime),
+          status: 'draft',
+          prizes: data.prizes
+            .filter(p => p.name.trim())
+            .map(p => ({
+              name: p.name.trim(),
+              description: p.description.trim() || undefined,
+              valueEstimated: p.valueEstimated ? parseFloat(p.valueEstimated) : undefined,
+              quantity: p.quantity ? parseInt(p.quantity, 10) : undefined,
+            })),
+        }
+        const raffle = await createRaffle(raffleData)
+        raffleId = raffle.id
+        setPartialRaffleId(raffle.id)
       }
-      const raffle = await createRaffle(raffleData)
 
-      const validPacks = data.packs.filter(p => p.name.trim() && p.price && parseInt(p.price, 10) >= 0)
+      const validPacks = data.packs.filter(p => p.name.trim() && p.price && parseFloat(p.price) >= 0)
       for (let i = 0; i < validPacks.length; i++) {
         setSubmitProgress(`Creando pack ${i + 1} de ${validPacks.length}...`)
         const p = validPacks[i]
-        await createRafflePack(raffle.id, {
+        await createRafflePack(raffleId!, {
           name: p.name.trim(),
-          price: parseInt(p.price, 10),
+          price: parseFloat(p.price),
           luckyPassQuantity: parseInt(p.luckyPassQuantity, 10) || 1,
           isFeatured: p.isFeatured,
           isPreSale: p.isPreSale,
@@ -585,14 +599,19 @@ export function RaffleWizardModal({ onClose, onSuccess, createRaffle }: RaffleWi
 
       if (data.coverImage) {
         setSubmitProgress('Subiendo imagen de portada...')
-        await uploadRaffleCover(raffle.id, data.coverImage)
+        await uploadRaffleCover(raffleId!, data.coverImage)
       }
 
+      setPartialRaffleId(null)
       onSuccess()
       onClose()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al crear la rifa'
-      setSubmitError(msg)
+      if (raffleId) {
+        setSubmitError(`${msg}. La rifa fue creada. Puedes reintentar para completar packs o imagen.`)
+      } else {
+        setSubmitError(msg)
+      }
       toastError(err, undefined, msg)
     } finally {
       setSubmitting(false)
@@ -658,7 +677,7 @@ export function RaffleWizardModal({ onClose, onSuccess, createRaffle }: RaffleWi
             ) : (
               <Button type="button" variant="primary" onClick={handleSubmit} loading={submitting} className="flex items-center gap-1">
                 <CheckCircle2 className="size-4" />
-                Crear Rifa
+                {partialRaffleId ? 'Reintentar' : 'Crear Rifa'}
               </Button>
             )}
           </div>

@@ -13,5 +13,5 @@ export declare class CreateRaffleDto {
     startDate?: string;
     endDate?: string;
     status?: RaffleStatus;
-    prizes?: CreatePrizeDto[];
+    prizes: CreatePrizeDto[];
 }

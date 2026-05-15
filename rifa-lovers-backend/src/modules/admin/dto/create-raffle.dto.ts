@@ -52,9 +52,8 @@ export class CreateRaffleDto {
   @IsOptional()
   status?: RaffleStatus
 
-  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => CreatePrizeDto)
   @ArrayMinSize(1, { message: 'Debe incluir al menos un premio' })
-  prizes?: CreatePrizeDto[]
+  prizes: CreatePrizeDto[]
 }

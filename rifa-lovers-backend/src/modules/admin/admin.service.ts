@@ -74,6 +74,15 @@ export class AdminService {
         },
       })
 
+      await tx.raffleProgress.create({
+        data: {
+          raffleId: raffle.id,
+          packsSold: 0,
+          revenueTotal: 0,
+          percentageToGoal: 0,
+        },
+      })
+
       for (let i = 0; i < prizes.length; i++) {
         const prizeDto = prizes[i]
         const requiredPacks = i === prizes.length - 1 ? goalPacks : segmentSize * (i + 1)
@@ -132,6 +141,7 @@ export class AdminService {
     }
 
     const updateData: Prisma.RaffleUpdateInput = {}
+    if (dto.maxTicketNumber !== undefined) updateData.maxTicketNumber = dto.maxTicketNumber
     if (dto.title !== undefined) updateData.title = dto.title
     if (dto.description !== undefined) updateData.description = dto.description
     if (dto.goalPacks !== undefined) updateData.goalPacks = dto.goalPacks

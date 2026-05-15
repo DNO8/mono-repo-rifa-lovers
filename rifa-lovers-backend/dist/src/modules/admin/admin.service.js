@@ -40,6 +40,14 @@ let AdminService = AdminService_1 = class AdminService {
                     status: dto.status || client_1.RaffleStatus.draft,
                 },
             });
+            await tx.raffleProgress.create({
+                data: {
+                    raffleId: raffle.id,
+                    packsSold: 0,
+                    revenueTotal: 0,
+                    percentageToGoal: 0,
+                },
+            });
             for (let i = 0; i < prizes.length; i++) {
                 const prizeDto = prizes[i];
                 const requiredPacks = i === prizes.length - 1 ? goalPacks : segmentSize * (i + 1);
@@ -90,6 +98,8 @@ let AdminService = AdminService_1 = class AdminService {
             throw new common_1.NotFoundException('Rifa no encontrada');
         }
         const updateData = {};
+        if (dto.maxTicketNumber !== undefined)
+            updateData.maxTicketNumber = dto.maxTicketNumber;
         if (dto.title !== undefined)
             updateData.title = dto.title;
         if (dto.description !== undefined)

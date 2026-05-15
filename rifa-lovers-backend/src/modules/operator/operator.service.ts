@@ -225,22 +225,23 @@ export class OperatorService {
       for (let i = 0; i < prizes.length; i++) {
         const prizeDto = prizes[i]
         const requiredPacks = i === prizes.length - 1 ? goalPacks : segmentSize * (i + 1)
-        await tx.prize.create({
+        const milestone = await tx.milestone.create({
           data: {
-            name: prizeDto.name,
-            description: prizeDto.description,
-            raffleId: raffle.id,
-            type: 'milestone',
-            quantity: prizeDto.quantity ?? 1,
-            valueEstimated: prizeDto.valueEstimated ?? null,
-          },
-        })
-        await tx.milestone.create({
-          data: {
-            name: `Milestone ${i + 1}`,
+            name: `Meta ${i + 1}`,
             requiredPacks,
             raffleId: raffle.id,
             sortOrder: i + 1,
+          },
+        })
+        await tx.prize.create({
+          data: {
+            name: prizeDto.name,
+            description: prizeDto.description ?? null,
+            raffleId: raffle.id,
+            milestoneId: milestone.id,
+            type: 'milestone',
+            quantity: prizeDto.quantity ?? 1,
+            valueEstimated: prizeDto.valueEstimated ?? null,
           },
         })
       }

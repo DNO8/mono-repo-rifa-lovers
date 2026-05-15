@@ -19,7 +19,7 @@ export function RaffleFormModal({ initial, onClose, onSubmit }: RaffleFormModalP
     title: initial?.title || '',
     description: initial?.description || '',
     goalPacks: initial?.goalPacks?.toString() || '',
-    maxTicketNumber: initial?.goalPacks ? '30000' : '30000',
+    maxTicketNumber: initial?.maxTicketNumber?.toString() || '30000',
     startDate: initialStart.date,
     startTime: initialStart.time || '00:00',
     endDate: initialEnd.date,

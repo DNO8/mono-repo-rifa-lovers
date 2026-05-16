@@ -54,6 +54,68 @@ export function PricingSection() {
           </div>
         )}
 
+        {/* Pack Cards */}
+        {!isLoading && !error && pricingTiers.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {pricingTiers.map((tier) => (
+              <Card
+                key={tier.id}
+                variant={tier.popular ? 'highlight' : 'glass'}
+                className="relative p-6 md:p-8 flex flex-col"
+              >
+                {tier.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge variant="gradient">Más popular</Badge>
+                  </div>
+                )}
+
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold text-text-primary mb-1">{tier.name}</h3>
+                  <p className="text-sm text-text-secondary">{tier.tagline}</p>
+                </div>
+
+                <div className="text-center mb-6">
+                  <span className="text-4xl md:text-5xl font-extrabold text-text-primary">
+                    ${tier.price.toLocaleString('es-CL')}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  <Badge variant="subtle" className="text-xs">
+                    {tier.tickets} LuckyPass
+                  </Badge>
+                  {tier.bonusTickets > 0 && (
+                    <Badge variant="gradient" className="text-xs">
+                      +{tier.bonusTickets} bonus
+                    </Badge>
+                  )}
+                </div>
+
+                {tier.benefits && tier.benefits.length > 0 && (
+                  <ul className="space-y-2 mb-6 flex-1">
+                    {tier.benefits.map((benefit, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-text-secondary">
+                        <CheckCircle className="size-4 text-success shrink-0" />
+                        {benefit}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <Button
+                  variant={tier.popular ? 'primary' : 'secondary'}
+                  size="lg"
+                  className="w-full mt-auto"
+                  onClick={() => navigate(`/checkout?packId=${tier.packId}`)}
+                >
+                  {tier.cta}
+                  <ArrowRight className="size-4" />
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
+
         {/* Pack Mom Section — controlled by SHOW_PACK_MOM feature flag */}
         {SHOW_PACK_MOM && !isLoading && !error && (
           <div className="mt-16 md:mt-20">

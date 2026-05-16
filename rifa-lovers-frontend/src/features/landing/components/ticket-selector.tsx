@@ -17,6 +17,7 @@ const FLASH_CAMPAIGN = {
 interface DisplayMilestone {
   id: string
   name: string
+  prizeNames: string[]
   requiredPacks: number
   isCompleted: boolean
   isActive: boolean
@@ -28,6 +29,7 @@ function buildDisplayMilestones(milestones: RaffleMilestone[]): DisplayMilestone
   return sorted.map((m, i) => ({
     id: m.id,
     name: m.name ?? `Hito ${m.sortOrder}`,
+    prizeNames: m.prizes.map((p) => p.name).filter((n): n is string => !!n),
     requiredPacks: m.requiredPacks,
     isCompleted: m.isUnlocked,
     isActive: !m.isUnlocked && i === firstPendingIdx,
@@ -89,14 +91,27 @@ function MilestoneNode({ milestone, isLast }: { milestone: DisplayMilestone; isL
         >
           {milestone.requiredPacks.toLocaleString('es-CL')}
         </Badge>
-        <p className={cn(
-          'text-[11px] font-bold leading-tight mb-0.5',
-          isCompleted && 'text-success',
-          isActive && 'text-primary',
-          !isCompleted && !isActive && 'text-text-tertiary'
-        )}>
-          {milestone.name}
-        </p>
+        {milestone.prizeNames.length > 0 ? (
+          milestone.prizeNames.map((prizeName, idx) => (
+            <p key={idx} className={cn(
+              'text-[10px] font-bold leading-tight mb-0.5',
+              isCompleted && 'text-success',
+              isActive && 'text-primary',
+              !isCompleted && !isActive && 'text-text-tertiary'
+            )}>
+              {prizeName}
+            </p>
+          ))
+        ) : (
+          <p className={cn(
+            'text-[11px] font-bold leading-tight mb-0.5',
+            isCompleted && 'text-success',
+            isActive && 'text-primary',
+            !isCompleted && !isActive && 'text-text-tertiary'
+          )}>
+            {milestone.name}
+          </p>
+        )}
       </div>
     </div>
   )

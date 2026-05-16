@@ -128,9 +128,7 @@ export async function updateOperatorRaffleStatus(raffleId: string, data: UpdateR
 export async function uploadRaffleCover(raffleId: string, file: File): Promise<{ coverImageUrl: string }> {
   const formData = new FormData()
   formData.append('file', file)
-  return apiClient.post<{ coverImageUrl: string }>(ENDPOINTS.operator.uploadCover(raffleId), formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  return apiClient.post<{ coverImageUrl: string }>(ENDPOINTS.operator.uploadCover(raffleId), formData)
 }
 
 // ==================== PACKS ====================

@@ -34,6 +34,7 @@ import {
   Link2,
   AlertTriangle,
   Sparkles,
+  Rocket,
 } from 'lucide-react'
 import { RaffleWizardModal } from '@/features/shared/components/raffle-wizard-modal'
 
@@ -145,7 +146,7 @@ export default function OperatorDashboardPage() {
 
   const { org, isLoading: isLoadingOrg, create: createOrg, refresh: refreshOrg } = useOperatorOrg()
   const { kpis } = useOperatorKPIs()
-  const { raffles, create: createRaffle, refresh: refreshRaffles } = useOperatorRaffles()
+  const { raffles, create: createRaffle, refresh: refreshRaffles, updateStatus: updateRaffleStatus } = useOperatorRaffles()
   const { packs, create: createPack, update: updatePack, remove: deletePack } = useOperatorPacks(selectedRaffleId || '')
   const { campaigns, send: sendCampaign } = useOperatorNewsletter()
   const { upload: uploadCover, isUploading: isUploadingCover } = useUploadRaffleCover()
@@ -385,6 +386,23 @@ export default function OperatorDashboardPage() {
                             >
                               <Link2 className="w-4 h-4" />
                             </button>
+                            {raffle.status === 'draft' && (
+                              <button
+                                className="p-1.5 rounded hover:bg-green-50 text-green-500"
+                                title="Publicar rifa"
+                                onClick={async () => {
+                                  try {
+                                    await updateRaffleStatus(raffle.id, { status: 'active' })
+                                    toast.success('Rifa publicada exitosamente')
+                                    refreshRaffles()
+                                  } catch {
+                                    toast.error('Error al publicar la rifa')
+                                  }
+                                }}
+                              >
+                                <Rocket className="w-4 h-4" />
+                              </button>
+                            )}
                             <button
                               className="p-1.5 rounded hover:bg-blue-50 text-blue-500"
                               title="Ver packs"

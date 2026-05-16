@@ -13,6 +13,8 @@ export function getErrorMessage(
   fallback = 'Ocurrió un error inesperado. Por favor intenta más tarde.',
 ): string {
   if (err instanceof ApiError) return err.getUserMessage(context)
+  if (err instanceof Error) return err.message
+  if (typeof err === 'string') return err
   return fallback
 }
 

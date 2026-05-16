@@ -105,15 +105,16 @@ export class FetchHttpClient implements HttpClient {
     path: string,
     options: HttpRequestOptions & { method: string },
   ): Promise<T> {
+    const isFormData = options.body instanceof FormData
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(options.headers ?? {}),
     }
 
     const res = await fetch(`${this.baseUrl}${path}`, {
       method: options.method,
       headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
+      body: isFormData ? (options.body as BodyInit) : options.body ? JSON.stringify(options.body) : undefined,
       signal: options.signal,
     })
 

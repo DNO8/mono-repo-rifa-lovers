@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Gift, ChevronRight, Lock, RefreshCw, Clock, XCircle, ChevronDown, ChevronUp } from 'lucide-react'
+import { Gift, ChevronRight, Lock, RefreshCw, Clock, XCircle, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export interface HistoryItem {
@@ -15,6 +15,8 @@ export interface HistoryItem {
 interface TicketHistoryProps {
   items: HistoryItem[]
   onItemClick?: (item: HistoryItem) => void
+  limit?: number
+  viewMoreHref?: string
 }
 
 const statusConfig = {
@@ -23,7 +25,7 @@ const statusConfig = {
   fallido: { label: 'Expirada', icon: XCircle, badge: 'muted' as const, className: 'bg-red-50 text-red-500 border border-red-200' },
 }
 
-export function TicketHistory({ items, onItemClick }: TicketHistoryProps) {
+export function TicketHistory({ items, onItemClick, limit, viewMoreHref }: TicketHistoryProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   const toggleExpand = (id: string) => {
@@ -35,6 +37,9 @@ export function TicketHistory({ items, onItemClick }: TicketHistoryProps) {
     })
   }
 
+  const hasMore = limit !== undefined && items.length > limit
+  const visibleItems = hasMore ? items.slice(0, limit) : items
+
   return (
     <div className="glass-medium rounded-2xl p-5">
       <div className="flex items-center justify-between mb-5">
@@ -45,7 +50,7 @@ export function TicketHistory({ items, onItemClick }: TicketHistoryProps) {
         {items.length === 0 && (
           <p className="text-sm text-text-tertiary text-center py-4">No tienes compras registradas</p>
         )}
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const config = statusConfig[item.status]
           const StatusIcon = config.icon
           const isPending = item.status === 'pendiente'
@@ -170,6 +175,15 @@ export function TicketHistory({ items, onItemClick }: TicketHistoryProps) {
             </div>
           )
         })}
+        {hasMore && viewMoreHref && (
+          <a
+            href={viewMoreHref}
+            className="flex items-center justify-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 mt-2 py-2 transition-colors"
+          >
+            Ver todas las compras
+            <ArrowRight className="size-3.5" />
+          </a>
+        )}
       </div>
     </div>
   )

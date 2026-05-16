@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, type ReactNode } from 'react'
 import { usePublicRaffles } from '@/hooks/use-raffles'
 import { useAsyncData } from '@/hooks/use-async-data'
 import { getRafflePacks, getRaffleProgress } from '@/api/raffles.api'
+import { getPacks } from '@/api/packs.api'
 import type { RaffleProgress, Pack } from '@/types/domain.types'
 import { SelectedRaffleContext } from './selected-raffle.context'
 
@@ -23,9 +24,14 @@ export function SelectedRaffleProvider({ children }: { children: ReactNode }) {
     return allRaffles.find(r => r.id === effectiveRaffleId) ?? null
   }, [allRaffles, effectiveRaffleId])
 
-  const packsFetcher = useCallback(() => {
-    if (!effectiveRaffleId) return Promise.resolve([] as Pack[])
-    return getRafflePacks(effectiveRaffleId)
+  const packsFetcher = useCallback(async () => {
+    if (!effectiveRaffleId) return [] as Pack[]
+    const rafflePacks = await getRafflePacks(effectiveRaffleId)
+    if (rafflePacks.length > 0) return rafflePacks
+    // Fallback: usar packs globales (One, Flow, Max)
+    const allPacks = await getPacks()
+    const fallbackNames = ['One', 'Flow', 'Max']
+    return allPacks.filter((p) => fallbackNames.includes(p.name ?? ''))
   }, [effectiveRaffleId])
 
   const progressFetcher = useCallback(() => {

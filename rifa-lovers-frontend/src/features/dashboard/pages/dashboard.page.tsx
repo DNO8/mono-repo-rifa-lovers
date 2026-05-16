@@ -216,7 +216,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-8">
               {/* Sidebar */}
               <aside className="order-2 lg:order-1 space-y-5">
-                <TicketHistory items={historyItems.length > 0 ? historyItems : []} />
+                <TicketHistory
+                  items={historyItems.length > 0 ? historyItems : []}
+                  limit={5}
+                  viewMoreHref="/mis-compras"
+                />
                 <SocialImpactBanner paidCount={purchases.filter(p => p.status === 'paid').length} />
                 {user?.email && (
                   <NewsletterDashboardCard

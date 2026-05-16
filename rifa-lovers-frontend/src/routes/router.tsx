@@ -30,6 +30,7 @@ const LazyDashboardPage = lazy(() => import('@/features/dashboard/pages/dashboar
 const LazyProfilePage = lazy(() => import('@/features/profile/pages/profile.page'))
 const LazyCheckoutPage = lazy(() => import('@/features/checkout/pages/checkout.page'))
 const LazyRaffleDetailPage = lazy(() => import('@/features/dashboard/pages/raffle-detail.page'))
+const LazyMisComprasPage = lazy(() => import('@/features/dashboard/pages/mis-compras.page'))
 const LazyPaymentReturnPage = lazy(() => import('@/features/checkout/pages/payment-return.page'))
 // const LazyPackMomPage = lazy(() => import('@/features/pack-mom/pages/pack-mom.page'))
 // Preventa pages - disabled for now, can be re-enabled in future
@@ -151,6 +152,17 @@ export const router = createBrowserRouter([
       <PageWithSuspense fallback={<DashboardPageSkeleton />}>
         <ProtectedRoute>
           <LazyProfilePage />
+        </ProtectedRoute>
+      </PageWithSuspense>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/mis-compras',
+    element: (
+      <PageWithSuspense fallback={<DashboardPageSkeleton />}>
+        <ProtectedRoute>
+          <LazyMisComprasPage />
         </ProtectedRoute>
       </PageWithSuspense>
     ),

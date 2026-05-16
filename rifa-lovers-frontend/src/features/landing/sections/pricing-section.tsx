@@ -7,7 +7,7 @@ import { usePacks } from '@/hooks/use-packs'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
 
-const SHOW_PACK_MOM = true
+const SHOW_PACK_MOM = false
 
 export function PricingSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.15 })

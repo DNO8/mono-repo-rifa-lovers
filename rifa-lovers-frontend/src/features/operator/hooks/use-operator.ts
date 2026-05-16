@@ -108,11 +108,13 @@ export function useOperatorRaffles() {
 
 export function useOperatorPacks(raffleId: string) {
   const { data: packs, isLoading, error, refresh } = useAsyncData<PackWithStats[]>(
-    () => getRafflePacks(raffleId),
+    () => (raffleId ? getRafflePacks(raffleId) : Promise.resolve([])),
     [],
+    [raffleId],
   )
 
   const create = async (data: CreatePackRequest) => {
+    if (!raffleId) throw new Error('Se requiere una rifa seleccionada para crear un pack')
     const newPack = await createRafflePack(raffleId, data)
     refresh()
     return newPack
@@ -134,19 +136,22 @@ export function useOperatorPacks(raffleId: string) {
 
 export function useOperatorParticipants(raffleId: string) {
   const { data: participants, isLoading, error, refresh } = useAsyncData<Participant[]>(
-    () => getOperatorParticipants(raffleId),
+    () => (raffleId ? getOperatorParticipants(raffleId) : Promise.resolve([])),
     [],
+    [raffleId],
   )
   return { participants, isLoading, error, refresh }
 }
 
 export function useOperatorDraw(raffleId: string) {
   const { data: drawStatus, isLoading, error, refresh } = useAsyncData<DrawStatusResponse>(
-    () => getOperatorDrawStatus(raffleId),
+    () => (raffleId ? getOperatorDrawStatus(raffleId) : Promise.resolve({ canExecute: false, results: null })),
     { canExecute: false, results: null },
+    [raffleId],
   )
 
   const execute = async (prizeId?: string) => {
+    if (!raffleId) throw new Error('Se requiere una rifa seleccionada para ejecutar el sorteo')
     const result = await executeOperatorDraw(raffleId, prizeId)
     refresh()
     return result

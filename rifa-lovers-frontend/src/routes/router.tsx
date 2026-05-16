@@ -206,15 +206,16 @@ export const router = createBrowserRouter([
     ),
     errorElement: <RouteErrorBoundary />,
   },
-  {
-    path: '/pack-mom',
-    element: (
-      <PageWithSuspense fallback={<LandingPageSkeleton />}>
-        <LazyPackMomPage />
-      </PageWithSuspense>
-    ),
-    errorElement: <RouteErrorBoundary />,
-  },
+  // Pack Mom route disabled - campaign ended
+  // {
+  //   path: '/pack-mom',
+  //   element: (
+  //     <PageWithSuspense fallback={<LandingPageSkeleton />}>
+  //       <LazyPackMomPage />
+  //     </PageWithSuspense>
+  //   ),
+  //   errorElement: <RouteErrorBoundary />,
+  // },
   // Preventa routes disabled for now - can be re-enabled in future
   // {
   //   path: '/pack-preventa',

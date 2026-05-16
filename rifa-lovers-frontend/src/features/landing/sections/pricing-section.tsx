@@ -3,7 +3,7 @@ import { ArrowRight, Loader2, Heart, CheckCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { usePacks } from '@/hooks/use-packs'
+import { useSelectedRaffle } from '@/context/use-selected-raffle'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { mapPacksToPricingTiers } from '@/lib/mappers/pack.mapper'
 
@@ -12,7 +12,7 @@ const SHOW_PACK_MOM = false
 export function PricingSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.15 })
   const navigate = useNavigate()
-  const { packs, isLoading, error } = usePacks()
+  const { packs, isLoading, error } = useSelectedRaffle()
 
   const pricingTiers = mapPacksToPricingTiers(
     packs.filter((p) => p.name?.toUpperCase() !== 'EXCLUSIVO PREVENTA'),

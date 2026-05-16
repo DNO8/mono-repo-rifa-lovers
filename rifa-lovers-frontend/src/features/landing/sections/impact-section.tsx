@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
 import { MetricCard } from '@/components/shared/metric-card'
 import { MilestoneCard } from '@/components/shared/milestone-card'
-import { useActiveRaffle } from '@/hooks/use-raffles'
+import { useSelectedRaffle } from '@/context/use-selected-raffle'
 import { ConfettiCanvas, type ConfettiRef } from '@/components/shared/confetti-canvas'
 import type { Milestone, ImpactMetric } from '@/types/domain.types'
 import { scrollToPricing } from '@/lib/utils'
 
-function buildMilestones(raffle: ReturnType<typeof useActiveRaffle>['raffle']): Milestone[] {
+function buildMilestones(raffle: ReturnType<typeof useSelectedRaffle>['raffle']): Milestone[] {
   const milestones = raffle?.milestones ?? []
   const sorted = [...milestones].sort((a, b) => a.sortOrder - b.sortOrder)
   const firstPendingIdx = sorted.findIndex((m) => !m.isUnlocked)
@@ -28,8 +28,8 @@ function buildMilestones(raffle: ReturnType<typeof useActiveRaffle>['raffle']): 
 }
 
 function buildMetrics(
-  progress: ReturnType<typeof useActiveRaffle>['progress'],
-  raffle: ReturnType<typeof useActiveRaffle>['raffle'],
+  progress: ReturnType<typeof useSelectedRaffle>['progress'],
+  raffle: ReturnType<typeof useSelectedRaffle>['raffle'],
 ): ImpactMetric[] {
   const packsSold = progress?.packsSold ?? 0
   const goalPacks = raffle?.goalPacks ?? 1
@@ -63,7 +63,7 @@ function buildMetrics(
 export function ImpactSection() {
   const sectionRef = useGsapScroll<HTMLElement>({ stagger: 0.12 })
   const confettiRef = useRef<ConfettiRef>(null)
-  const { raffle, progress } = useActiveRaffle()
+  const { raffle, progress } = useSelectedRaffle()
 
   const milestones = buildMilestones(raffle)
   const metrics = buildMetrics(progress, raffle)

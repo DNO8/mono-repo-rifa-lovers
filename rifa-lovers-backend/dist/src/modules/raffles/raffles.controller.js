@@ -35,6 +35,12 @@ let RafflesController = class RafflesController {
     async getActiveProgress() {
         return this.rafflesService.getActiveProgress();
     }
+    async getRafflePacks(id) {
+        return this.rafflesService.getPacksByRaffle(id);
+    }
+    async getRaffleProgress(id) {
+        return this.rafflesService.getProgressByRaffle(id);
+    }
     async getUserRaffles(userId) {
         return await this.rafflesService.getUserRaffles(userId);
     }
@@ -61,6 +67,20 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], RafflesController.prototype, "getActiveProgress", null);
+__decorate([
+    (0, common_1.Get)(':id/packs'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], RafflesController.prototype, "getRafflePacks", null);
+__decorate([
+    (0, common_1.Get)(':id/progress'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], RafflesController.prototype, "getRaffleProgress", null);
 __decorate([
     (0, common_1.Get)('user'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), customer_ownership_guard_1.CustomerOwnershipGuard),

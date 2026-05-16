@@ -3,7 +3,7 @@ import { Lock, Zap, Trophy, Gift } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { gsap } from '@/lib/gsap'
-import { useActiveRaffle } from '@/hooks/use-raffles'
+import { useSelectedRaffle } from '@/context/use-selected-raffle'
 import { cn } from '@/lib/utils'
 import type { RaffleMilestone } from '@/types/domain.types'
 
@@ -187,7 +187,7 @@ function FlashCampaignBanner() {
 
 export function MilestoneTimeline() {
   const timelineRef = useRef<HTMLDivElement>(null)
-  const { raffle, progress } = useActiveRaffle()
+  const { raffle, progress } = useSelectedRaffle()
 
   const milestones = buildDisplayMilestones(raffle?.milestones ?? [])
   const packsSold = progress?.packsSold ?? 0

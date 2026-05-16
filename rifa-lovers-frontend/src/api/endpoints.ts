@@ -33,6 +33,8 @@ export const ENDPOINTS = {
     public: '/raffles/public',
     activeProgress: '/raffles/active/progress',
     detail: (id: string) => `/raffles/${id}`,
+    packs: (id: string) => `/raffles/${id}/packs`,
+    progress: (id: string) => `/raffles/${id}/progress`,
     draw: {
       results: (raffleId: string) => `/raffles/${raffleId}/winners`,
       adminResults: (raffleId: string) => `/admin/raffles/${raffleId}/winners`,

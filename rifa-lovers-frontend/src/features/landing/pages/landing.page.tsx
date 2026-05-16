@@ -15,11 +15,11 @@ import { PricingSection } from '../sections/pricing-section'
 import { BackingSection } from '../sections/backing-section'
 import { MilestoneTimeline } from '../components/ticket-selector'
 import { CTASection } from '../sections/cta-section'
-
+import { SelectedRaffleProvider } from '@/context/use-selected-raffle'
 
 export default function LandingPage() {
   return (
-    <>
+    <SelectedRaffleProvider>
       <SEOHead
         title="RifaLovers — Rifas online con impacto social en Chile"
         description="Participa en rifas online legales y transparentes en Chile. Gana premios increíbles y contribuye a causas solidarias con nuestra comunidad participativa."
@@ -49,6 +49,6 @@ export default function LandingPage() {
       <SectionDivider />
       <TestimonialsSection />
       <CTASection />
-    </>
+    </SelectedRaffleProvider>
   )
 }

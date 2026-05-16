@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Timer, Users, ChevronDown } from 'lucide-react'
 import { gsap } from '@/lib/gsap'
 import { Badge } from '@/components/ui/badge'
-import { usePublicRaffles } from '@/hooks/use-raffles'
+import { useSelectedRaffle } from '@/context/use-selected-raffle'
 
 interface TimeLeft {
   days: number
@@ -48,8 +48,7 @@ function Dot() {
 
 export function CountdownSection() {
   const sectionRef = useRef<HTMLElement>(null)
-  const { raffles, isLoading } = usePublicRaffles()
-  const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null)
+  const { allRaffles, selectedRaffleId, setSelectedRaffleId, raffle, isLoading } = useSelectedRaffle()
   const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [isClosed, setIsClosed] = useState(false)
 
@@ -80,17 +79,8 @@ export function CountdownSection() {
     return () => { tween.kill() }
   }, [])
 
-  const activeRaffles = useMemo(() => raffles.filter(r => r.status === 'active'), [raffles])
-  const closedRaffles = useMemo(() => raffles.filter(r => ['sold_out', 'closed', 'drawn'].includes(r.status)), [raffles])
-
-  // Auto-select first active raffle or fallback to first closed; reset if selected no longer exists
-  const selectedRaffle = useMemo(() => {
-    if (selectedRaffleId) {
-      const found = raffles.find(r => r.id === selectedRaffleId)
-      if (found) return found
-    }
-    return activeRaffles[0] ?? closedRaffles[0] ?? null
-  }, [raffles, activeRaffles, closedRaffles, selectedRaffleId])
+  const activeRaffles = useMemo(() => allRaffles.filter((r) => r.status === 'active'), [allRaffles])
+  const selectedRaffle = raffle
 
   const targetMs = selectedRaffle?.endDate ? new Date(selectedRaffle.endDate).getTime() : null
   const showClosed = !isLoading && (selectedRaffle ? ['sold_out', 'closed', 'drawn'].includes(selectedRaffle.status) : false)

@@ -1,5 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { RafflesRepository } from './raffles.repository'
+import { PacksRepository } from '../packs/packs.repository'
+import { mapPackToDto } from '../packs/mappers/pack.mapper'
 import { RaffleResponseDto, RaffleProgressDto } from './dto'
 import { RaffleEntity } from './entities'
 import { Raffle, RaffleProgress, Milestone, Prize, RaffleStatus } from '@prisma/client'
@@ -14,7 +16,10 @@ type RaffleWithProgressAndMilestones = Raffle & {
 export class RafflesService {
   private readonly logger = new Logger(RafflesService.name)
 
-  constructor(private readonly rafflesRepository: RafflesRepository) {}
+  constructor(
+    private readonly rafflesRepository: RafflesRepository,
+    private readonly packsRepository: PacksRepository,
+  ) {}
 
   async findActive(): Promise<RaffleResponseDto | null> {
     this.logger.debug('Buscando rifa activa')
@@ -89,6 +94,40 @@ export class RafflesService {
       `Progreso rifa ${raffle.id}: ${progress?.packsSold ?? 0} packs vendidos`,
     )
 
+    const packsSold = progress?.packsSold ?? 0
+    const percentageToGoal = raffle.goalPacks > 0 ? Math.min((packsSold / raffle.goalPacks) * 100, 100) : 0
+
+    return {
+      raffleId: raffle.id,
+      packsSold,
+      revenueTotal: progress?.revenueTotal?.toNumber() ?? 0,
+      percentageToGoal,
+    }
+  }
+
+  async getPacksByRaffle(raffleId: string) {
+    this.logger.debug(`Obteniendo packs para rifa ${raffleId}`)
+    const packs = await this.packsRepository.findMany(
+      { raffleId },
+      { price: 'asc' },
+    )
+    return packs.map(mapPackToDto)
+  }
+
+  async getProgressByRaffle(raffleId: string): Promise<RaffleProgressDto> {
+    this.logger.debug(`Obteniendo progreso para rifa ${raffleId}`)
+
+    const raffle = await this.rafflesRepository.findUnique(
+      { id: raffleId },
+      { progress: true },
+    ) as RaffleWithProgressAndMilestones | null
+
+    if (!raffle) {
+      this.logger.warn(`Rifa no encontrada: ${raffleId}`)
+      throw new NotFoundException(`Rifa con ID ${raffleId} no encontrada`)
+    }
+
+    const progress = raffle.progress
     const packsSold = progress?.packsSold ?? 0
     const percentageToGoal = raffle.goalPacks > 0 ? Math.min((packsSold / raffle.goalPacks) * 100, 100) : 0
 

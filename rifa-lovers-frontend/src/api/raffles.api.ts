@@ -1,6 +1,6 @@
 import { apiClient } from './client'
 import { ENDPOINTS } from './endpoints'
-import type { Raffle, RaffleProgress } from '@/types/domain.types'
+import type { Raffle, RaffleProgress, Pack } from '@/types/domain.types'
 
 export async function getActiveRaffle(): Promise<Raffle | null> {
   return apiClient.get<Raffle>(ENDPOINTS.raffles.active)
@@ -20,4 +20,12 @@ export async function getUserRaffles(): Promise<Raffle[]> {
 
 export async function getRaffleById(raffleId: string): Promise<Raffle | null> {
   return apiClient.get<Raffle>(ENDPOINTS.raffles.detail(raffleId))
+}
+
+export async function getRafflePacks(raffleId: string): Promise<Pack[]> {
+  return apiClient.get<Pack[]>(ENDPOINTS.raffles.packs(raffleId))
+}
+
+export async function getRaffleProgress(raffleId: string): Promise<RaffleProgress | null> {
+  return apiClient.get<RaffleProgress>(ENDPOINTS.raffles.progress(raffleId))
 }

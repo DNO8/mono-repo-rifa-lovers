@@ -1,9 +1,9 @@
 import { useRef, useEffect } from 'react'
-import { useActiveRaffle } from '@/hooks/use-raffles'
+import { useSelectedRaffle } from '@/context/use-selected-raffle'
 import { gsap } from '@/lib/gsap'
 
 export function ProgressFomoSection() {
-  const { raffle, progress, isLoading } = useActiveRaffle()
+  const { raffle, progress, isLoading } = useSelectedRaffle()
   const barRef = useRef<HTMLDivElement>(null)
   const indicatorRef = useRef<HTMLDivElement>(null)
   const countRef = useRef<HTMLSpanElement>(null)

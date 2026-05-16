@@ -25,13 +25,11 @@ export function mapPackToPricingTier(pack: Pack, index: number): PricingTier {
 }
 
 /**
- * Mapea packs del API a PricingTiers, excluyendo los packs Mom.
- * Solo muestra los 3 packs más baratos en las cards del landing.
+ * Mapea packs del API a PricingTiers.
+ * Muestra todos los packs de la rifa seleccionada, ordenados por precio.
  */
 export function mapPacksToPricingTiers(packs: Pack[]): PricingTier[] {
   return packs
-    .filter((p) => !p.name?.toUpperCase().includes('MOM'))
     .sort((a, b) => a.price - b.price)
-    .slice(0, 3)
     .map((pack, index) => mapPackToPricingTier(pack, index))
 }

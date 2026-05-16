@@ -13,10 +13,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RafflesService = void 0;
 const common_1 = require("@nestjs/common");
 const raffles_repository_1 = require("./raffles.repository");
+const packs_repository_1 = require("../packs/packs.repository");
+const pack_mapper_1 = require("../packs/mappers/pack.mapper");
 const entities_1 = require("./entities");
 let RafflesService = RafflesService_1 = class RafflesService {
-    constructor(rafflesRepository) {
+    constructor(rafflesRepository, packsRepository) {
         this.rafflesRepository = rafflesRepository;
+        this.packsRepository = packsRepository;
         this.logger = new common_1.Logger(RafflesService_1.name);
     }
     async findActive() {
@@ -78,6 +81,28 @@ let RafflesService = RafflesService_1 = class RafflesService {
         }
         const progress = raffle.progress;
         this.logger.debug(`Progreso rifa ${raffle.id}: ${progress?.packsSold ?? 0} packs vendidos`);
+        const packsSold = progress?.packsSold ?? 0;
+        const percentageToGoal = raffle.goalPacks > 0 ? Math.min((packsSold / raffle.goalPacks) * 100, 100) : 0;
+        return {
+            raffleId: raffle.id,
+            packsSold,
+            revenueTotal: progress?.revenueTotal?.toNumber() ?? 0,
+            percentageToGoal,
+        };
+    }
+    async getPacksByRaffle(raffleId) {
+        this.logger.debug(`Obteniendo packs para rifa ${raffleId}`);
+        const packs = await this.packsRepository.findMany({ raffleId }, { price: 'asc' });
+        return packs.map(pack_mapper_1.mapPackToDto);
+    }
+    async getProgressByRaffle(raffleId) {
+        this.logger.debug(`Obteniendo progreso para rifa ${raffleId}`);
+        const raffle = await this.rafflesRepository.findUnique({ id: raffleId }, { progress: true });
+        if (!raffle) {
+            this.logger.warn(`Rifa no encontrada: ${raffleId}`);
+            throw new common_1.NotFoundException(`Rifa con ID ${raffleId} no encontrada`);
+        }
+        const progress = raffle.progress;
         const packsSold = progress?.packsSold ?? 0;
         const percentageToGoal = raffle.goalPacks > 0 ? Math.min((packsSold / raffle.goalPacks) * 100, 100) : 0;
         return {
@@ -172,6 +197,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
 exports.RafflesService = RafflesService;
 exports.RafflesService = RafflesService = RafflesService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [raffles_repository_1.RafflesRepository])
+    __metadata("design:paramtypes", [raffles_repository_1.RafflesRepository,
+        packs_repository_1.PacksRepository])
 ], RafflesService);
 //# sourceMappingURL=raffles.service.js.map

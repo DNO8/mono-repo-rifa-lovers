@@ -21,6 +21,7 @@ export declare class RaffleResponseDto {
     status: string;
     createdAt: string;
     endDate: string | null;
+    coverImageUrl?: string | null;
     milestones?: MilestoneDto[];
 }
 export declare class RaffleProgressDto {

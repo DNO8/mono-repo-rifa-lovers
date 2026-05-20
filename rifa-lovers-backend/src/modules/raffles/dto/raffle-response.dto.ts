@@ -23,6 +23,7 @@ export class RaffleResponseDto {
   status: string
   createdAt: string
   endDate: string | null
+  coverImageUrl?: string | null
   milestones?: MilestoneDto[]
 }
 

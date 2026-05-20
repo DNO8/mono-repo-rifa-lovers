@@ -57,6 +57,7 @@ export class RafflesService {
       status: raffleEntity.status,
       createdAt: raffleEntity.createdAt.toISOString(),
       endDate: raffleEntity.endDate ? raffleEntity.endDate.toISOString() : null,
+      coverImageUrl: raffle.coverImageUrl,
       milestones: raffle.milestones?.map(m => ({
         id: m.id,
         name: m.name,
@@ -169,6 +170,7 @@ export class RafflesService {
       status: raffle.status,
       createdAt: raffle.createdAt.toISOString(),
       endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+      coverImageUrl: raffle.coverImageUrl,
     }
   }
 
@@ -186,6 +188,7 @@ export class RafflesService {
       status: raffle.status,
       createdAt: raffle.createdAt.toISOString(),
       endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+      coverImageUrl: raffle.coverImageUrl,
     }))
   }
 
@@ -203,6 +206,7 @@ export class RafflesService {
       status: raffle.status,
       createdAt: raffle.createdAt.toISOString(),
       endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+      coverImageUrl: raffle.coverImageUrl,
       milestones: raffle.milestones?.map(m => ({
         id: m.id,
         name: m.name,
@@ -233,6 +237,7 @@ export class RafflesService {
       status: raffle.status,
       createdAt: raffle.createdAt.toISOString(),
       endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+      coverImageUrl: raffle.coverImageUrl,
     }))
   }
 }

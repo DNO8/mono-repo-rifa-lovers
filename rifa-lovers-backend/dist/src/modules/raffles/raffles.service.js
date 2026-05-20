@@ -52,6 +52,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
             status: raffleEntity.status,
             createdAt: raffleEntity.createdAt.toISOString(),
             endDate: raffleEntity.endDate ? raffleEntity.endDate.toISOString() : null,
+            coverImageUrl: raffle.coverImageUrl,
             milestones: raffle.milestones?.map(m => ({
                 id: m.id,
                 name: m.name,
@@ -136,6 +137,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
             status: raffle.status,
             createdAt: raffle.createdAt.toISOString(),
             endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+            coverImageUrl: raffle.coverImageUrl,
         };
     }
     async findByStatus(status) {
@@ -150,6 +152,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
             status: raffle.status,
             createdAt: raffle.createdAt.toISOString(),
             endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+            coverImageUrl: raffle.coverImageUrl,
         }));
     }
     async getPublicRaffles() {
@@ -164,6 +167,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
             status: raffle.status,
             createdAt: raffle.createdAt.toISOString(),
             endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+            coverImageUrl: raffle.coverImageUrl,
             milestones: raffle.milestones?.map(m => ({
                 id: m.id,
                 name: m.name,
@@ -191,6 +195,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
             status: raffle.status,
             createdAt: raffle.createdAt.toISOString(),
             endDate: raffle.endDate ? raffle.endDate.toISOString() : null,
+            coverImageUrl: raffle.coverImageUrl,
         }));
     }
 };

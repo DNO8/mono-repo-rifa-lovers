@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { ApiError } from '@/api/clients/http-client'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router'
 import { useAuthStore } from '@/stores/auth.store'
@@ -733,8 +734,9 @@ export default function OperatorDashboardPage() {
           try {
             await deletePack(deletePackTarget.id)
             toast.success('Pack eliminado correctamente')
-          } catch {
-            toast.error('Error al eliminar el pack')
+          } catch (err) {
+            const msg = err instanceof ApiError ? err.getUserMessage() : 'Error al eliminar el pack'
+            toast.error(msg)
           } finally {
             setDeletePackTarget(null)
           }

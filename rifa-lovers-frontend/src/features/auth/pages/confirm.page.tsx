@@ -6,45 +6,61 @@ import { Spinner } from '@/components/ui/spinner'
 
 type ConfirmType = 'recovery' | 'signup' | null
 
-function parseHash() {
-  const hash = window.location.hash
-  if (!hash || hash.length < 2) {
-    return { error: 'Enlace inválido o expirado.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
+function parseParams() {
+  const search = window.location.search
+  if (!search || search.length < 2) {
+    // Fallback: if no query params, try hash (for older Supabase flows)
+    const hash = window.location.hash
+    if (!hash || hash.length < 2) {
+      return { error: 'Enlace inválido o expirado.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
+    }
+
+    const hashParams = new URLSearchParams(hash.substring(1))
+    const accessToken = hashParams.get('access_token')
+    const type = hashParams.get('type')
+
+    if (!accessToken) {
+      return { error: 'Token no encontrado en el enlace.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
+    }
+
+    if (type === 'signup') {
+      return { error: null, success: '¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.', confirmType: 'signup' as ConfirmType, recoveryToken: null, recoveryEmail: null }
+    }
+
+    if (type === 'recovery') {
+      try {
+        const parts = accessToken.split('.')
+        if (parts.length !== 3) {
+          return { error: 'Token inválido.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
+        }
+        const payload = JSON.parse(atob(parts[1]))
+        const email = payload.email
+        if (!email) {
+          return { error: 'No se pudo obtener el email del token.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
+        }
+        return { error: null, success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: accessToken, recoveryEmail: email }
+      } catch {
+        return { error: 'Error al procesar el token. Solicita un nuevo enlace.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
+      }
+    }
+
+    return { error: 'Tipo de confirmación no válido.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
   }
 
-  const hashParams = new URLSearchParams(hash.substring(1))
-  const accessToken = hashParams.get('access_token')
-  const type = hashParams.get('type')
-
-  if (!accessToken) {
-    return { error: 'Token no encontrado en el enlace.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
-  }
+  const urlParams = new URLSearchParams(search)
+  const token = urlParams.get('token')
+  const type = urlParams.get('type')
+  const email = urlParams.get('email')
 
   if (type === 'signup') {
-    return {
-      error: null,
-      success: '¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.',
-      confirmType: 'signup' as ConfirmType,
-      recoveryToken: null,
-      recoveryEmail: null,
-    }
+    return { error: null, success: '¡Tu email ha sido verificado exitosamente! Ya puedes iniciar sesión.', confirmType: 'signup' as ConfirmType, recoveryToken: null, recoveryEmail: null }
   }
 
   if (type === 'recovery') {
-    try {
-      const parts = accessToken.split('.')
-      if (parts.length !== 3) {
-        return { error: 'Token inválido.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
-      }
-      const payload = JSON.parse(atob(parts[1]))
-      const email = payload.email
-      if (!email) {
-        return { error: 'No se pudo obtener el email del token.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
-      }
-      return { error: null, success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: accessToken, recoveryEmail: email }
-    } catch {
-      return { error: 'Error al procesar el token. Solicita un nuevo enlace.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
+    if (!token || !email) {
+      return { error: 'Enlace de recuperación inválido. Solicita un nuevo enlace.', success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: null, recoveryEmail: null }
     }
+    return { error: null, success: null, confirmType: 'recovery' as ConfirmType, recoveryToken: token, recoveryEmail: email }
   }
 
   return { error: 'Tipo de confirmación no válido.', success: null, confirmType: null, recoveryToken: null, recoveryEmail: null }
@@ -52,11 +68,11 @@ function parseHash() {
 
 export default function ConfirmPage() {
   const navigate = useNavigate()
-  const [error] = useState<string | null>(() => parseHash().error)
-  const [success] = useState<string | null>(() => parseHash().success)
-  const [confirmType] = useState<ConfirmType>(() => parseHash().confirmType)
-  const [recoveryToken] = useState<string | null>(() => parseHash().recoveryToken)
-  const [recoveryEmail] = useState<string | null>(() => parseHash().recoveryEmail)
+  const [error] = useState<string | null>(() => parseParams().error)
+  const [success] = useState<string | null>(() => parseParams().success)
+  const [confirmType] = useState<ConfirmType>(() => parseParams().confirmType)
+  const [recoveryToken] = useState<string | null>(() => parseParams().recoveryToken)
+  const [recoveryEmail] = useState<string | null>(() => parseParams().recoveryEmail)
 
   useEffect(() => {
     if (recoveryToken && recoveryEmail) {

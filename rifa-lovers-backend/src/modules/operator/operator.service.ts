@@ -95,7 +95,14 @@ export class OperatorService {
       throw new BadRequestException('Ya tienes una organizacion asignada')
     }
 
-    const slug = dto.slug || dto.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    let slug = dto.slug || dto.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+
+    // Ensure unique slug by appending random suffix if conflict
+    const existing = await this.prisma.organization.findUnique({ where: { slug } })
+    if (existing) {
+      const suffix = Math.random().toString(36).substring(2, 6)
+      slug = `${slug}-${suffix}`
+    }
 
     const org = await this.prisma.organization.create({
       data: { name: dto.name, slug },

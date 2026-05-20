@@ -75,6 +75,7 @@ class CreateOrganizationDto {
 exports.CreateOrganizationDto = CreateOrganizationDto;
 __decorate([
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MaxLength)(200),
     __metadata("design:type", String)
 ], CreateOrganizationDto.prototype, "name", void 0);

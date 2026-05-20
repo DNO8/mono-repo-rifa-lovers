@@ -1,31 +1,25 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { HeroLiveFrame } from './hero-live-frame'
 
-// Lazy load the heavy 3D viewer - creates separate chunk
-const HeroModelViewer = lazy(() => import('./hero-model-viewer'))
+const HeroCanvasBG = lazy(() => import('./hero-canvas-bg'))
 
-/**
- * Lightweight skeleton placeholder shown while 3D model loads
- * or when not in viewport
- */
-function ModelSkeleton() {
+function FullscreenSkeleton() {
   return (
-    <div className="aspect-square bg-surface-secondary/30 rounded-2xl animate-pulse flex flex-col items-center justify-center gap-3 min-h-[300px]">
-      <div className="size-12 rounded-full bg-surface-secondary/50" />
-      <span className="text-text-tertiary text-sm">Cargando modelo 3D...</span>
+    <div className="w-full h-full bg-[#0d0b1a] animate-pulse flex flex-col items-center justify-center gap-3">
+      <div className="size-12 rounded-full bg-white/10" />
+      <span className="text-white/40 text-sm">Cargando escena 3D...</span>
     </div>
   )
 }
 
 /**
  * LazyHeroModelViewer
- * 
+ *
  * Implements:
  * - Code splitting with React.lazy() - 3D viewer in separate chunk
  * - Intersection Observer - only loads when entering viewport
  * - Page Visibility API - pauses animation when tab is backgrounded
  * - Delayed unmount - keeps rendered for 5s after leaving viewport
- * 
+ *
  * Reduces initial bundle by ~350KB and stops wasting CPU/GPU when not visible.
  */
 export function LazyHeroModelViewer() {
@@ -40,56 +34,41 @@ export function LazyHeroModelViewer() {
       ([entry]) => {
         const visible = entry.isIntersecting
         setIsVisible(visible)
-        
-        // Mount when becoming visible
-        if (visible) {
-          setShouldRender(true)
-        }
+        if (visible) setShouldRender(true)
       },
-      { 
-        threshold: 0.1, // Trigger when 10% visible
-        rootMargin: '100px' // Start loading 100px before entering viewport
+      {
+        threshold: 0.05,
+        rootMargin: '100px',
       }
     )
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current)
-    }
-
+    if (containerRef.current) observer.observe(containerRef.current)
     return () => observer.disconnect()
   }, [])
 
   // Delayed unmount - keep rendered for 5s after leaving viewport
-  // Prevents thrashing on quick scrolls
   useEffect(() => {
     if (!isVisible && shouldRender) {
-      const timer = setTimeout(() => {
-        setShouldRender(false)
-      }, 5000)
+      const timer = setTimeout(() => setShouldRender(false), 5000)
       return () => clearTimeout(timer)
     }
   }, [isVisible, shouldRender])
 
   // Page Visibility API - pause when tab is backgrounded
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      pausedRef.current = document.hidden
-    }
-
+    const handleVisibilityChange = () => { pausedRef.current = document.hidden }
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div ref={containerRef} className="w-full h-full">
       {shouldRender ? (
-        <Suspense fallback={<ModelSkeleton />}>
-          <HeroLiveFrame>
-            <HeroModelViewer isVisible={isVisible} pausedRef={pausedRef} />
-          </HeroLiveFrame>
+        <Suspense fallback={<FullscreenSkeleton />}>
+          <HeroCanvasBG isVisible={isVisible} pausedRef={pausedRef} />
         </Suspense>
       ) : (
-        <ModelSkeleton />
+        <FullscreenSkeleton />
       )}
     </div>
   )

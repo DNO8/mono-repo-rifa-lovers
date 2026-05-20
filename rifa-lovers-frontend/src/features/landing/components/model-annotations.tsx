@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { Cpu, MemoryStick, HardDrive, Monitor, BatteryFull, Usb, Zap, Camera, X } from 'lucide-react'
@@ -11,7 +11,7 @@ const HOTSPOTS: Hotspot[] = [
     spec: 'CPU 10 núcleos · GPU 10 núcleos',
     description: 'Rendimiento ultrarrápido para multitasking, edición de video 4K y apps de IA. Neural Engine de 16 núcleos.',
     position: [0.05, -0.05, 0.15],
-    cameraPosition: [1.2, 0.6, 2.5],
+    cameraPosition: [0.8, 0.5, 1.8],
     cameraTarget: [0.05, -0.05, 0.15],
     side: 'right',
     icon: Cpu,
@@ -23,7 +23,7 @@ const HOTSPOTS: Hotspot[] = [
     spec: '16 GB RAM',
     description: 'Memoria compartida entre CPU, GPU y Neural Engine para un rendimiento fluido en todas las tareas.',
     position: [0.25, -0.1, 0.3],
-    cameraPosition: [1.5, 0.5, 2.5],
+    cameraPosition: [1.0, 0.4, 1.8],
     cameraTarget: [0.25, -0.1, 0.3],
     side: 'right',
     icon: MemoryStick,
@@ -35,7 +35,7 @@ const HOTSPOTS: Hotspot[] = [
     spec: '512 GB SSD',
     description: 'Almacenamiento ultrarrápido para cargar apps y transferir archivos en segundos.',
     position: [-0.3, -0.08, 0.4],
-    cameraPosition: [-1.2, 0.5, 2.5],
+    cameraPosition: [-0.8, 0.4, 1.8],
     cameraTarget: [-0.3, -0.08, 0.4],
     side: 'left',
     icon: HardDrive,
@@ -47,7 +47,7 @@ const HOTSPOTS: Hotspot[] = [
     spec: '13.6" · 1.000 millones de colores',
     description: 'Resolución impresionante con textos nítidos, colores vibrantes y soporte P3 wide color.',
     position: [0, 0.5, 0.4],
-    cameraPosition: [0.8, 1.2, 3],
+    cameraPosition: [0.6, 1.0, 2.2],
     cameraTarget: [0, 0.5, 0.4],
     side: 'right',
     icon: Monitor,
@@ -59,7 +59,7 @@ const HOTSPOTS: Hotspot[] = [
     spec: 'Hasta 18 horas de uso',
     description: 'Todo el día sin cargador. Reproduce video hasta 18 horas seguidas con una sola carga.',
     position: [0, -0.2, 0.6],
-    cameraPosition: [0.8, 0.3, 3],
+    cameraPosition: [0.6, 0.2, 2.2],
     cameraTarget: [0, -0.2, 0.6],
     side: 'left',
     icon: BatteryFull,
@@ -71,7 +71,7 @@ const HOTSPOTS: Hotspot[] = [
     spec: '2× puertos USB-C',
     description: 'Transferencia de datos de alta velocidad, carga y conexión a monitores externos.',
     position: [-1, -0.05, 0.3],
-    cameraPosition: [-2, 0.5, 2],
+    cameraPosition: [-1.4, 0.4, 1.6],
     cameraTarget: [-1, -0.05, 0.3],
     side: 'left',
     icon: Usb,
@@ -83,7 +83,7 @@ const HOTSPOTS: Hotspot[] = [
     spec: 'Carga magnética segura',
     description: 'Conector magnético que se conecta y desconecta fácilmente para proteger tu MacBook.',
     position: [-1.05, 0.01, 0.15],
-    cameraPosition: [-2, 0.5, 1.5],
+    cameraPosition: [-1.4, 0.4, 1.4],
     cameraTarget: [-1.05, 0.01, 0.15],
     side: 'left',
     icon: Zap,
@@ -95,7 +95,7 @@ const HOTSPOTS: Hotspot[] = [
     spec: '1080p · Encuadre Centrado',
     description: 'Cámara de alta definición con Encuadre Centrado que te sigue automáticamente en videollamadas.',
     position: [0, 1.2, 1],
-    cameraPosition: [0.8, 1.8, 3],
+    cameraPosition: [0.6, 1.6, 2.2],
     cameraTarget: [0, 1.2, 1],
     side: 'right',
     icon: Camera,
@@ -116,14 +116,36 @@ function AnnotationDot({
   onClick: () => void
 }) {
   const Icon = hotspot.icon
+  const dotRef = useRef<HTMLDivElement>(null)
 
-  // Ref callback: when panel mounts, measure and reposition to stay within canvas bounds
+  // Base side: dots 3, 6, 7 always right; others use hotspot.side
+  const baseSide: 'left' | 'right' = index === 3 || index === 6 || index === 7 ? 'right' : hotspot.side
+
+  // Ref callback: when panel mounts, adjust side based on viewport position and handle overflow
   const panelRefCallback = (node: HTMLDivElement | null) => {
     if (!node) return
-    // Allow the browser to lay out the element first
     requestAnimationFrame(() => {
       const container = node.closest('canvas')?.parentElement
       if (!container) return
+
+      // Determine final side: dots 6/7 always right; others flip right if dot is in left 70% of viewport
+      const dotRect = dotRef.current?.getBoundingClientRect()
+      const threshold = window.innerWidth * 0.7
+      let side = baseSide
+      if (index === 6 || index === 7) {
+        side = 'right'
+      } else if (dotRect && dotRect.left < threshold) {
+        side = 'right'
+      }
+
+      // Apply side directly to DOM (overrides inline style to prevent React resets)
+      if (side === 'right') {
+        node.style.left = '20px'
+        node.style.right = 'auto'
+      } else {
+        node.style.right = '20px'
+        node.style.left = 'auto'
+      }
 
       const panelRect = node.getBoundingClientRect()
       const containerRect = container.getBoundingClientRect()
@@ -157,7 +179,7 @@ function AnnotationDot({
       zIndexRange={active ? [1000, 500] : [10, 0]}
       style={{ pointerEvents: 'auto' }}
     >
-      <div className="relative" onClick={onClick}>
+      <div className="relative" onClick={onClick} ref={dotRef}>
         {/* Numbered dot */}
         <div className="relative size-4 lg:size-6 cursor-pointer">
           {!active && (
@@ -186,7 +208,7 @@ function AnnotationDot({
             style={{
               top: '50%',
               transform: 'translateY(-50%)',
-              [hotspot.side === 'right' ? 'left' : 'right']: '20px',
+              [baseSide === 'right' ? 'left' : 'right']: '20px',
             }}
           >
             <div
@@ -270,10 +292,21 @@ export function ModelAnnotations({
       unlock()
     } else {
       // Activate — lock drag + animate camera
-      // Rotate camera coordinates by the model's current Y rotation
+      // Rotate camera coordinates by the model's current Y rotation, then add pivot offset
       const yAngle = pivotRef.current?.rotation.y ?? 0
-      const worldCamPos = rotateY(hotspot.cameraPosition, yAngle)
-      const worldCamTarget = rotateY(hotspot.cameraTarget, yAngle)
+      const pivotPos = pivotRef.current?.position ?? new THREE.Vector3(0, 0, 0)
+      const rotatedCamPos = rotateY(hotspot.cameraPosition, yAngle)
+      const rotatedCamTarget = rotateY(hotspot.cameraTarget, yAngle)
+      const worldCamPos: [number, number, number] = [
+        rotatedCamPos[0] + pivotPos.x,
+        rotatedCamPos[1] + pivotPos.y,
+        rotatedCamPos[2] + pivotPos.z,
+      ]
+      const worldCamTarget: [number, number, number] = [
+        rotatedCamTarget[0] + pivotPos.x,
+        rotatedCamTarget[1] + pivotPos.y,
+        rotatedCamTarget[2] + pivotPos.z,
+      ]
       setActiveId(hotspot.id)
       lock()
       onAnimateCamera.current?.(worldCamPos, worldCamTarget)

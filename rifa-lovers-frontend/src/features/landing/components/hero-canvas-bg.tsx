@@ -1,6 +1,6 @@
-import { Suspense, useRef, useEffect } from 'react'
+import { Suspense, useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useGLTF, ContactShadows, OrbitControls, Center } from '@react-three/drei'
+import { useGLTF, ContactShadows, OrbitControls, Center, Stars, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
 import { Spinner } from '@/components/ui/spinner'
 import { useModelDrag } from '@/hooks/use-model-drag'
@@ -10,9 +10,9 @@ const MODEL_PATH = '/models/macbook-2k-draco.glb'
 const DEFAULT_CAMERA_POS = new THREE.Vector3(2.5, 1.2, 5)
 const DEFAULT_CAMERA_TARGET = new THREE.Vector3(0, 0.1, 0)
 const ORBIT_TARGET = new THREE.Vector3(0, 0.1, 0)
-const MIN_DISTANCE = 1
+const MIN_DISTANCE = 5
 const MAX_DISTANCE = 8
-const ANIM_DURATION = 0.8
+const ANIM_DURATION = 0.6
 
 function MacBookModel({
   userRotation,
@@ -21,6 +21,7 @@ function MacBookModel({
   onResetCamera,
   lock,
   unlock,
+  isDesktop,
 }: {
   userRotation: React.RefObject<number>
   paused: React.RefObject<boolean>
@@ -28,6 +29,7 @@ function MacBookModel({
   onResetCamera: React.RefObject<(() => void) | null>
   lock: () => void
   unlock: () => void
+  isDesktop: boolean
 }) {
   const pivotRef = useRef<THREE.Group>(null)
   const { scene } = useGLTF(MODEL_PATH)
@@ -50,7 +52,7 @@ function MacBookModel({
   })
 
   return (
-    <group ref={pivotRef} dispose={null}>
+    <group ref={pivotRef} dispose={null} position={[isDesktop ? 1.6 : 0, 0, 0]}>
       <Center>
         <primitive object={cloned} scale={scaleFactor} />
       </Center>
@@ -119,7 +121,6 @@ function CameraAnimator({
     currentTarget.current.lerpVectors(startTarget.current, endTarget.current, t)
     camera.lookAt(currentTarget.current)
 
-    // Continuously sync OrbitControls target during animation to prevent snap
     if (controlsRef.current) {
       controlsRef.current.target.copy(currentTarget.current)
       controlsRef.current.update()
@@ -142,98 +143,11 @@ function easeInOutCubic(t: number): number {
 
 function LoadingFallback3D() {
   return (
-    <div
-      className="absolute inset-0 flex items-center justify-center"
-      style={{
-        background: 'radial-gradient(ellipse at 30% 40%, rgba(123,63,228,0.25) 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, rgba(255,77,166,0.15) 0%, transparent 55%), linear-gradient(135deg, #0d0b1a 0%, #140e26 40%, #1a1028 70%, #0d0b1a 100%)',
-      }}
-    >
+    <div className="absolute inset-0 z-10 flex items-center justify-center">
       <div className="text-center">
         <Spinner size="lg" />
-        <p className="text-sm text-text-secondary mt-3">Cargando modelo 3D...</p>
+        <p className="text-sm text-white/40 mt-3">Cargando escena 3D...</p>
       </div>
-    </div>
-  )
-}
-
-interface HeroModelViewerProps {
-  isVisible?: boolean
-  pausedRef?: React.MutableRefObject<boolean>
-}
-
-export default function HeroModelViewer({ isVisible = true, pausedRef: externalPausedRef }: HeroModelViewerProps) {
-  const { userRotation, paused: internalPaused, lock, unlock, locked, pointerHandlers } = useModelDrag()
-
-  const animateCameraRef = useRef<((pos: [number, number, number], target: [number, number, number]) => void) | null>(null)
-  const resetCameraRef = useRef<(() => void) | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const controlsRef = useRef<any>(null)
-  const pausedRef = useRef(false)
-
-  // Sync paused ref without polling — runs whenever visibility or external ref changes
-  useEffect(() => {
-    pausedRef.current = internalPaused.current || (externalPausedRef?.current ?? false) || !isVisible
-    if (externalPausedRef) {
-      externalPausedRef.current = pausedRef.current
-    }
-  })
-
-  return (
-    <div
-      className="relative mx-auto w-full h-[260px] sm:h-[320px] md:h-[460px] lg:h-[540px] xl:h-[600px] rounded-2xl overflow-hidden"
-      style={{ cursor: locked.current ? 'default' : undefined }}
-      {...pointerHandlers}
-    >
-      {/* Branded gradient background */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: 'radial-gradient(ellipse at 30% 40%, rgba(123,63,228,0.25) 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, rgba(255,77,166,0.15) 0%, transparent 55%), linear-gradient(135deg, #0d0b1a 0%, #140e26 40%, #1a1028 70%, #0d0b1a 100%)',
-        }}
-      />
-      <Suspense fallback={<LoadingFallback3D />}>
-        <Canvas
-          camera={{ position: [2.5, 1.2, 5], fov: 35, near: 0.1, far: 100 }}
-          dpr={[1, 1.5]}
-          gl={{ antialias: true, alpha: true }}
-          style={{ background: 'transparent' }}
-        >
-          {/* Bright clear lighting */}
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[4, 6, 4]} intensity={2.2} color="#ffffff" castShadow />
-          <directionalLight position={[-3, 2, -3]} intensity={0.8} color="#7B3FE4" />
-          <directionalLight position={[-4, 3, 5]} intensity={0.6} color="#ffffff" />
-          <pointLight position={[1, 3, 1]} intensity={0.5} color="#FF4DA6" />
-
-          <InnerScene
-            userRotation={userRotation}
-            paused={pausedRef}
-            onAnimateCamera={animateCameraRef}
-            onResetCamera={resetCameraRef}
-            lock={lock}
-            unlock={unlock}
-          />
-
-          <CameraAnimator
-            animateCameraRef={animateCameraRef}
-            resetCameraRef={resetCameraRef}
-            controlsRef={controlsRef}
-          />
-
-          <ZoomPassthrough />
-          <OrbitControls
-            ref={controlsRef}
-            enableRotate={false}
-            enablePan={false}
-            enableZoom
-            enableDamping
-            dampingFactor={0.08}
-            minDistance={MIN_DISTANCE}
-            maxDistance={MAX_DISTANCE}
-            target={ORBIT_TARGET}
-          />
-        </Canvas>
-      </Suspense>
     </div>
   )
 }
@@ -267,6 +181,7 @@ function InnerScene({
   onResetCamera,
   lock,
   unlock,
+  isDesktop,
 }: {
   userRotation: React.RefObject<number>
   paused: React.RefObject<boolean>
@@ -274,9 +189,12 @@ function InnerScene({
   onResetCamera: React.RefObject<(() => void) | null>
   lock: () => void
   unlock: () => void
+  isDesktop: boolean
 }) {
   return (
     <>
+      <Stars radius={80} depth={60} count={3000} factor={4} fade speed={0.8} saturation={0.5} />
+      <Sparkles count={40} scale={4} size={2} speed={0.3} color="#FF4DA6" noise={0.5} />
       <MacBookModel
         userRotation={userRotation}
         paused={paused}
@@ -284,11 +202,100 @@ function InnerScene({
         onResetCamera={onResetCamera}
         lock={lock}
         unlock={unlock}
+        isDesktop={isDesktop}
       />
       <ContactShadows position={[0, -0.01, 0]} opacity={0.15} scale={5} blur={2.5} color="#000000" />
     </>
   )
 }
 
-// Note: Model is now loaded on-demand via Intersection Observer in LazyHeroModelViewer
-// This prevents eager loading and reduces initial bundle size by ~350KB
+interface HeroCanvasBGProps {
+  isVisible?: boolean
+  pausedRef?: React.MutableRefObject<boolean>
+}
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+  return isDesktop
+}
+
+export default function HeroCanvasBG({ isVisible = true, pausedRef: externalPausedRef }: HeroCanvasBGProps) {
+  const isDesktop = useIsDesktop()
+  const { userRotation, paused: internalPaused, lock, unlock, locked, pointerHandlers } = useModelDrag({ resumeDelayMs: 10000 })
+
+  const animateCameraRef = useRef<((pos: [number, number, number], target: [number, number, number]) => void) | null>(null)
+  const resetCameraRef = useRef<(() => void) | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const controlsRef = useRef<any>(null)
+
+  // Sync external paused ref for Page Visibility API
+  useEffect(() => {
+    if (externalPausedRef) {
+      externalPausedRef.current = internalPaused.current || !isVisible
+    }
+  })
+
+  return (
+    <div
+      className="relative w-full h-full"
+      style={{ cursor: locked.current ? 'default' : undefined }}
+      {...pointerHandlers}
+    >
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: 'radial-gradient(ellipse at 30% 40%, rgba(123,63,228,0.25) 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, rgba(255,77,166,0.15) 0%, transparent 55%), linear-gradient(135deg, #0d0b1a 0%, #140e26 40%, #1a1028 70%, #0d0b1a 100%)',
+        }}
+      />
+      <Suspense fallback={<LoadingFallback3D />}>
+        <Canvas
+          camera={{ position: [2.5, 1.2, 5], fov: 35, near: 0.1, far: 100 }}
+          dpr={[1, 1.5]}
+          gl={{ antialias: true, alpha: true }}
+          style={{ background: 'transparent' }}
+        >
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[4, 6, 4]} intensity={2.2} color="#ffffff" castShadow />
+          <directionalLight position={[-3, 2, -3]} intensity={0.8} color="#7B3FE4" />
+          <directionalLight position={[-4, 3, 5]} intensity={0.6} color="#ffffff" />
+          <pointLight position={[1, 3, 1]} intensity={0.5} color="#FF4DA6" />
+
+          <InnerScene
+            userRotation={userRotation}
+            paused={internalPaused}
+            onAnimateCamera={animateCameraRef}
+            onResetCamera={resetCameraRef}
+            lock={lock}
+            unlock={unlock}
+            isDesktop={isDesktop}
+          />
+
+          <CameraAnimator
+            animateCameraRef={animateCameraRef}
+            resetCameraRef={resetCameraRef}
+            controlsRef={controlsRef}
+          />
+
+          <ZoomPassthrough />
+          <OrbitControls
+            ref={controlsRef}
+            enableRotate={false}
+            enablePan={false}
+            enableZoom
+            enableDamping
+            dampingFactor={0.08}
+            minDistance={MIN_DISTANCE}
+            maxDistance={MAX_DISTANCE}
+            target={ORBIT_TARGET}
+          />
+        </Canvas>
+      </Suspense>
+    </div>
+  )
+}

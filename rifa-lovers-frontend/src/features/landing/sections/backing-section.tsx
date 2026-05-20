@@ -1,4 +1,4 @@
-import { Shield, Code, Scale, Building } from 'lucide-react'
+import { Shield, Code, Scale, Building, FileText } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { useGsapScroll } from '@/hooks/use-gsap-scroll'
@@ -55,6 +55,14 @@ export function BackingSection() {
                 </div>
               </div>
             </div>
+
+            <a
+              href="/bases-legales"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg text-primary text-sm font-semibold hover:bg-primary/20 transition-colors duration-200 mb-4"
+            >
+              <FileText className="size-4" />
+              Ver bases legales
+            </a>
 
             <div className="flex items-center gap-3 pt-4 border-t border-border-light">
               <img

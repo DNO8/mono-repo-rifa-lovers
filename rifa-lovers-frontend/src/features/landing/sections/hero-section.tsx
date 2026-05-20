@@ -1,23 +1,12 @@
 import { useRef } from 'react'
-import { ArrowRight, Hand, CalendarClock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { LazyHeroModelViewer } from '../components/lazy-hero-model-viewer'
-import { useActiveRaffle } from '@/hooks/use-raffles'
-import { scrollToPricing } from '@/lib/utils'
+import { HeroContentOverlay } from '../components/hero-content-overlay'
+import { HeroLiveBadges } from '../components/hero-live-badges'
 
 export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const spotlightRef = useRef<HTMLDivElement>(null)
   const rectRef = useRef<DOMRect | null>(null)
-  const { raffle } = useActiveRaffle()
-
-  const drawDate = raffle?.endDate
-    ? new Date(raffle.endDate).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })
-    : null
-  const drawTime = raffle?.endDate
-    ? new Date(raffle.endDate).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-    : null
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     const spot = spotlightRef.current
@@ -40,12 +29,12 @@ export function HeroSection() {
     <section
       ref={sectionRef}
       id="hero"
-      className="relative min-h-[85vh] lg:min-h-screen overflow-hidden"
+      className="relative min-h-[85vh] lg:min-h-screen overflow-hidden bg-[#0d0b1a]"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Gradient flashlight cursor */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+      {/* Gradient flashlight cursor — desktop only */}
+      <div className="hidden lg:block absolute inset-0 overflow-hidden pointer-events-none z-50">
         <div
           ref={spotlightRef}
           className="absolute w-[50px] h-[50px] rounded-full transition-opacity duration-300"
@@ -57,92 +46,34 @@ export function HeroSection() {
         />
       </div>
 
-      {/* ── Desktop: text overlay left + model right ── */}
-      {/* ── Mobile: stacked — text top, model bottom ── */}
-      <div className="relative min-h-[85vh] lg:min-h-screen flex flex-col lg:flex-row lg:gap-52">
-        {/* Left: Copy overlay */}
-        <div className="relative z-20 flex flex-col justify-center px-6 md:px-12 lg:px-10 xl:px-16 pt-24 pb-8 lg:py-0 lg:w-[38%] xl:w-[40%]">
-          <div className="hero-fade-up" style={{ animationDelay: '0.2s' }}>
-            <Badge variant="gradient" className="mb-5">
-              <div className="size-2 rounded-full bg-white animate-pulse" />
-              SORTEO EN VIVO
-            </Badge>
-          </div>
+      {/* Desktop: 3D Canvas fullscreen */}
+      <div className="hidden lg:block absolute inset-0 z-0">
+        <LazyHeroModelViewer />
+      </div>
 
-          <h1
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-[2.5rem] xl:text-6xl leading-[1.15] tracking-tight mb-4"
-            style={{ fontFamily: 'var(--font-sans)', fontWeight: 800 }}
-          >
-            <span
-              className="block text-text-primary hero-fade-up"
-              style={{ animationDelay: '0.3s' }}
-            >
-              Próximamente: Gana un MacBook M5
-            </span>
-            <span
-              className="block bg-linear-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent hero-fade-up"
-              style={{ animationDelay: '0.7s' }}
-            >
-              desde $2.990
-            </span>
-          </h1>
-
-          <p
-            className="text-sm md:text-base text-text-secondary max-w-xl mb-2 leading-relaxed hero-fade-up"
-            style={{ animationDelay: '0.4s' }}
-          >
-            y cumple el sueño de los niños de la{' '}
-            <span className="font-semibold text-text-primary">Fundación Niño y Cáncer</span>
-          </p>
-
-          <p
-            className="text-sm md:text-base text-text-secondary max-w-xl mb-4 leading-relaxed hero-fade-up"
-            style={{ animationDelay: '0.55s' }}
-          >
-            <span className="font-semibold text-primary">3 smartphones y 3 tablets</span>, además
-            participas en la escala de desbloqueo de fabulosos premios.
-          </p>
-
-          {drawDate && (
-            <div className="flex items-center gap-2 mb-5 text-sm hero-fade-up" style={{ animationDelay: '0.7s' }}>
-              <CalendarClock className="size-4 text-primary" />
-              <span className="text-text-primary font-semibold">
-                Sorteo en vivo — {drawDate}{drawTime ? ` a las ${drawTime}` : ''}
-              </span>
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 hero-fade-up" style={{ animationDelay: '0.85s' }}>
-            <Button variant="primary" size="lg" onClick={scrollToPricing}>
-              Participar Ahora
-              <ArrowRight className="size-4" />
-            </Button>
-            <a
-              href="https://www.facebook.com/profile.php?id=61572258592880"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-white/15 border border-white/25 rounded-full text-text-primary text-sm font-semibold backdrop-blur-sm hover:bg-white/25 transition-all duration-200 cursor-pointer group"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-              </span>
-              Ver sorteo en vivo
-            </a>
-          </div>
+      {/* Desktop: Text Overlay */}
+      <div className="hidden lg:flex absolute inset-0 z-30 pointer-events-none items-center px-8 lg:px-12 xl:px-16 2xl:px-20">
+        <div className="w-full max-w-[42%] lg:max-w-[45%] xl:max-w-[50%]">
+          <HeroContentOverlay />
         </div>
+      </div>
 
-        {/* Right: Live frame with 3D model (lazy loaded) */}
-        <div
-          className="relative z-10 flex-1 flex items-center justify-center px-4 pb-8 lg:px-4 xl:px-8 lg:py-16 hero-fade-up"
-          style={{ animationDelay: '1.0s' }}
-        >
-          <div className="w-full max-w-[700px]">
-            <LazyHeroModelViewer />
-            <p className="flex items-center justify-center gap-1.5 text-xs text-text-primary mt-3 opacity-60">
-              <Hand className="size-3.5" />
-              Arrastra para rotar · toca los <span className="font-semibold">números</span> para explorar specs
-            </p>
+      {/* Desktop: Floating Live Badges */}
+      <div className="hidden lg:block absolute inset-0 z-40 pointer-events-none">
+        <HeroLiveBadges />
+      </div>
+
+      {/* Mobile: Split layout */}
+      <div className="lg:hidden relative z-10 flex flex-col min-h-[85vh]">
+        {/* Text side */}
+        <div className="w-full flex items-center px-6 py-12 bg-linear-to-b from-[#0d0b1a] via-[#110d1a] to-[#1a0f2e]">
+          <HeroContentOverlay />
+        </div>
+        {/* 3D Canvas side */}
+        <div className="relative w-full h-[55vh]">
+          <LazyHeroModelViewer />
+          <div className="absolute inset-0 z-40 pointer-events-none">
+            <HeroLiveBadges />
           </div>
         </div>
       </div>

@@ -44,7 +44,7 @@ export class ApiError extends Error {
       return 'Has realizado demasiadas solicitudes. Por favor espera un momento e intenta de nuevo.'
     }
     if (this.status >= 500) {
-      return 'Hubo un problema con el servidor. Por favor intenta más tarde.'
+      return this.serverMessage() ?? 'Hubo un problema con el servidor. Por favor intenta más tarde.'
     }
 
     if (context === 'auth' || context === 'login') {

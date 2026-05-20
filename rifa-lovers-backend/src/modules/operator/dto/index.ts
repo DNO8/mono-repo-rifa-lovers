@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsBoolean, Min, MaxLength } from 'class-validator'
+import { IsString, IsNumber, IsOptional, IsBoolean, IsNotEmpty, Min, MaxLength } from 'class-validator'
 
 export class CreatePackDto {
   @IsString()
@@ -49,6 +49,7 @@ export class UpdatePackDto {
 
 export class CreateOrganizationDto {
   @IsString()
+  @IsNotEmpty()
   @MaxLength(200)
   name: string
 

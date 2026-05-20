@@ -9,6 +9,7 @@ var AllExceptionsFilter_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AllExceptionsFilter = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 let AllExceptionsFilter = AllExceptionsFilter_1 = class AllExceptionsFilter {
     constructor() {
         this.logger = new common_1.Logger(AllExceptionsFilter_1.name);
@@ -18,15 +19,32 @@ let AllExceptionsFilter = AllExceptionsFilter_1 = class AllExceptionsFilter {
         const response = ctx.getResponse();
         const request = ctx.getRequest();
         const isProduction = process.env.NODE_ENV === 'production';
-        const status = exception instanceof common_1.HttpException
-            ? exception.getStatus()
-            : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
-        const message = exception instanceof common_1.HttpException
-            ? exception.message
-            : 'Internal server error';
-        const error = exception instanceof common_1.HttpException
-            ? exception.name
-            : 'InternalServerError';
+        let status;
+        let message;
+        let error;
+        if (exception instanceof common_1.HttpException) {
+            status = exception.getStatus();
+            message = exception.message;
+            error = exception.name;
+        }
+        else if (exception instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+            if (exception.code === 'P2002') {
+                const fields = exception.meta?.target?.join(', ') || 'campo';
+                status = common_1.HttpStatus.CONFLICT;
+                message = `Ya existe un registro con ese ${fields}. Intenta con otro valor.`;
+                error = 'ConflictError';
+            }
+            else {
+                status = common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+                message = 'Error de base de datos. Intenta más tarde.';
+                error = 'DatabaseError';
+            }
+        }
+        else {
+            status = common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+            message = 'Internal server error';
+            error = 'InternalServerError';
+        }
         const errorResponse = {
             statusCode: status,
             message,

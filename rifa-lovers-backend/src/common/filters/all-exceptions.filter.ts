@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
+import { Prisma } from '@prisma/client'
 
 /**
  * Filtro de excepciones global
@@ -39,20 +40,32 @@ export class AllExceptionsFilter implements ExceptionFilter {
     
     const isProduction = process.env.NODE_ENV === 'production'
     
-    // Determinar status code
-    const status = exception instanceof HttpException
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR
+    // Determinar status code y mensaje
+    let status: number
+    let message: string
+    let error: string
 
-    // Mensaje seguro para el cliente
-    const message = exception instanceof HttpException
-      ? exception.message
-      : 'Internal server error'
-
-    // Nombre del error
-    const error = exception instanceof HttpException
-      ? exception.name
-      : 'InternalServerError'
+    if (exception instanceof HttpException) {
+      status = exception.getStatus()
+      message = exception.message
+      error = exception.name
+    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      // Handle Prisma unique constraint errors as 409 Conflict
+      if (exception.code === 'P2002') {
+        const fields = (exception.meta?.target as string[])?.join(', ') || 'campo'
+        status = HttpStatus.CONFLICT
+        message = `Ya existe un registro con ese ${fields}. Intenta con otro valor.`
+        error = 'ConflictError'
+      } else {
+        status = HttpStatus.INTERNAL_SERVER_ERROR
+        message = 'Error de base de datos. Intenta más tarde.'
+        error = 'DatabaseError'
+      }
+    } else {
+      status = HttpStatus.INTERNAL_SERVER_ERROR
+      message = 'Internal server error'
+      error = 'InternalServerError'
+    }
 
     // Construir respuesta
     const errorResponse: ErrorResponse = {

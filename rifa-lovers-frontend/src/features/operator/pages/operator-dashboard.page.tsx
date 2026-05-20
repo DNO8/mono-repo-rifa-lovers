@@ -42,6 +42,7 @@ import {
   Image,
   Eye,
 } from 'lucide-react'
+import Cropper, { type Area } from 'react-easy-crop'
 import { RaffleWizardModal } from '@/features/shared/components/raffle-wizard-modal'
 
 type Tab = 'overview' | 'raffles' | 'packs' | 'newsletter'
@@ -138,9 +139,9 @@ function PackFormModal({
 // ─── Helper: create cropped image blob ────────────────────────────────────────
 async function createImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const image = new Image()
+    const image = document.createElement('img')
     image.addEventListener('load', () => resolve(image))
-    image.addEventListener('error', (error) => reject(error))
+    image.addEventListener('error', (err: Event) => reject(err))
     image.src = url
   })
 }

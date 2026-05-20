@@ -118,8 +118,8 @@ function AnnotationDot({
   const Icon = hotspot.icon
   const dotRef = useRef<HTMLDivElement>(null)
 
-  // Base side: dots 3, 6, 7 always right; others use hotspot.side
-  const baseSide: 'left' | 'right' = index === 3 || index === 6 || index === 7 ? 'right' : hotspot.side
+  // Base side: dots 3, 5, 6, 7 always right; others use hotspot.side
+  const baseSide: 'left' | 'right' = index === 3 || index === 5 || index === 6 || index === 7 ? 'right' : hotspot.side
 
   // Ref callback: when panel mounts, adjust side based on viewport position and handle overflow
   const panelRefCallback = (node: HTMLDivElement | null) => {
@@ -128,11 +128,11 @@ function AnnotationDot({
       const container = node.closest('canvas')?.parentElement
       if (!container) return
 
-      // Determine final side: dots 6/7 always right; others flip right if dot is in left 70% of viewport
+      // Determine final side: dots 5/6/7 always right; others flip right if dot is in left 70% of viewport
       const dotRect = dotRef.current?.getBoundingClientRect()
       const threshold = window.innerWidth * 0.7
       let side = baseSide
-      if (index === 6 || index === 7) {
+      if (index === 5 || index === 6 || index === 7) {
         side = 'right'
       } else if (dotRect && dotRect.left < threshold) {
         side = 'right'

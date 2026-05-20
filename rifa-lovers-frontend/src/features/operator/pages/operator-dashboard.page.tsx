@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { ApiError } from '@/api/clients/http-client'
 import { hasDangerousHtml, sanitizeHtml } from '@/lib/html-sanitizer'
 import { toast } from 'react-toastify'
@@ -135,6 +135,136 @@ function PackFormModal({
   )
 }
 
+// ─── Helper: create cropped image blob ────────────────────────────────────────
+async function createImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.addEventListener('load', () => resolve(image))
+    image.addEventListener('error', (error) => reject(error))
+    image.src = url
+  })
+}
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+  const image = await createImage(imageSrc)
+  const canvas = document.createElement('canvas')
+  canvas.width = pixelCrop.width
+  canvas.height = pixelCrop.height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('No 2d context')
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  )
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob)
+      else reject(new Error('Canvas is empty'))
+    }, 'image/jpeg', 0.92)
+  })
+}
+
+// ─── Crop Cover Modal ─────────────────────────────────────────────────────────
+function CropCoverModal({
+  open,
+  image,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean
+  image: string
+  onClose: () => void
+  onConfirm: (file: File) => void
+}) {
+  const [localCrop, setLocalCrop] = useState({ x: 0, y: 0 })
+  const [localZoom, setLocalZoom] = useState(1)
+  const [localCroppedAreaPixels, setLocalCroppedAreaPixels] = useState<Area | null>(null)
+  const [localIsCropping, setLocalIsCropping] = useState(false)
+
+  const onCropComplete = useCallback((_: Area, croppedAreaPixels: Area) => {
+    setLocalCroppedAreaPixels(croppedAreaPixels)
+  }, [])
+
+  const handleConfirm = async () => {
+    if (!localCroppedAreaPixels) return
+    setLocalIsCropping(true)
+    try {
+      const blob = await getCroppedImg(image, localCroppedAreaPixels)
+      const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' })
+      onConfirm(file)
+    } catch {
+      toast.error('Error al recortar la imagen')
+    } finally {
+      setLocalIsCropping(false)
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-surface-primary rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+        <div className="p-4 border-b border-border-light flex items-center justify-between">
+          <h3 className="text-lg font-bold text-text-primary">Ajustar portada</h3>
+          <button
+            onClick={onClose}
+            className="size-8 rounded-full flex items-center justify-center hover:bg-surface-secondary transition-colors"
+          >
+            <X className="size-4 text-text-secondary" />
+          </button>
+        </div>
+
+        <div className="p-4">
+          <p className="text-sm text-text-secondary mb-3">
+            Arrastra y usa el zoom para ajustar la imagen. Recomendado 16:9.
+          </p>
+          <div className="relative w-full h-[300px] sm:h-[380px] bg-black rounded-xl overflow-hidden">
+            <Cropper
+              image={image}
+              crop={localCrop}
+              zoom={localZoom}
+              aspect={16 / 9}
+              onCropChange={setLocalCrop}
+              onZoomChange={setLocalZoom}
+              onCropComplete={onCropComplete}
+              showGrid
+            />
+          </div>
+
+          <div className="mt-4 flex items-center gap-3">
+            <span className="text-xs text-text-tertiary">Zoom</span>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={localZoom}
+              onChange={(e) => setLocalZoom(Number(e.target.value))}
+              className="flex-1 accent-primary"
+            />
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-border-light flex justify-end gap-3">
+          <Button variant="outline" onClick={onClose} disabled={localIsCropping}>
+            Cancelar
+          </Button>
+          <Button onClick={handleConfirm} disabled={localIsCropping}>
+            {localIsCropping ? 'Procesando...' : 'Confirmar'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Cover Upload Modal ───────────────────────────────────────────────────────
 
 function CoverUploadModal({
@@ -236,6 +366,8 @@ export default function OperatorDashboardPage() {
   const [packModal, setPackModal] = useState<'create' | PackWithStats | null>(null)
   const [showRaffleModal, setShowRaffleModal] = useState(false)
   const [coverModalRaffleId, setCoverModalRaffleId] = useState<string | null>(null)
+  const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [cropImage, setCropImage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [deletePackTarget, setDeletePackTarget] = useState<PackWithStats | null>(null)
 
@@ -748,18 +880,14 @@ export default function OperatorDashboardPage() {
         type="file"
         accept="image/jpeg,image/png,image/webp"
         className="hidden"
-        onChange={async (e) => {
+        onChange={(e) => {
           const file = e.target.files?.[0]
           if (!file || !coverModalRaffleId) return
-          try {
-            await uploadCover(coverModalRaffleId, file)
-            toast.success('Portada actualizada')
-            refreshRaffles()
-          } catch {
-            toast.error('Error al subir la portada')
-          }
-          e.target.value = ''
+          const imageUrl = URL.createObjectURL(file)
+          setCropImage(imageUrl)
+          setCropModalOpen(true)
           setCoverModalRaffleId(null)
+          e.target.value = ''
         }}
         disabled={isUploadingCover}
       />
@@ -769,6 +897,27 @@ export default function OperatorDashboardPage() {
         open={!!coverModalRaffleId}
         onClose={() => setCoverModalRaffleId(null)}
         onSelectFile={() => fileInputRef.current?.click()}
+      />
+
+      {/* Crop cover modal */}
+      <CropCoverModal
+        open={cropModalOpen}
+        image={cropImage ?? ''}
+        onClose={() => {
+          setCropModalOpen(false)
+          setCropImage(null)
+        }}
+        onConfirm={async (file) => {
+          if (!coverModalRaffleId) return
+          try {
+            await uploadCover(coverModalRaffleId, file)
+            toast.success('Portada actualizada exitosamente')
+          } catch {
+            toast.error('Error al subir la portada')
+          }
+          setCropModalOpen(false)
+          setCropImage(null)
+        }}
       />
 
       {/* Delete pack confirmation modal */}

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { ApiError } from '@/api/clients/http-client'
+import { hasDangerousHtml, sanitizeHtml } from '@/lib/html-sanitizer'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router'
 import { useAuthStore } from '@/stores/auth.store'
@@ -39,6 +40,7 @@ import {
   Upload,
   X,
   Image,
+  Eye,
 } from 'lucide-react'
 import { RaffleWizardModal } from '@/features/shared/components/raffle-wizard-modal'
 
@@ -255,6 +257,7 @@ export default function OperatorDashboardPage() {
   const [newsletterSubject, setNewsletterSubject] = useState('')
   const [newsletterBody, setNewsletterBody] = useState('')
   const [sendingNewsletter, setSendingNewsletter] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   const handleLogout = () => { logout(); navigate('/') }
 
@@ -278,9 +281,13 @@ export default function OperatorDashboardPage() {
 
   const handleSendNewsletter = async () => {
     if (!newsletterSubject.trim() || !newsletterBody.trim()) return
+    if (hasDangerousHtml(newsletterBody)) {
+      toast.error('El mensaje contiene código no permitido (scripts, iframes, etc.). Revisa el contenido.')
+      return
+    }
     setSendingNewsletter(true)
     try {
-      const result = await sendCampaign({ subject: newsletterSubject.trim(), body: newsletterBody.trim() })
+      const result = await sendCampaign({ subject: newsletterSubject.trim(), body: sanitizeHtml(newsletterBody.trim()) })
       toast.success(result.message)
       setNewsletterSubject('')
       setNewsletterBody('')
@@ -645,18 +652,54 @@ export default function OperatorDashboardPage() {
                     placeholder="Escribe el contenido del correo..."
                   />
                 </div>
-                <Button
-                  variant="primary"
-                  onClick={handleSendNewsletter}
-                  loading={sendingNewsletter}
-                  disabled={!newsletterSubject.trim() || !newsletterBody.trim()}
-                  className="w-full sm:w-auto"
-                >
-                  <Send className="w-4 h-4 mr-1.5" />
-                  Enviar Campana
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowPreview(true)}
+                    disabled={!newsletterSubject.trim() || !newsletterBody.trim()}
+                    className="w-full sm:w-auto"
+                  >
+                    <Eye className="w-4 h-4 mr-1.5" />
+                    Vista previa
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleSendNewsletter}
+                    loading={sendingNewsletter}
+                    disabled={!newsletterSubject.trim() || !newsletterBody.trim()}
+                    className="w-full sm:w-auto"
+                  >
+                    <Send className="w-4 h-4 mr-1.5" />
+                    Enviar Campana
+                  </Button>
+                </div>
               </CardContent>
             </Card>
+
+            {showPreview && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Vista previa del correo</span>
+                    <button
+                      className="p-1 rounded hover:bg-gray-100 text-gray-500"
+                      onClick={() => setShowPreview(false)}
+                      title="Cerrar vista previa"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <iframe
+                    title="Vista previa newsletter"
+                    srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;padding:16px;color:#333}</style></head><body>${sanitizeHtml(newsletterBody)}</body></html>`}
+                    className="w-full h-96 border rounded-lg bg-white"
+                    sandbox=""
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>

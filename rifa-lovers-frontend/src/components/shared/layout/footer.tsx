@@ -84,7 +84,7 @@ export function Footer() {
               <span className="text-base gradient-text leading-none" style={{ fontFamily: "'Montserrat Variable', 'Montserrat', sans-serif" }}><span className="font-bold">Rifa</span><span className="font-semibold">Lovers</span></span>
             </Link>
             <p className="text-xs text-text-secondary max-w-[220px]" style={{ fontFamily: "'Montserrat Variable', 'Montserrat', sans-serif", fontWeight: 400 }}>
-              Experiencias reales. Comunidad real. Transparencia real.Transparencia real.
+              Experiencias reales. Comunidad real. Transparencia real.
             </p>
           </div>
 

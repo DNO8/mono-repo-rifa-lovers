@@ -476,9 +476,14 @@ export class OperatorService {
     await this.assertOrganization(userId)
     const existing = await this.prisma.pack.findUnique({
       where: { id: packId },
-      include: { raffle: true },
+      include: { raffle: true, userPacks: true },
     })
     if (!existing || !existing.raffle) throw new NotFoundException('Pack no encontrado')
+
+    const hasPurchases = existing.userPacks.some(up => up.purchaseId !== null)
+    if (hasPurchases) {
+      throw new BadRequestException('No se puede eliminar un pack que tiene compras asociadas.')
+    }
 
     await this.prisma.pack.delete({ where: { id: packId } })
   }

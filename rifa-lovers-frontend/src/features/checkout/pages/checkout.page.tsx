@@ -19,6 +19,7 @@ import { ReservationTimer } from '../components/reservation-timer'
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
   const packIdParam = searchParams.get('packId') || ''
+  const ticketsParam = searchParams.get('tickets')
   const bonusTickets = 0
 
   const { raffle, isLoading: raffleLoading } = useActiveRaffle()
@@ -31,7 +32,14 @@ export default function CheckoutPage() {
 
   const isLoading = raffleLoading || packsLoading
 
-  const selectedPack = packs.find((p) => p.id === packIdParam) ?? packs[0]
+  const requestedTickets = ticketsParam ? parseInt(ticketsParam, 10) : null
+
+  const selectedPack =
+    packs.find((p) => p.id === packIdParam) ??
+    (requestedTickets != null
+      ? packs.find((p) => p.luckyPassQuantity === requestedTickets)
+      : undefined) ??
+    packs[0]
 
   const raffleTitle = raffle?.title ?? 'Premio por confirmar'
   const maxTicketNumber = raffle?.maxTicketNumber ?? 30000

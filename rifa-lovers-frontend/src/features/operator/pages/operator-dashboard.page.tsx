@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router'
 import { useAuthStore } from '@/stores/auth.store'
@@ -35,6 +35,9 @@ import {
   AlertTriangle,
   Sparkles,
   Rocket,
+  Upload,
+  X,
+  Image,
 } from 'lucide-react'
 import { RaffleWizardModal } from '@/features/shared/components/raffle-wizard-modal'
 
@@ -129,6 +132,97 @@ function PackFormModal({
   )
 }
 
+// ─── Cover Upload Modal ───────────────────────────────────────────────────────
+
+function CoverUploadModal({
+  open,
+  onClose,
+  onSelectFile,
+}: {
+  open: boolean
+  onClose: () => void
+  onSelectFile: () => void
+}) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-text-primary">Subir portada</h3>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-gray-100 text-text-secondary"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex items-start gap-3 bg-primary/5 border border-primary/10 rounded-xl p-4 mb-5">
+          <Image className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-text-primary">Recomendación de imagen</p>
+            <p className="text-xs text-text-secondary mt-1">
+              Resolución óptima: <span className="font-medium text-text-primary">1200 × 630 píxeles</span> (ratio 1.91:1)
+            </p>
+            <p className="text-xs text-text-secondary mt-0.5">
+              Formatos: JPG, PNG o WebP. Tamaño máximo: 2 MB.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Button variant="secondary" className="flex-1" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button variant="primary" className="flex-1" onClick={onSelectFile}>
+            <Upload className="w-4 h-4 mr-1.5" />
+            Seleccionar archivo
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Delete Confirm Modal ─────────────────────────────────────────────────────
+
+function DeleteConfirmModal({
+  open,
+  title,
+  description,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean
+  title: string
+  description: string
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-red-100 rounded-full">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-text-primary">{title}</h3>
+        </div>
+        <p className="text-sm text-text-secondary mb-6">{description}</p>
+        <div className="flex gap-3">
+          <Button variant="secondary" className="flex-1" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" className="flex-1" onClick={onConfirm}>
+            Eliminar
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function OperatorDashboardPage() {
@@ -138,6 +232,9 @@ export default function OperatorDashboardPage() {
   const [selectedRaffleId, setSelectedRaffleId] = useState<string | null>(null)
   const [packModal, setPackModal] = useState<'create' | PackWithStats | null>(null)
   const [showRaffleModal, setShowRaffleModal] = useState(false)
+  const [coverModalRaffleId, setCoverModalRaffleId] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [deletePackTarget, setDeletePackTarget] = useState<PackWithStats | null>(null)
 
   // Org creation form state
   const [orgName, setOrgName] = useState('')
@@ -353,29 +450,13 @@ export default function OperatorDashboardPage() {
                         <td className="py-3 px-4">${raffle.totalRevenue.toLocaleString('es-CL')}</td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            <label
-                              className="p-1.5 rounded hover:bg-purple-50 text-purple-500 cursor-pointer"
+                            <button
+                              className="p-1.5 rounded hover:bg-purple-50 text-purple-500"
                               title="Subir portada"
+                              onClick={() => setCoverModalRaffleId(raffle.id)}
                             >
                               <ImagePlus className="w-4 h-4" />
-                              <input
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                className="hidden"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0]
-                                  if (!file) return
-                                  try {
-                                    await uploadCover(raffle.id, file)
-                                    toast.success('Portada actualizada')
-                                  } catch {
-                                    toast.error('Error al subir la portada')
-                                  }
-                                  e.target.value = ''
-                                }}
-                                disabled={isUploadingCover}
-                              />
-                            </label>
+                            </button>
                             <button
                               className="p-1.5 rounded hover:bg-blue-50 text-blue-500"
                               title="Copiar link"
@@ -427,20 +508,23 @@ export default function OperatorDashboardPage() {
         {/* ── Packs ── */}
         {activeTab === 'packs' && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              {selectedRaffleId ? (
-                <>
-                  <span className="text-sm text-gray-500">
-                    Rifa: {raffles.find(r => r.id === selectedRaffleId)?.title || 'Seleccionada'}
-                  </span>
-                  <Button variant="secondary" size="sm" onClick={() => setSelectedRaffleId(null)}>
-                    Cambiar rifa
-                  </Button>
-                </>
-              ) : (
-                <span className="text-sm text-gray-500">Selecciona una rifa en la pestana Rifas para ver sus packs</span>
-              )}
-            </div>
+            <Card>
+              <CardContent className="p-4">
+                <label className="block text-sm font-medium text-text-primary mb-2">Selecciona una rifa</label>
+                <select
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  value={selectedRaffleId ?? ''}
+                  onChange={(e) => setSelectedRaffleId(e.target.value || null)}
+                >
+                  <option value="">-- Elige una rifa --</option>
+                  {raffles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.title || 'Sin título'}
+                    </option>
+                  ))}
+                </select>
+              </CardContent>
+            </Card>
 
             {selectedRaffleId && (
               <Card>
@@ -482,12 +566,7 @@ export default function OperatorDashboardPage() {
                                 <button
                                   className="p-1.5 rounded hover:bg-red-50 text-red-500"
                                   title="Eliminar"
-                                  onClick={async () => {
-                                    if (confirm('Eliminar este pack?')) {
-                                      try { await deletePack(pack.id); toast.success('Pack eliminado') }
-                                      catch { toast.error('Error al eliminar') }
-                                    }
-                                  }}
+                                  onClick={() => setDeletePackTarget(pack)}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -613,6 +692,54 @@ export default function OperatorDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Hidden file input triggered by cover modal */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          if (!file || !coverModalRaffleId) return
+          try {
+            await uploadCover(coverModalRaffleId, file)
+            toast.success('Portada actualizada')
+            refreshRaffles()
+          } catch {
+            toast.error('Error al subir la portada')
+          }
+          e.target.value = ''
+          setCoverModalRaffleId(null)
+        }}
+        disabled={isUploadingCover}
+      />
+
+      {/* Cover upload modal */}
+      <CoverUploadModal
+        open={!!coverModalRaffleId}
+        onClose={() => setCoverModalRaffleId(null)}
+        onSelectFile={() => fileInputRef.current?.click()}
+      />
+
+      {/* Delete pack confirmation modal */}
+      <DeleteConfirmModal
+        open={!!deletePackTarget}
+        title="Eliminar pack"
+        description={`¿Estás seguro de que deseas eliminar "${deletePackTarget?.name ?? 'este pack'}"? Esta acción no se puede deshacer.`}
+        onClose={() => setDeletePackTarget(null)}
+        onConfirm={async () => {
+          if (!deletePackTarget) return
+          try {
+            await deletePack(deletePackTarget.id)
+            toast.success('Pack eliminado correctamente')
+          } catch {
+            toast.error('Error al eliminar el pack')
+          } finally {
+            setDeletePackTarget(null)
+          }
+        }}
+      />
     </>
   )
 }

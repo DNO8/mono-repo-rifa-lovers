@@ -28,11 +28,14 @@ export function OrderSummary({ raffleName, ticketCount, bonusTickets, unitPrice,
             <span className="font-medium text-success">+{bonusTickets} gratis 🎁</span>
           </div>
         )}
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between text-sm mb-4">
           <span className="text-text-secondary">Precio por LuckyPass</span>
-          <span className="font-medium text-text-primary">
-            ${unitPrice.toLocaleString('es-CL')}
-          </span>
+          <div className="text-right">
+            <span className="block text-xs text-gray-400 line-through">
+              ${Math.round(unitPrice * 1.25).toLocaleString('es-CL')} CLP
+            </span>
+            <span className="font-semibold">${unitPrice.toLocaleString('es-CL')} CLP</span>
+          </div>
         </div>
       </div>
 

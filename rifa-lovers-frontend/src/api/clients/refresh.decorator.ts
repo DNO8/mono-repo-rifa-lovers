@@ -92,7 +92,7 @@ export class RefreshDecorator implements HttpClient {
     try {
       return await fn()
     } catch (error) {
-      if (!(error instanceof ApiError) || error.status !== 401) {
+      if (!(error instanceof ApiError) || (error.status !== 401 && error.status !== 403)) {
         throw error
       }
 
@@ -104,8 +104,12 @@ export class RefreshDecorator implements HttpClient {
       const newToken = await this.tryRefresh()
       if (!newToken) {
         this.store.logout()
-        // Redirect to login after logout
-        window.location.href = '/login'
+        // Also clear Zustand store state to trigger reactive logout across the app
+        import('@/stores/auth.store').then(({ useAuthStore }) => {
+          useAuthStore.getState().logout()
+        }).catch(() => { /* silent */ })
+        // Redirect to login without keeping current page in history
+        window.location.replace('/login')
         throw error
       }
 

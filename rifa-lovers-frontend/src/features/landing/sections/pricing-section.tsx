@@ -74,10 +74,16 @@ export function PricingSection() {
                   <p className="text-sm text-text-secondary">{tier.tagline}</p>
                 </div>
 
-                <div className="text-center mb-6">
-                  <span className="text-4xl md:text-5xl font-extrabold text-text-primary">
-                    ${tier.price.toLocaleString('es-CL')}
+                <div className="flex flex-col mt-auto">
+                  <span className="text-sm text-gray-400 line-through">
+                    ${Math.round(tier.price * 1.25).toLocaleString('es-CL')}
                   </span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl md:text-5xl font-extrabold text-text-primary">
+                      ${tier.price.toLocaleString('es-CL')}
+                    </span>
+                    <span className="text-sm text-text-tertiary">CLP</span>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-center gap-2 mb-6">

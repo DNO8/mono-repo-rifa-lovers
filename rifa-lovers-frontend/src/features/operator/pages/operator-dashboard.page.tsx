@@ -560,7 +560,12 @@ export default function OperatorDashboardPage() {
                         {packs.map((pack) => (
                           <tr key={pack.id} className="border-b hover:bg-gray-50">
                             <td className="py-3 px-4">{pack.name || 'Sin nombre'}</td>
-                            <td className="py-3 px-4">${pack.price.toLocaleString('es-CL')}</td>
+                            <td className="py-3 px-4">
+                              <span className="block text-xs text-gray-400 line-through">
+                                ${Math.round(pack.price * 1.25).toLocaleString('es-CL')}
+                              </span>
+                              ${pack.price.toLocaleString('es-CL')}
+                            </td>
                             <td className="py-3 px-4">{pack.luckyPassQuantity}</td>
                             <td className="py-3 px-4">
                               <div className="flex gap-2">

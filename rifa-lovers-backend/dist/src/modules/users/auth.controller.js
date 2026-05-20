@@ -86,17 +86,28 @@ let AuthController = AuthController_1 = class AuthController {
         if (!token || !email || !password) {
             return { success: false, message: 'Token, email y contraseña son requeridos.' };
         }
-        const { data: verifyData, error: verifyError } = await this.supabaseService.verifyOTP(email, token, 'recovery');
-        if (verifyError || !verifyData.user) {
-            this.logger.warn(`Invalid or expired recovery token for password reset: ${email}`);
-            return { success: false, message: 'Token inválido o expirado.' };
+        let userId;
+        const { data: userData, error: userError } = await this.supabaseService.getUser(token);
+        if (userData?.user) {
+            userId = userData.user.id;
         }
-        const { error: updateError } = await this.supabaseService.updateUser(verifyData.user.id, { password });
+        else if (userError) {
+            this.logger.debug(`getUser failed for JWT token, falling back to OTP: ${userError.message}`);
+        }
+        if (!userId) {
+            const { data: verifyData, error: verifyError } = await this.supabaseService.verifyOTP(email, token, 'recovery');
+            if (verifyError || !verifyData?.user) {
+                this.logger.warn(`Invalid or expired recovery token for password reset: ${email}`);
+                return { success: false, message: 'Token inválido o expirado.' };
+            }
+            userId = verifyData.user.id;
+        }
+        const { error: updateError } = await this.supabaseService.updateUser(userId, { password });
         if (updateError) {
-            this.logger.error(`Failed to update password for user ${verifyData.user.id}: ${updateError.message}`);
+            this.logger.error(`Failed to update password for user ${userId}: ${updateError.message}`);
             return { success: false, message: 'Error al actualizar la contraseña. Intenta de nuevo.' };
         }
-        this.logger.log(`Password successfully updated for user: ${verifyData.user.id}`);
+        this.logger.log(`Password successfully updated for user: ${userId}`);
         return { success: true, message: 'Contraseña actualizada exitosamente.' };
     }
 };

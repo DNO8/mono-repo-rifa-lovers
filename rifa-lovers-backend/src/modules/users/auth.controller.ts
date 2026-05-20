@@ -142,27 +142,40 @@ export class AuthController {
       return { success: false, message: 'Token, email y contraseña son requeridos.' }
     }
 
-    // Verify the recovery OTP token (this is NOT an access token)
-    const { data: verifyData, error: verifyError } = await this.supabaseService.verifyOTP(
-      email,
-      token,
-      'recovery',
-    )
+    // The token from Supabase recovery link is a JWT access token (not an OTP).
+    // Validate it with getUser() to extract the user, then update password.
+    let userId: string | undefined
 
-    if (verifyError || !verifyData.user) {
-      this.logger.warn(`Invalid or expired recovery token for password reset: ${email}`)
-      return { success: false, message: 'Token inválido o expirado.' }
+    const { data: userData, error: userError } = await this.supabaseService.getUser(token)
+    if (userData?.user) {
+      userId = userData.user.id
+    } else if (userError) {
+      this.logger.debug(`getUser failed for JWT token, falling back to OTP: ${userError.message}`)
+    }
+
+    // Fallback: if getUser didn't work, try OTP verification (legacy flow)
+    if (!userId) {
+      const { data: verifyData, error: verifyError } = await this.supabaseService.verifyOTP(
+        email,
+        token,
+        'recovery',
+      )
+      if (verifyError || !verifyData?.user) {
+        this.logger.warn(`Invalid or expired recovery token for password reset: ${email}`)
+        return { success: false, message: 'Token inválido o expirado.' }
+      }
+      userId = verifyData.user.id
     }
 
     // Update the password using admin client
-    const { error: updateError } = await this.supabaseService.updateUser(verifyData.user.id, { password })
+    const { error: updateError } = await this.supabaseService.updateUser(userId, { password })
 
     if (updateError) {
-      this.logger.error(`Failed to update password for user ${verifyData.user.id}: ${updateError.message}`)
+      this.logger.error(`Failed to update password for user ${userId}: ${updateError.message}`)
       return { success: false, message: 'Error al actualizar la contraseña. Intenta de nuevo.' }
     }
 
-    this.logger.log(`Password successfully updated for user: ${verifyData.user.id}`)
+    this.logger.log(`Password successfully updated for user: ${userId}`)
     return { success: true, message: 'Contraseña actualizada exitosamente.' }
   }
 }

@@ -32,23 +32,37 @@ export function useAsyncData<T>(
   const [error, setError] = useState<string | null>(null)
 
   const fetcherRef = useRef(fetcher)
+  const isMountedRef = useRef(true)
 
   // Keep ref in sync with latest fetcher without triggering re-renders
   useEffect(() => {
     fetcherRef.current = fetcher
   })
 
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   const run = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) setIsLoading(true)
     setError(null)
     try {
       const result = await fetcherRef.current()
-      setData(result)
-      if (cacheKey) setCacheItem(cacheKey, result, cacheTtlMs)
+      if (isMountedRef.current) {
+        setData(result)
+        if (cacheKey) setCacheItem(cacheKey, result, cacheTtlMs)
+      }
     } catch (err: unknown) {
-      setError(getErrorMessage(err))
+      if (isMountedRef.current) {
+        setError(getErrorMessage(err))
+      }
     } finally {
-      if (!options?.silent) setIsLoading(false)
+      if (isMountedRef.current && !options?.silent) {
+        setIsLoading(false)
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps, react-compiler/react-compiler
   }, deps)

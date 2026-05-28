@@ -50,7 +50,7 @@ __decorate([
 ], RegisterDto.prototype, "lastName", void 0);
 __decorate([
     (0, class_validator_1.IsString)({ message: 'La dirección debe ser un string' }),
-    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'La dirección es requerida' }),
     (0, class_validator_1.MinLength)(10, { message: 'La dirección debe tener al menos 10 caracteres' }),
     (0, class_validator_1.MaxLength)(200, { message: 'La dirección no puede exceder 200 caracteres' }),
     __metadata("design:type", String)

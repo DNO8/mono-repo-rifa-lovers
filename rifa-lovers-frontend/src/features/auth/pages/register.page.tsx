@@ -28,6 +28,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (isLoading) return
     clearError()
 
     if (password !== confirmPassword) {
@@ -45,7 +46,12 @@ export default function RegisterPage() {
       return
     }
 
-    if (address && address.length < 10) {
+    if (!address || address.trim().length === 0) {
+      toast.error('La dirección es requerida')
+      return
+    }
+
+    if (address.trim().length < 10) {
       toast.error('La dirección debe tener al menos 10 caracteres')
       return
     }
@@ -61,7 +67,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(name, lastName, phone, email, password, address || undefined, recaptchaToken, acceptTerms)
+      await register(name, lastName, phone, email, password, address.trim(), recaptchaToken, acceptTerms)
 
       // Auto-subscribe to newsletter if opted in
       if (subscribeNewsletter) {
@@ -169,6 +175,7 @@ export default function RegisterPage() {
             <input
               id="register-address"
               type="text"
+              required
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Ej: Av. Las Condes 1234, Depto 501, Las Condes"

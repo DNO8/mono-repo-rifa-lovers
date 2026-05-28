@@ -31,10 +31,10 @@ export class RegisterDto {
   lastName: string;
 
   @IsString({ message: 'La dirección debe ser un string' })
-  @IsOptional()
+  @IsNotEmpty({ message: 'La dirección es requerida' })
   @MinLength(10, { message: 'La dirección debe tener al menos 10 caracteres' })
   @MaxLength(200, { message: 'La dirección no puede exceder 200 caracteres' })
-  address?: string;
+  address: string;
 
   @IsString({ message: 'El token reCAPTCHA debe ser un string' })
   @IsNotEmpty({ message: 'El token reCAPTCHA es requerido' })

@@ -43,13 +43,25 @@ export function SelectedRaffleProvider({ children }: { children: ReactNode }) {
     data: packs,
     isLoading: packsLoading,
     error: packsError,
-  } = useAsyncData(packsFetcher, [] as Pack[], [effectiveRaffleId])
+  } = useAsyncData(
+    packsFetcher,
+    [] as Pack[],
+    [effectiveRaffleId],
+    effectiveRaffleId ? `raffle-packs:${effectiveRaffleId}` : undefined,
+    5 * 60 * 1000,
+  )
 
   const {
     data: progress,
     isLoading: progressLoading,
     error: progressError,
-  } = useAsyncData(progressFetcher, null as RaffleProgress | null, [effectiveRaffleId])
+  } = useAsyncData(
+    progressFetcher,
+    null as RaffleProgress | null,
+    [effectiveRaffleId],
+    effectiveRaffleId ? `raffle-progress:${effectiveRaffleId}` : undefined,
+    60 * 1000,
+  )
 
   const isLoading = rafflesLoading || packsLoading || progressLoading
   const error = packsError || progressError

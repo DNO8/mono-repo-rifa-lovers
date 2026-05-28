@@ -17,6 +17,9 @@ export function useActiveRaffle() {
   const { data, isLoading, error, refresh } = useAsyncData<ActiveRaffleData>(
     fetchActiveRaffle,
     { raffle: null, progress: null },
+    [],
+    'active-raffle',
+    2 * 60 * 1000,
   )
   return { raffle: data.raffle, progress: data.progress, isLoading, error, refresh }
 }
@@ -26,6 +29,9 @@ export function usePublicRaffles() {
   const { data, isLoading, error, refresh } = useAsyncData<Raffle[]>(
     getPublicRaffles,
     [],
+    [],
+    'public-raffles',
+    5 * 60 * 1000,
   )
   return { raffles: data, isLoading, error, refresh }
 }

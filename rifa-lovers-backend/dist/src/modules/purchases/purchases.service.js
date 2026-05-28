@@ -134,6 +134,19 @@ let PurchasesService = class PurchasesService {
         return (0, purchase_mapper_1.mapPurchaseToDto)(purchase);
     }
     async updateStatus(id, status) {
+        const current = await this.purchasesRepository.findUnique({ id });
+        if (!current) {
+            throw new common_1.NotFoundException('Compra no encontrada');
+        }
+        if (current.status === status) {
+            return (0, purchase_mapper_1.mapPurchaseToDto)(current);
+        }
+        if (current.status === 'paid' && status !== 'refunded') {
+            throw new common_1.ConflictException('La compra ya fue pagada y no puede cambiar de estado');
+        }
+        if (current.status === 'failed' && status !== 'failed') {
+            throw new common_1.ConflictException('La compra ya fue marcada como fallida');
+        }
         const purchase = await this.purchasesRepository.updateStatus(id, status, status === 'paid' ? new Date() : undefined);
         const purchaseWithRaffle = await this.purchasesRepository.findUnique({ id: purchase.id }, { raffle: true });
         if (!purchaseWithRaffle) {
@@ -146,13 +159,20 @@ let PurchasesService = class PurchasesService {
         if (!existing) {
             throw new common_1.NotFoundException(`Compra ${purchaseId} no encontrada`);
         }
-        if (existing.status === 'paid') {
-            return (0, purchase_mapper_1.mapPurchaseToDto)(existing);
-        }
-        if (existing.status === 'failed') {
-            throw new common_1.BadRequestException('Esta compra ya fue invalidada. Crea una nueva compra para participar.');
-        }
         await this.prisma.$transaction(async (tx) => {
+            const purchase = await tx.purchase.findUnique({
+                where: { id: purchaseId },
+                include: { raffle: true, userPacks: true },
+            });
+            if (!purchase) {
+                throw new common_1.NotFoundException(`Compra ${purchaseId} no encontrada`);
+            }
+            if (purchase.status === 'paid') {
+                return;
+            }
+            if (purchase.status === 'failed') {
+                throw new common_1.BadRequestException('Esta compra ya fue invalidada. Crea una nueva compra para participar.');
+            }
             await tx.purchase.update({
                 where: { id: purchaseId },
                 data: { status: 'paid', paidAt: new Date() },
@@ -169,7 +189,7 @@ let PurchasesService = class PurchasesService {
                 where: { purchaseId },
                 include: { pack: true },
             });
-            const raffleId = existing.raffleId;
+            const raffleId = purchase.raffleId;
             if (!raffleId) {
                 throw new common_1.BadRequestException('La compra no tiene rifa asociada');
             }
@@ -210,7 +230,7 @@ let PurchasesService = class PurchasesService {
                     }
                     luckyPassData.push({
                         raffleId,
-                        userId: existing.userId,
+                        userId: purchase.userId,
                         userPackId: userPack.id,
                         ticketNumber,
                         status: 'active',

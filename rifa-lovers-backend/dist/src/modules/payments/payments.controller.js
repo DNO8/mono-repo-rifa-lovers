@@ -157,20 +157,25 @@ let PaymentsController = class PaymentsController {
                 await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
             }
         }
+        const currentPurchase = await this.purchasesService.findById(purchase.id);
         if (finalStatus === 2) {
-            try {
-                await this.purchasesService.confirmPayment(purchase.id, {
-                    providerTransactionId: String(flowOrderId),
-                    provider: 'flow',
-                    status: 'paid',
-                });
-            }
-            catch (err) {
-                const msg = err instanceof Error ? err.message : String(err);
+            if (currentPurchase.status !== 'paid') {
+                try {
+                    await this.purchasesService.confirmPayment(purchase.id, {
+                        providerTransactionId: String(flowOrderId),
+                        provider: 'flow',
+                        status: 'paid',
+                    });
+                }
+                catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                }
             }
         }
         if (finalStatus === 3 || finalStatus === 4) {
-            await this.purchasesService.updateStatus(purchase.id, 'failed');
+            if (currentPurchase.status === 'pending') {
+                await this.purchasesService.updateStatus(purchase.id, 'failed');
+            }
         }
         const updatedPurchase = await this.purchasesService.findById(purchase.id);
         return {

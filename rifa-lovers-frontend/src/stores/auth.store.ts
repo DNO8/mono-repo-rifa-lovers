@@ -23,7 +23,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
     user: null,
     token: null,
     refreshToken: null,
@@ -32,6 +32,8 @@ export const useAuthStore = create<AuthState>()(
     error: null,
 
     login: async (email: string, password: string) => {
+      const { isLoading } = get()
+      if (isLoading) return
       set({ isLoading: true, error: null })
       try {
         const data = await apiClient.post<AuthResponse>(ENDPOINTS.auth.login, { email, password })
@@ -45,6 +47,8 @@ export const useAuthStore = create<AuthState>()(
     },
 
     register: async (name: string, lastName: string, phone: string, email: string, password: string, address?: string, recaptchaToken?: string, acceptTerms?: boolean) => {
+      const { isLoading } = get()
+      if (isLoading) return
       set({ isLoading: true, error: null })
       try {
         await apiClient.post<AuthResponse>(ENDPOINTS.auth.register, { firstName: name, lastName, phone, email, password, address, recaptchaToken, acceptTerms })
@@ -68,6 +72,8 @@ export const useAuthStore = create<AuthState>()(
     clearError: () => set({ error: null }),
 
     refreshUser: async () => {
+      const { isLoading } = get()
+      if (isLoading) return
       try {
         const user = await apiClient.get<User>(ENDPOINTS.users.me)
         set({ user })

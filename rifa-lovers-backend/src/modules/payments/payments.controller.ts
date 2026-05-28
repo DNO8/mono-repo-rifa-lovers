@@ -240,22 +240,29 @@ export class PaymentsController {
       }
     }
 
+    // Re-fetch current purchase state to avoid race conditions
+    const currentPurchase = await this.purchasesService.findById(purchase.id)
+
     // Si Flow indica que el pago fue exitoso, confirmar la compra
     if (finalStatus === 2) {
-      try {
-        await this.purchasesService.confirmPayment(purchase.id, {
-          providerTransactionId: String(flowOrderId),
-          provider: 'flow',
-          status: 'paid',
-        })
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
+      if (currentPurchase.status !== 'paid') {
+        try {
+          await this.purchasesService.confirmPayment(purchase.id, {
+            providerTransactionId: String(flowOrderId),
+            provider: 'flow',
+            status: 'paid',
+          })
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+        }
       }
     }
 
     // Si Flow indica que el pago fue rechazado o anulado, actualizar el estado de la compra
     if (finalStatus === 3 || finalStatus === 4) {
-      await this.purchasesService.updateStatus(purchase.id, 'failed')
+      if (currentPurchase.status === 'pending') {
+        await this.purchasesService.updateStatus(purchase.id, 'failed')
+      }
     }
 
     // Re-fetch purchase to return the latest status

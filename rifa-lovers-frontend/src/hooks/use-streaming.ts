@@ -39,12 +39,18 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
     error: null,
   })
 
+  const isMountedRef = useRef(true)
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => { isMountedRef.current = false }
+  }, [])
+
   const setLoading = (key: keyof Pick<StreamingState, 'isLoadingRaffle' | 'isLoadingParticipants' | 'isLoadingDrawStatus'>, value: boolean) => {
-    setState(prev => ({ ...prev, [key]: value }))
+    if (isMountedRef.current) setState(prev => ({ ...prev, [key]: value }))
   }
 
   const setError = (error: string | null) => {
-    setState(prev => ({ ...prev, error }))
+    if (isMountedRef.current) setState(prev => ({ ...prev, error }))
   }
 
   // Fetch raffle details
@@ -59,7 +65,7 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
         ? await streamingService.getAdminRaffle(raffleId)
         : await streamingService.getRaffle(raffleId)
       
-      setState(prev => ({ ...prev, raffle }))
+      if (isMountedRef.current) setState(prev => ({ ...prev, raffle }))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al cargar la rifa'
       setError(message)
@@ -93,7 +99,7 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
         participants = [] // Customers don't have access to participants list
       }
       
-      setState(prev => ({ ...prev, participants }))
+      if (isMountedRef.current) setState(prev => ({ ...prev, participants }))
     } catch (err) {
       console.error('Error fetching participants:', err)
       // Don't set error for participants, just log it
@@ -117,7 +123,7 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
           }
       
       // Extract the canExecute object which contains canDraw, prizesCount, etc.
-      setState(prev => ({ ...prev, drawStatus: statusResponse.canExecute }))
+      if (isMountedRef.current) setState(prev => ({ ...prev, drawStatus: statusResponse.canExecute }))
     } catch (err) {
       console.error('Error fetching draw status:', err)
       // Don't set error for draw status, just log it
@@ -127,17 +133,24 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
   }
 
   // Execute draw for a specific prize or the next pending prize
+  const isExecutingRef = useRef(false)
   const executeDraw = async (prizeId?: string): Promise<CustomerDrawResult> => {
     if (!raffleId) throw new Error('No raffle ID provided')
+    if (isExecutingRef.current) throw new Error('Ya se está ejecutando un sorteo')
     
-    const result = isAdminOrOperator
-      ? await streamingService.executeAdminDraw(raffleId, prizeId)
-      : await streamingService.executeDraw(raffleId)
-    
-    // Do NOT refresh immediately - let the animation complete first
-    // The component will call refreshDrawStatus after animation
-    
-    return result
+    isExecutingRef.current = true
+    try {
+      const result = isAdminOrOperator
+        ? await streamingService.executeAdminDraw(raffleId, prizeId)
+        : await streamingService.executeDraw(raffleId)
+      
+      // Do NOT refresh immediately - let the animation complete first
+      // The component will call refreshDrawStatus after animation
+      
+      return result
+    } finally {
+      isExecutingRef.current = false
+    }
   }
 
   // Reset draw (clear winners and allow re-draw)

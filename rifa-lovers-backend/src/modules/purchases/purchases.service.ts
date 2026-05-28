@@ -2,6 +2,7 @@ import {
   Injectable ,
   NotFoundException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common'
 import { PurchasesRepository } from './purchases.repository'
 import { PacksRepository } from '../packs/packs.repository'
@@ -127,13 +128,30 @@ export class PurchasesService {
     id: string,
     status: 'pending' | 'paid' | 'failed' | 'refunded',
   ): Promise<PurchaseResponseDto> {
+    const current = await this.purchasesRepository.findUnique({ id })
+    if (!current) {
+      throw new NotFoundException('Compra no encontrada')
+    }
+
+    // Idempotent: already in desired state
+    if (current.status === status) {
+      return mapPurchaseToDto(current as PurchaseWithRaffle)
+    }
+
+    // Prevent overwriting terminal states from concurrent requests
+    if (current.status === 'paid' && status !== 'refunded') {
+      throw new ConflictException('La compra ya fue pagada y no puede cambiar de estado')
+    }
+
+    if (current.status === 'failed' && status !== 'failed') {
+      throw new ConflictException('La compra ya fue marcada como fallida')
+    }
 
     const purchase = await this.purchasesRepository.updateStatus(
       id,
       status,
       status === 'paid' ? new Date() : undefined,
     )
-
 
     // Obtener la compra actualizada con la relación
     const purchaseWithRaffle = await this.purchasesRepository.findUnique(
@@ -165,15 +183,26 @@ export class PurchasesService {
     if (!existing) {
       throw new NotFoundException(`Compra ${purchaseId} no encontrada`)
     }
-    if (existing.status === 'paid') {
-      return mapPurchaseToDto(existing as PurchaseWithRaffle)
-    }
-    if (existing.status === 'failed') {
-      throw new BadRequestException('Esta compra ya fue invalidada. Crea una nueva compra para participar.')
-    }
-
     // Transacción única: marcar como paid + generar LuckyPasses (atomicidad total)
     await this.prisma.$transaction(async (tx) => {
+      // Re-read purchase inside transaction to prevent race conditions
+      const purchase = await tx.purchase.findUnique({
+        where: { id: purchaseId },
+        include: { raffle: true, userPacks: true },
+      })
+
+      if (!purchase) {
+        throw new NotFoundException(`Compra ${purchaseId} no encontrada`)
+      }
+
+      if (purchase.status === 'paid') {
+        return
+      }
+
+      if (purchase.status === 'failed') {
+        throw new BadRequestException('Esta compra ya fue invalidada. Crea una nueva compra para participar.')
+      }
+
       // 1. Marcar compra y transacción como pagadas
       await tx.purchase.update({
         where: { id: purchaseId },
@@ -194,7 +223,7 @@ export class PurchasesService {
         include: { pack: true },
       })
 
-      const raffleId = existing.raffleId
+      const raffleId = purchase.raffleId
       if (!raffleId) {
         throw new BadRequestException('La compra no tiene rifa asociada')
       }
@@ -253,7 +282,7 @@ export class PurchasesService {
           }
           luckyPassData.push({
             raffleId,
-            userId: existing.userId,
+            userId: purchase.userId,
             userPackId: userPack.id,
             ticketNumber,
             status: 'active',

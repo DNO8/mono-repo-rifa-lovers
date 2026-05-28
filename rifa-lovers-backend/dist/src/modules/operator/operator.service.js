@@ -204,24 +204,26 @@ let OperatorService = class OperatorService {
     }
     async updateRaffle(userId, raffleId, dto) {
         await this.assertOrganization(userId);
-        const raffle = await this.prisma.raffle.findUnique({
-            where: { id: raffleId },
-            include: { progress: true },
-        });
-        if (!raffle)
-            throw new common_1.NotFoundException('Rifa no encontrada');
-        const updated = await this.prisma.raffle.update({
-            where: { id: raffleId },
-            data: {
-                title: dto.title,
-                description: dto.description,
-                goalPacks: dto.goalPacks,
-                maxTicketNumber: dto.maxTicketNumber,
-                startDate: dto.startDate ? new Date(dto.startDate) : undefined,
-                endDate: dto.endDate ? new Date(dto.endDate) : undefined,
-                status: dto.status,
-            },
-            include: { progress: true },
+        const updated = await this.prisma.$transaction(async (tx) => {
+            const raffle = await tx.raffle.findUnique({
+                where: { id: raffleId },
+                include: { progress: true },
+            });
+            if (!raffle)
+                throw new common_1.NotFoundException('Rifa no encontrada');
+            return tx.raffle.update({
+                where: { id: raffleId },
+                data: {
+                    title: dto.title,
+                    description: dto.description,
+                    goalPacks: dto.goalPacks,
+                    maxTicketNumber: dto.maxTicketNumber,
+                    startDate: dto.startDate ? new Date(dto.startDate) : undefined,
+                    endDate: dto.endDate ? new Date(dto.endDate) : undefined,
+                    status: dto.status,
+                },
+                include: { progress: true },
+            });
         });
         return {
             id: updated.id,
@@ -241,16 +243,18 @@ let OperatorService = class OperatorService {
     }
     async updateRaffleStatus(userId, raffleId, dto) {
         await this.assertOrganization(userId);
-        const raffle = await this.prisma.raffle.findUnique({
-            where: { id: raffleId },
-            include: { progress: true },
-        });
-        if (!raffle)
-            throw new common_1.NotFoundException('Rifa no encontrada');
-        const updated = await this.prisma.raffle.update({
-            where: { id: raffleId },
-            data: { status: dto.status },
-            include: { progress: true },
+        const updated = await this.prisma.$transaction(async (tx) => {
+            const raffle = await tx.raffle.findUnique({
+                where: { id: raffleId },
+                include: { progress: true },
+            });
+            if (!raffle)
+                throw new common_1.NotFoundException('Rifa no encontrada');
+            return tx.raffle.update({
+                where: { id: raffleId },
+                data: { status: dto.status },
+                include: { progress: true },
+            });
         });
         return {
             id: updated.id,
@@ -275,6 +279,14 @@ let OperatorService = class OperatorService {
         });
         if (!raffle)
             throw new common_1.NotFoundException('Rifa no encontrada');
+        const ext = file.mimetype.split('/')[1] || 'jpg';
+        const path = `${raffleId}-${Date.now()}.${ext}`;
+        const buffer = file.buffer;
+        const publicUrl = await this.supabaseService.uploadFile('raffle-covers', path, buffer, file.mimetype);
+        await this.prisma.raffle.update({
+            where: { id: raffleId },
+            data: { coverImageUrl: publicUrl },
+        });
         if (raffle.coverImageUrl) {
             try {
                 const oldPath = raffle.coverImageUrl.split('/').pop();
@@ -285,14 +297,6 @@ let OperatorService = class OperatorService {
             catch {
             }
         }
-        const ext = file.mimetype.split('/')[1] || 'jpg';
-        const path = `${raffleId}-${Date.now()}.${ext}`;
-        const buffer = file.buffer;
-        const publicUrl = await this.supabaseService.uploadFile('raffle-covers', path, buffer, file.mimetype);
-        await this.prisma.raffle.update({
-            where: { id: raffleId },
-            data: { coverImageUrl: publicUrl },
-        });
         return { coverImageUrl: publicUrl };
     }
     async getPacks(userId, raffleId) {

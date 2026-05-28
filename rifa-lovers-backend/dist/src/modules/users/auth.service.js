@@ -104,14 +104,6 @@ let AuthService = class AuthService {
         if (!user) {
             throw new common_1.NotFoundException('Usuario no encontrado');
         }
-        if (updateData.email && updateData.email.toLowerCase() !== user.email) {
-            const existingUser = await this.prisma.user.findFirst({
-                where: { email: updateData.email.toLowerCase() },
-            });
-            if (existingUser) {
-                throw new common_1.ConflictException('El email ya está en uso');
-            }
-        }
         if (updateData.newPassword) {
             if (!updateData.currentPassword) {
                 throw new common_1.UnauthorizedException('Debes ingresar tu contraseña actual para cambiarla');
@@ -143,11 +135,19 @@ let AuthService = class AuthService {
                 throw new common_1.ConflictException('Error al actualizar en Supabase: ' + supabaseError.message);
             }
         }
-        const updatedUser = await this.prisma.user.update({
-            where: { id: userId },
-            data: updateDataPrisma,
-        });
-        return (0, user_mapper_1.mapUserToDto)(updatedUser);
+        try {
+            const updatedUser = await this.prisma.user.update({
+                where: { id: userId },
+                data: updateDataPrisma,
+            });
+            return (0, user_mapper_1.mapUserToDto)(updatedUser);
+        }
+        catch (error) {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                throw new common_1.ConflictException('El email ya está en uso');
+            }
+            throw error;
+        }
     }
     parsePhone(phone, fallback = null) {
         if (phone === undefined || phone === null || phone === '')

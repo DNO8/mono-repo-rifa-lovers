@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Sse } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { AuthGuard } from '@nestjs/passport'
 import { interval, Observable, switchMap, map } from 'rxjs'
 import { PurchasesService } from './purchases.service'
@@ -50,6 +51,7 @@ export class PurchasesController {
    * Updates every 30 seconds
    */
   @Sse('recent/stream')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   recentPurchasesStream(): Observable<MessageEvent> {
     return interval(30000).pipe(
       switchMap(() => this.purchasesService.getRecentPurchases()),

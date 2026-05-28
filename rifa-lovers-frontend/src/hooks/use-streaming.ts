@@ -154,18 +154,25 @@ export function useStreaming(raffleId: string | undefined): StreamingState & Str
   }
 
   // Reset draw (clear winners and allow re-draw)
+  const isResettingRef = useRef(false)
   const resetDraw = async (): Promise<void> => {
     if (!raffleId) throw new Error('No raffle ID provided')
     if (!isAdminOrOperator) throw new Error('Only admin/operator can reset draw')
+    if (isResettingRef.current) throw new Error('Ya se está reiniciando el sorteo')
     
-    await streamingService.resetAdminDraw(raffleId)
-    
-    // Refresh all data after reset
-    await Promise.all([
-      refreshRaffle(),
-      refreshParticipants(),
-      refreshDrawStatus()
-    ])
+    isResettingRef.current = true
+    try {
+      await streamingService.resetAdminDraw(raffleId)
+      
+      // Refresh all data after reset
+      await Promise.all([
+        refreshRaffle(),
+        refreshParticipants(),
+        refreshDrawStatus()
+      ])
+    } finally {
+      isResettingRef.current = false
+    }
   }
 
   // Transform participants into individual lucky pass slots for roulette

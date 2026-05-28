@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PurchasesController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const passport_1 = require("@nestjs/passport");
 const rxjs_1 = require("rxjs");
 const purchases_service_1 = require("./purchases.service");
@@ -78,6 +79,7 @@ __decorate([
 ], PurchasesController.prototype, "createFree", null);
 __decorate([
     (0, common_1.Sse)('recent/stream'),
+    (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60000 } }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", rxjs_1.Observable)

@@ -127,16 +127,6 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    if (updateData.email && updateData.email.toLowerCase() !== user.email) {
-      const existingUser = await this.prisma.user.findFirst({
-        where: { email: updateData.email.toLowerCase() },
-      });
-
-      if (existingUser) {
-        throw new ConflictException('El email ya está en uso');
-      }
-    }
-
     // --- Verify current password before changing to new password ---
     if (updateData.newPassword) {
       if (!updateData.currentPassword) {
@@ -177,12 +167,18 @@ export class AuthService {
       }
     }
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: updateDataPrisma,
-    });
-
-    return mapUserToDto(updatedUser);
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateDataPrisma,
+      });
+      return mapUserToDto(updatedUser);
+    } catch (error: unknown) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('El email ya está en uso');
+      }
+      throw error;
+    }
   }
 
   private parsePhone(phone?: string, fallback: string | null = null): string | undefined {

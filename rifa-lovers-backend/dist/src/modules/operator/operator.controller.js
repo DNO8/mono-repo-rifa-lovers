@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var OperatorController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OperatorController = void 0;
 const common_1 = require("@nestjs/common");
@@ -24,10 +23,9 @@ const dto_1 = require("./dto");
 const dto_2 = require("../admin/dto");
 const decorators_1 = require("../../common/decorators");
 const roles_guard_1 = require("../users/guards/roles.guard");
-let OperatorController = OperatorController_1 = class OperatorController {
+let OperatorController = class OperatorController {
     constructor(operatorService) {
         this.operatorService = operatorService;
-        this.logger = new common_1.Logger(OperatorController_1.name);
     }
     async getOrganization(userId) {
         return this.operatorService.getOrganization(userId);
@@ -239,7 +237,7 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], OperatorController.prototype, "sendNewsletter", null);
-exports.OperatorController = OperatorController = OperatorController_1 = __decorate([
+exports.OperatorController = OperatorController = __decorate([
     (0, common_1.Controller)('operator'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), new roles_guard_1.RolesGuard([client_1.UserRole.operator, client_1.UserRole.admin])),
     __metadata("design:paramtypes", [operator_service_1.OperatorService])

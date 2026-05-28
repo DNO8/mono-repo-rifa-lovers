@@ -1,6 +1,5 @@
 import {
-  Injectable,
-  Logger,
+  Injectable ,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common'
@@ -22,7 +21,6 @@ type PurchaseWithRaffle = Purchase & { raffle: Raffle | null; userPacks?: (UserP
 
 @Injectable()
 export class PurchasesService {
-  private readonly logger = new Logger(PurchasesService.name)
 
   constructor(
     private readonly purchasesRepository: PurchasesRepository,
@@ -33,21 +31,15 @@ export class PurchasesService {
   ) {}
 
   async findByUser(userId: string): Promise<PurchaseResponseDto[]> {
-    this.logger.debug(`Buscando compras del usuario: ${userId}`)
-
     const purchases = await this.purchasesRepository.findByUser(userId, {
       raffle: true,
       userPacks: { include: { pack: true } },
     })
 
-    this.logger.debug(`Encontradas ${purchases.length} compras para el usuario ${userId}`)
-
     return purchases.map((purchase) => mapPurchaseToDto(purchase as PurchaseWithRaffle))
   }
 
   async create(userId: string, createDto: CreatePurchaseDto): Promise<CreatePurchaseResponseDto> {
-    this.logger.debug(`Creando compra: userId=${userId}, raffleId=${createDto.raffleId}, packId=${createDto.packId}, qty=${createDto.quantity}`)
-
     // 1. Validar que los datos necesarios están presentes
     if (!createDto.raffleId) {
       throw new BadRequestException('El ID de la rifa es requerido')
@@ -93,7 +85,6 @@ export class PurchasesService {
         pack,
       })
 
-      this.logger.log(`Compra creada exitosamente: ${result.purchase.id}`)
 
       return {
         id: result.purchase.id,
@@ -114,13 +105,11 @@ export class PurchasesService {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error'
       const stack = error instanceof Error ? error.stack : undefined
-      this.logger.error(`Error creando compra: ${msg}`, stack)
       throw error
     }
   }
 
   async findById(id: string): Promise<PurchaseResponseDto> {
-    this.logger.debug(`Buscando compra por ID: ${id}`)
 
     const purchase = await this.purchasesRepository.findUnique(
       { id },
@@ -128,7 +117,6 @@ export class PurchasesService {
     )
 
     if (!purchase) {
-      this.logger.warn(`Compra no encontrada: ${id}`)
       throw new NotFoundException(`Compra con ID ${id} no encontrada`)
     }
 
@@ -139,7 +127,6 @@ export class PurchasesService {
     id: string,
     status: 'pending' | 'paid' | 'failed' | 'refunded',
   ): Promise<PurchaseResponseDto> {
-    this.logger.debug(`Actualizando estado de compra ${id} a: ${status}`)
 
     const purchase = await this.purchasesRepository.updateStatus(
       id,
@@ -147,7 +134,6 @@ export class PurchasesService {
       status === 'paid' ? new Date() : undefined,
     )
 
-    this.logger.log(`Estado de compra ${id} actualizado a: ${status}`)
 
     // Obtener la compra actualizada con la relación
     const purchaseWithRaffle = await this.purchasesRepository.findUnique(
@@ -170,7 +156,6 @@ export class PurchasesService {
       status: string
     },
   ): Promise<PurchaseResponseDto> {
-    this.logger.debug(`Confirmando pago para compra: ${purchaseId}`)
 
     // 0. Idempotencia: verificar que la compra no ya fue confirmada
     const existing = await this.purchasesRepository.findUnique(
@@ -181,11 +166,9 @@ export class PurchasesService {
       throw new NotFoundException(`Compra ${purchaseId} no encontrada`)
     }
     if (existing.status === 'paid') {
-      this.logger.warn(`Compra ${purchaseId} ya fue confirmada, ignorando duplicado`)
       return mapPurchaseToDto(existing as PurchaseWithRaffle)
     }
     if (existing.status === 'failed') {
-      this.logger.warn(`Compra ${purchaseId} ya fue invalidada, rechazando confirmación`)
       throw new BadRequestException('Esta compra ya fue invalidada. Crea una nueva compra para participar.')
     }
 
@@ -222,7 +205,6 @@ export class PurchasesService {
         WHERE purchase_id = ${purchaseId}::uuid
       `
       const reservedNumbers = reservedTickets.map((r) => r.ticket_number)
-      this.logger.debug(`Tickets reservados para purchase=${purchaseId}: ${reservedNumbers.join(', ')}`)
 
       // 4. Lock raffle row para asignación secuencial de tickets sin reserva
       await tx.$queryRaw`
@@ -280,7 +262,6 @@ export class PurchasesService {
         }
 
         await tx.luckyPass.createMany({ data: luckyPassData })
-        this.logger.debug(`Generados ${count} LuckyPasses para userPack ${userPack.id}`)
       }
 
       // 6. Liberar reservas usadas (ya convertidas a LuckyPasses)
@@ -288,7 +269,6 @@ export class PurchasesService {
         await tx.$executeRaw`
           DELETE FROM public.ticket_reservations WHERE purchase_id = ${purchaseId}::uuid
         `
-        this.logger.debug(`Reservas liberadas para purchase=${purchaseId}`)
       }
 
       // 7. Actualizar raffle_progress
@@ -341,9 +321,6 @@ export class PurchasesService {
         }
       }
 
-      this.logger.log(
-        `Pago confirmado: purchase=${purchaseId}, luckyPasses=${totalLuckyPasses}, packsSold=${totalQuantity}`,
-      )
     })
 
     // Obtener la compra actualizada con relaciones completas
@@ -396,7 +373,6 @@ export class PurchasesService {
           ticketNumbers,
         })
         .catch((err) => {
-          this.logger.error(`Error enviando email de compra: ${err}`)
         })
     }
 
@@ -426,7 +402,6 @@ export class PurchasesService {
     userId: string,
     createDto: CreatePurchaseDto,
   ): Promise<CreatePurchaseResponseDto> {
-    this.logger.debug(`Creando compra gratuita: userId=${userId}, raffleId=${createDto.raffleId}, packId=${createDto.packId}`)
 
     // 1. Validar que los datos necesarios están presentes
     if (!createDto.raffleId) {
@@ -525,7 +500,6 @@ export class PurchasesService {
         status: 'approved',
       })
 
-      this.logger.log(`Compra gratuita creada exitosamente: ${result.purchase.id}`)
 
       return {
         id: result.purchase.id,
@@ -545,7 +519,6 @@ export class PurchasesService {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Unknown error'
       const stack = error instanceof Error ? error.stack : undefined
-      this.logger.error(`Error creando compra gratuita: ${msg}`, stack)
       throw error
     }
   }
@@ -555,7 +528,6 @@ export class PurchasesService {
    * Incluye nombre del usuario y cantidad real de LuckyPasses generados
    */
   async getRecentPurchases(): Promise<RecentPurchaseDto[]> {
-    this.logger.debug('Obteniendo compras recientes para ticker')
 
     const purchases = await this.prisma.purchase.findMany({
       where: { status: 'paid', paidAt: { not: null } },

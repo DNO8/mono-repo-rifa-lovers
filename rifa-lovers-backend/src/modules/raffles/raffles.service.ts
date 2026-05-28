@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Injectable , NotFoundException } from '@nestjs/common'
 import { RafflesRepository } from './raffles.repository'
 import { PacksRepository } from '../packs/packs.repository'
 import { mapPackToDto } from '../packs/mappers/pack.mapper'
@@ -14,7 +14,6 @@ type RaffleWithProgressAndMilestones = Raffle & {
 
 @Injectable()
 export class RafflesService {
-  private readonly logger = new Logger(RafflesService.name)
 
   constructor(
     private readonly rafflesRepository: RafflesRepository,
@@ -22,12 +21,10 @@ export class RafflesService {
   ) {}
 
   async findActive(): Promise<RaffleResponseDto | null> {
-    this.logger.debug('Buscando rifa activa')
 
     const raffle = await this.rafflesRepository.findActiveWithProgress() as RaffleWithProgressAndMilestones | null
 
     if (!raffle) {
-      this.logger.debug('No se encontró rifa activa')
       return null
     }
 
@@ -46,7 +43,6 @@ export class RafflesService {
       updatedAt: raffle.updatedAt,
     })
 
-    this.logger.debug(`Rifa activa encontrada: ${raffleEntity.id}`)
 
     return {
       id: raffleEntity.id,
@@ -75,12 +71,10 @@ export class RafflesService {
   }
 
   async getActiveProgress(): Promise<RaffleProgressDto> {
-    this.logger.debug('Obteniendo progreso de rifa activa')
 
     const raffle = await this.rafflesRepository.findActiveWithProgress() as RaffleWithProgressAndMilestones | null
 
     if (!raffle) {
-      this.logger.debug('No hay rifa activa, retornando progreso vacío')
       return {
         raffleId: '',
         packsSold: 0,
@@ -91,9 +85,6 @@ export class RafflesService {
 
     const progress = raffle.progress
 
-    this.logger.debug(
-      `Progreso rifa ${raffle.id}: ${progress?.packsSold ?? 0} packs vendidos`,
-    )
 
     const packsSold = progress?.packsSold ?? 0
     const percentageToGoal = raffle.goalPacks > 0 ? Math.min((packsSold / raffle.goalPacks) * 100, 100) : 0
@@ -107,7 +98,6 @@ export class RafflesService {
   }
 
   async getPacksByRaffle(raffleId: string) {
-    this.logger.debug(`Obteniendo packs para rifa ${raffleId}`)
     const packs = await this.packsRepository.findMany(
       { raffleId },
       { price: 'asc' },
@@ -116,7 +106,6 @@ export class RafflesService {
   }
 
   async getProgressByRaffle(raffleId: string): Promise<RaffleProgressDto> {
-    this.logger.debug(`Obteniendo progreso para rifa ${raffleId}`)
 
     const raffle = await this.rafflesRepository.findUnique(
       { id: raffleId },
@@ -124,7 +113,6 @@ export class RafflesService {
     ) as RaffleWithProgressAndMilestones | null
 
     if (!raffle) {
-      this.logger.warn(`Rifa no encontrada: ${raffleId}`)
       throw new NotFoundException(`Rifa con ID ${raffleId} no encontrada`)
     }
 
@@ -141,7 +129,6 @@ export class RafflesService {
   }
 
   async findById(id: string): Promise<RaffleResponseDto> {
-    this.logger.debug(`Buscando rifa por ID: ${id}`)
 
     const raffle = await this.rafflesRepository.findUnique(
       { id },
@@ -157,7 +144,6 @@ export class RafflesService {
     )
 
     if (!raffle) {
-      this.logger.warn(`Rifa no encontrada: ${id}`)
       throw new NotFoundException(`Rifa con ID ${id} no encontrada`)
     }
 
@@ -175,7 +161,6 @@ export class RafflesService {
   }
 
   async findByStatus(status: RaffleStatus): Promise<RaffleResponseDto[]> {
-    this.logger.debug(`Buscando rifas con estado: ${status}`)
 
     const raffles = await this.rafflesRepository.findByStatus(status)
 
@@ -193,7 +178,6 @@ export class RafflesService {
   }
 
   async getPublicRaffles(): Promise<RaffleResponseDto[]> {
-    this.logger.debug('Obteniendo rifas públicas (activas + última cerrada)')
 
     const raffles = await this.rafflesRepository.findPublicRaffles()
 
@@ -224,8 +208,6 @@ export class RafflesService {
   }
 
   async getUserRaffles(userId: string): Promise<RaffleResponseDto[]> {
-    this.logger.debug(`Buscando rifas del usuario ${userId}`)
-
     const raffles = await this.rafflesRepository.findUserRaffles(userId)
 
     return raffles.map((raffle: Raffle) => ({

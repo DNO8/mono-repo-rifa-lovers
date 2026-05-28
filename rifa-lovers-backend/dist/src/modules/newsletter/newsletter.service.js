@@ -8,17 +8,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var NewsletterService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NewsletterService = void 0;
 const common_1 = require("@nestjs/common");
 const newsletter_repository_1 = require("./newsletter.repository");
 const resend_service_1 = require("../email/resend.service");
-let NewsletterService = NewsletterService_1 = class NewsletterService {
+let NewsletterService = class NewsletterService {
     constructor(newsletterRepository, resendService) {
         this.newsletterRepository = newsletterRepository;
         this.resendService = resendService;
-        this.logger = new common_1.Logger(NewsletterService_1.name);
     }
     async checkSubscription(email) {
         const subscriber = await this.newsletterRepository.findSubscriberByEmail(email);
@@ -27,14 +25,11 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
     async subscribe(dto) {
         const existing = await this.newsletterRepository.findSubscriberByEmail(dto.email);
         if (existing && existing.isActive) {
-            this.logger.log(`Suscripción idempotente: ${dto.email} ya está suscrito`);
             return existing;
         }
         if (existing && !existing.isActive) {
-            this.logger.log(`Reactivando suscripción: ${dto.email}`);
             return this.newsletterRepository.reactivateSubscriber(dto.email, dto.name);
         }
-        this.logger.log(`Nueva suscripción: ${dto.email}`);
         return this.newsletterRepository.createSubscriber({
             email: dto.email,
             name: dto.name,
@@ -45,7 +40,6 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
         if (!existing || !existing.isActive) {
             return { message: 'No estás suscrito al newsletter' };
         }
-        this.logger.log(`Desuscribiendo: ${email}`);
         await this.newsletterRepository.deactivateSubscriber(email);
         return { message: 'Te has desuscrito exitosamente' };
     }
@@ -62,7 +56,6 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
         if (subscribers.length === 0) {
             return { message: 'No hay suscriptores activos', recipientCount: 0 };
         }
-        this.logger.log(`Enviando campaña "${dto.subject}" a ${subscribers.length} suscriptores`);
         let sentCount = 0;
         const errors = [];
         for (const subscriber of subscribers) {
@@ -78,7 +71,6 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
             }
             catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                this.logger.error(`Error enviando a ${subscriber.email}: ${msg}`);
                 errors.push(subscriber.email);
             }
         }
@@ -89,7 +81,6 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
             recipientCount: sentCount,
             sentAt: new Date(),
         });
-        this.logger.log(`Campaña enviada: ${sentCount}/${subscribers.length} exitosos`);
         return {
             campaignId: campaign.id,
             recipientCount: sentCount,
@@ -99,7 +90,7 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
     }
 };
 exports.NewsletterService = NewsletterService;
-exports.NewsletterService = NewsletterService = NewsletterService_1 = __decorate([
+exports.NewsletterService = NewsletterService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [newsletter_repository_1.NewsletterRepository,
         resend_service_1.ResendService])

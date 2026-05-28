@@ -53,7 +53,6 @@ export declare class OperatorService {
     private readonly drawService;
     private readonly newsletterService;
     private readonly supabaseService;
-    private readonly logger;
     constructor(prisma: PrismaService, drawService: DrawService, newsletterService: NewsletterService, supabaseService: SupabaseService);
     private assertOrganization;
     createOrganization(userId: string, dto: CreateOrganizationDto): Promise<{

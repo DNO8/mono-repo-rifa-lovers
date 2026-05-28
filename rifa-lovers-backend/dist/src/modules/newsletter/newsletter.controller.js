@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var NewsletterController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NewsletterController = void 0;
 const common_1 = require("@nestjs/common");
@@ -22,33 +21,26 @@ const newsletter_service_1 = require("./newsletter.service");
 const dto_1 = require("./dto");
 const decorators_1 = require("../../common/decorators");
 const roles_guard_1 = require("../users/guards/roles.guard");
-let NewsletterController = NewsletterController_1 = class NewsletterController {
+let NewsletterController = class NewsletterController {
     constructor(newsletterService) {
         this.newsletterService = newsletterService;
-        this.logger = new common_1.Logger(NewsletterController_1.name);
     }
     async checkSubscription(email) {
-        this.logger.log(`GET /newsletter/check — ${email}`);
         return this.newsletterService.checkSubscription(email);
     }
     async subscribe(dto) {
-        this.logger.log(`POST /newsletter/subscribe — ${dto.email}`);
         return this.newsletterService.subscribe(dto);
     }
     async unsubscribe(email) {
-        this.logger.log(`DELETE /newsletter/unsubscribe — ${email}`);
         return this.newsletterService.unsubscribe(email);
     }
     async getSubscribers() {
-        this.logger.log('GET /newsletter/subscribers');
         return this.newsletterService.getSubscribers();
     }
     async getCampaigns() {
-        this.logger.log('GET /newsletter/campaigns');
         return this.newsletterService.getCampaigns();
     }
     async sendCampaign(dto, adminId) {
-        this.logger.log(`POST /newsletter/send — "${dto.subject}" by ${adminId}`);
         return this.newsletterService.sendCampaign(dto, adminId);
     }
 };
@@ -99,7 +91,7 @@ __decorate([
     __metadata("design:paramtypes", [dto_1.SendCampaignDto, String]),
     __metadata("design:returntype", Promise)
 ], NewsletterController.prototype, "sendCampaign", null);
-exports.NewsletterController = NewsletterController = NewsletterController_1 = __decorate([
+exports.NewsletterController = NewsletterController = __decorate([
     (0, common_1.Controller)('newsletter'),
     __metadata("design:paramtypes", [newsletter_service_1.NewsletterService])
 ], NewsletterController);

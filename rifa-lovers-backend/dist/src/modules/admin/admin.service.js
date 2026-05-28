@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var AdminService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminService = void 0;
 const common_1 = require("@nestjs/common");
@@ -16,15 +15,13 @@ const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../database/prisma.service");
 const client_1 = require("@prisma/client");
 const resend_service_1 = require("../email/resend.service");
-let AdminService = AdminService_1 = class AdminService {
+let AdminService = class AdminService {
     constructor(prisma, resendService, configService) {
         this.prisma = prisma;
         this.resendService = resendService;
         this.configService = configService;
-        this.logger = new common_1.Logger(AdminService_1.name);
     }
     async createRaffle(adminId, dto) {
-        this.logger.log(`Admin ${adminId} creando rifa: ${dto.title}`);
         const prizes = dto.prizes ?? [];
         const goalPacks = dto.goalPacks;
         const segmentSize = Math.floor(goalPacks / prizes.length);
@@ -73,7 +70,6 @@ let AdminService = AdminService_1 = class AdminService {
             }
             return raffle;
         });
-        this.logger.log(`Rifa creada: ${result.id} con ${prizes.length} premio(s)`);
         return {
             id: result.id,
             title: result.title,
@@ -90,7 +86,6 @@ let AdminService = AdminService_1 = class AdminService {
         };
     }
     async updateRaffle(raffleId, dto) {
-        this.logger.log(`Actualizando rifa: ${raffleId}`);
         const existing = await this.prisma.raffle.findUnique({
             where: { id: raffleId },
         });
@@ -116,11 +111,9 @@ let AdminService = AdminService_1 = class AdminService {
             where: { id: raffleId },
             data: updateData,
         });
-        this.logger.log(`Rifa actualizada: ${raffle.id}`);
         return raffle;
     }
     async updateRaffleStatus(raffleId, dto) {
-        this.logger.log(`Cambiando estado de rifa ${raffleId} a: ${dto.status}`);
         const raffle = await this.prisma.raffle.findUnique({
             where: { id: raffleId },
         });
@@ -141,11 +134,9 @@ let AdminService = AdminService_1 = class AdminService {
             where: { id: raffleId },
             data: { status: dto.status },
         });
-        this.logger.log(`Estado actualizado: ${raffle.status} → ${dto.status}`);
         return updated;
     }
     async getRaffleDetail(raffleId) {
-        this.logger.log(`Obteniendo detalle de rifa: ${raffleId}`);
         const raffle = await this.prisma.raffle.findUnique({
             where: { id: raffleId },
             include: {
@@ -174,7 +165,6 @@ let AdminService = AdminService_1 = class AdminService {
         };
     }
     async getRaffleParticipants(raffleId) {
-        this.logger.log(`Obteniendo participantes de rifa: ${raffleId}`);
         const raffle = await this.prisma.raffle.findUnique({
             where: { id: raffleId },
         });
@@ -258,7 +248,6 @@ let AdminService = AdminService_1 = class AdminService {
         });
     }
     async getKpis() {
-        this.logger.log('Obteniendo KPIs');
         const [totalSalesAgg, packsSold, activeUsers, activeRaffles, totalPurchases, pendingPurchases, completedPurchases, failedPurchases, refundedPurchases, totalLuckyPasses, winnersCount,] = await Promise.all([
             this.prisma.purchase.aggregate({
                 where: { status: 'paid' },
@@ -307,7 +296,6 @@ let AdminService = AdminService_1 = class AdminService {
         };
     }
     async updateUserRole(userId, dto) {
-        this.logger.log(`Cambiando rol de usuario ${userId} a: ${dto.role}`);
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
         });
@@ -328,14 +316,11 @@ let AdminService = AdminService_1 = class AdminService {
                 });
             }
             catch (err) {
-                this.logger.error(`Error enviando email de rol promovido: ${err instanceof Error ? err.message : String(err)}`);
             }
         }
-        this.logger.log(`Rol actualizado: ${user.role} → ${dto.role}`);
         return updated;
     }
     async updateUserStatus(userId, dto) {
-        this.logger.log(`Cambiando estado de usuario ${userId} a: ${dto.status}`);
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
         });
@@ -346,7 +331,6 @@ let AdminService = AdminService_1 = class AdminService {
             where: { id: userId },
             data: { status: dto.status },
         });
-        this.logger.log(`Estado actualizado: ${user.status} → ${dto.status}`);
         return updated;
     }
     async getAllUsers(skip = 0, take = 50) {
@@ -396,7 +380,7 @@ let AdminService = AdminService_1 = class AdminService {
     }
 };
 exports.AdminService = AdminService;
-exports.AdminService = AdminService = AdminService_1 = __decorate([
+exports.AdminService = AdminService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         resend_service_1.ResendService,

@@ -32,7 +32,6 @@ export interface AdminDrawResult extends DrawResult {
 export declare class DrawService {
     private readonly prisma;
     private readonly notifications;
-    private readonly logger;
     constructor(prisma: PrismaService, notifications: NotificationsService);
     private buildUserFullName;
     executeDraw(raffleId: string, adminUserId: string, prizeId?: string): Promise<DrawResult>;

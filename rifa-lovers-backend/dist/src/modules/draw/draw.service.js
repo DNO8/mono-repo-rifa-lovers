@@ -8,18 +8,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var DrawService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DrawService = void 0;
 const common_1 = require("@nestjs/common");
 const crypto_1 = require("crypto");
 const prisma_service_1 = require("../../database/prisma.service");
 const notifications_service_1 = require("../notifications/notifications.service");
-let DrawService = DrawService_1 = class DrawService {
+let DrawService = class DrawService {
     constructor(prisma, notifications) {
         this.prisma = prisma;
         this.notifications = notifications;
-        this.logger = new common_1.Logger(DrawService_1.name);
     }
     buildUserFullName(user) {
         if (!user)
@@ -30,7 +28,6 @@ let DrawService = DrawService_1 = class DrawService {
         return firstName || lastName || null;
     }
     async executeDraw(raffleId, adminUserId, prizeId) {
-        this.logger.log(`Ejecutando sorteo para rifa ${raffleId} por admin ${adminUserId}${prizeId ? ` para premio ${prizeId}` : ''}`);
         const raffle = await this.prisma.raffle.findUnique({
             where: { id: raffleId },
         });
@@ -48,9 +45,7 @@ let DrawService = DrawService_1 = class DrawService {
             },
             orderBy: { milestone: { sortOrder: 'asc' } }
         });
-        this.logger.log(`[DEBUG] Total premios en rifa: ${allPrizes.length}`);
         allPrizes.forEach((p, idx) => {
-            this.logger.log(`[DEBUG] Premio ${idx + 1}: id=${p.id}, name=${p.name}, milestoneUnlocked=${p.milestone?.isUnlocked}, winnersCount=${p.prizeWinners?.length || 0}`);
         });
         let prizeToDraw = null;
         if (prizeId) {
@@ -88,7 +83,6 @@ let DrawService = DrawService_1 = class DrawService {
         if (existingWinner) {
             throw new common_1.BadRequestException('Este premio ya tiene un ganador asignado');
         }
-        this.logger.log(`Sorteando premio: ${prizeToDraw.name}`);
         const prize = prizeToDraw;
         const { winner, isComplete } = await this.prisma.$transaction(async (tx) => {
             await tx.$queryRaw `
@@ -112,7 +106,6 @@ let DrawService = DrawService_1 = class DrawService {
             if (activePasses.length === 0) {
                 throw new common_1.BadRequestException('No hay LuckyPasses activos disponibles para el sorteo');
             }
-            this.logger.log(`${activePasses.length} LuckyPasses activos participando (dentro de transacción)`);
             const winnerIndex = (0, crypto_1.randomInt)(0, activePasses.length);
             const winnerPassId = activePasses[winnerIndex].id;
             const winnerPassWithUser = await tx.luckyPass.findUnique({
@@ -138,7 +131,6 @@ let DrawService = DrawService_1 = class DrawService {
                 },
             });
             const userFullName = this.buildUserFullName(winnerPass.user);
-            this.logger.log(`Ganador asignado: Prize=${prize.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email ?? 'N/A'}`);
             const pendingPrizes = await tx.prize.count({
                 where: {
                     raffleId: raffleId,
@@ -159,10 +151,8 @@ let DrawService = DrawService_1 = class DrawService {
                     where: { id: raffleId },
                     data: { status: 'drawn' },
                 });
-                this.logger.log(`Sorteo completado para rifa ${raffleId}. Todos los premios asignados.`);
             }
             else {
-                this.logger.log(`Quedan ${pendingPrizes} premios pendientes para rifa ${raffleId}`);
             }
             return {
                 winner: {
@@ -426,7 +416,7 @@ let DrawService = DrawService_1 = class DrawService {
     }
 };
 exports.DrawService = DrawService;
-exports.DrawService = DrawService = DrawService_1 = __decorate([
+exports.DrawService = DrawService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         notifications_service_1.NotificationsService])

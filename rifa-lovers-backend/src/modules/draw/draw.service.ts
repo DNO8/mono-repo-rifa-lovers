@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable , NotFoundException, BadRequestException } from '@nestjs/common'
 import { randomInt } from 'crypto'
 import { PrismaService } from '../../database/prisma.service'
 import { NotificationsService } from '../notifications/notifications.service'
@@ -36,7 +36,6 @@ export interface AdminDrawResult extends DrawResult {
 
 @Injectable()
 export class DrawService {
-  private readonly logger = new Logger(DrawService.name)
 
   constructor(
     private readonly prisma: PrismaService,
@@ -54,7 +53,6 @@ export class DrawService {
    * Ejecuta el sorteo de un premio específico o el primer premio pendiente
    */
   async executeDraw(raffleId: string, adminUserId: string, prizeId?: string): Promise<DrawResult> {
-    this.logger.log(`Ejecutando sorteo para rifa ${raffleId} por admin ${adminUserId}${prizeId ? ` para premio ${prizeId}` : ''}`)
 
     // 1. Validar que la rifa existe y está en estado 'closed'
     const raffle = await this.prisma.raffle.findUnique({
@@ -79,9 +77,7 @@ export class DrawService {
       orderBy: { milestone: { sortOrder: 'asc' } }
     })
     
-    this.logger.log(`[DEBUG] Total premios en rifa: ${allPrizes.length}`)
     allPrizes.forEach((p, idx) => {
-      this.logger.log(`[DEBUG] Premio ${idx + 1}: id=${p.id}, name=${p.name}, milestoneUnlocked=${p.milestone?.isUnlocked}, winnersCount=${p.prizeWinners?.length || 0}`)
     })
 
     // 2. Obtener el premio a sortear
@@ -130,7 +126,6 @@ export class DrawService {
       throw new BadRequestException('Este premio ya tiene un ganador asignado')
     }
 
-    this.logger.log(`Sorteando premio: ${prizeToDraw.name}`)
 
     // Safety: prizeToDraw is guaranteed non-null at this point
     const prize = prizeToDraw
@@ -164,7 +159,6 @@ export class DrawService {
         throw new BadRequestException('No hay LuckyPasses activos disponibles para el sorteo')
       }
 
-      this.logger.log(`${activePasses.length} LuckyPasses activos participando (dentro de transacción)`)
 
       // Seleccionar ganador aleatoriamente y obtener con usuario
       const winnerIndex = randomInt(0, activePasses.length)
@@ -201,7 +195,6 @@ export class DrawService {
 
       const userFullName = this.buildUserFullName(winnerPass.user)
 
-      this.logger.log(`Ganador asignado: Prize=${prize.name}, Pass=${winnerPass.ticketNumber}, User=${winnerPass.user?.email ?? 'N/A'}`)
 
       // Verificar si quedan premios pendientes (dentro de la transacción para atomicidad)
       const pendingPrizes = await tx.prize.count({
@@ -230,9 +223,7 @@ export class DrawService {
           data: { status: 'drawn' },
         })
 
-        this.logger.log(`Sorteo completado para rifa ${raffleId}. Todos los premios asignados.`)
       } else {
-        this.logger.log(`Quedan ${pendingPrizes} premios pendientes para rifa ${raffleId}`)
       }
 
       return {

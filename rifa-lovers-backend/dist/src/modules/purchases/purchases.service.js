@@ -41,7 +41,6 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var PurchasesService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PurchasesService = void 0;
 const common_1 = require("@nestjs/common");
@@ -54,26 +53,22 @@ const purchase_mapper_1 = require("./mappers/purchase.mapper");
 const date_fns_1 = require("date-fns");
 const locale_1 = require("date-fns/locale");
 const crypto = __importStar(require("crypto"));
-let PurchasesService = PurchasesService_1 = class PurchasesService {
+let PurchasesService = class PurchasesService {
     constructor(purchasesRepository, packsRepository, rafflesRepository, prisma, resendService) {
         this.purchasesRepository = purchasesRepository;
         this.packsRepository = packsRepository;
         this.rafflesRepository = rafflesRepository;
         this.prisma = prisma;
         this.resendService = resendService;
-        this.logger = new common_1.Logger(PurchasesService_1.name);
     }
     async findByUser(userId) {
-        this.logger.debug(`Buscando compras del usuario: ${userId}`);
         const purchases = await this.purchasesRepository.findByUser(userId, {
             raffle: true,
             userPacks: { include: { pack: true } },
         });
-        this.logger.debug(`Encontradas ${purchases.length} compras para el usuario ${userId}`);
         return purchases.map((purchase) => (0, purchase_mapper_1.mapPurchaseToDto)(purchase));
     }
     async create(userId, createDto) {
-        this.logger.debug(`Creando compra: userId=${userId}, raffleId=${createDto.raffleId}, packId=${createDto.packId}, qty=${createDto.quantity}`);
         if (!createDto.raffleId) {
             throw new common_1.BadRequestException('El ID de la rifa es requerido');
         }
@@ -109,7 +104,6 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 selectedNumbers: createDto.selectedNumbers,
                 pack,
             });
-            this.logger.log(`Compra creada exitosamente: ${result.purchase.id}`);
             return {
                 id: result.purchase.id,
                 raffleId: raffle.id,
@@ -129,23 +123,18 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
         catch (error) {
             const msg = error instanceof Error ? error.message : 'Unknown error';
             const stack = error instanceof Error ? error.stack : undefined;
-            this.logger.error(`Error creando compra: ${msg}`, stack);
             throw error;
         }
     }
     async findById(id) {
-        this.logger.debug(`Buscando compra por ID: ${id}`);
         const purchase = await this.purchasesRepository.findUnique({ id }, { raffle: true });
         if (!purchase) {
-            this.logger.warn(`Compra no encontrada: ${id}`);
             throw new common_1.NotFoundException(`Compra con ID ${id} no encontrada`);
         }
         return (0, purchase_mapper_1.mapPurchaseToDto)(purchase);
     }
     async updateStatus(id, status) {
-        this.logger.debug(`Actualizando estado de compra ${id} a: ${status}`);
         const purchase = await this.purchasesRepository.updateStatus(id, status, status === 'paid' ? new Date() : undefined);
-        this.logger.log(`Estado de compra ${id} actualizado a: ${status}`);
         const purchaseWithRaffle = await this.purchasesRepository.findUnique({ id: purchase.id }, { raffle: true });
         if (!purchaseWithRaffle) {
             throw new common_1.NotFoundException('Error al recuperar la compra actualizada');
@@ -153,17 +142,14 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
         return (0, purchase_mapper_1.mapPurchaseToDto)(purchaseWithRaffle);
     }
     async confirmPayment(purchaseId, paymentData) {
-        this.logger.debug(`Confirmando pago para compra: ${purchaseId}`);
         const existing = await this.purchasesRepository.findUnique({ id: purchaseId }, { raffle: true, userPacks: { include: { pack: true } } });
         if (!existing) {
             throw new common_1.NotFoundException(`Compra ${purchaseId} no encontrada`);
         }
         if (existing.status === 'paid') {
-            this.logger.warn(`Compra ${purchaseId} ya fue confirmada, ignorando duplicado`);
             return (0, purchase_mapper_1.mapPurchaseToDto)(existing);
         }
         if (existing.status === 'failed') {
-            this.logger.warn(`Compra ${purchaseId} ya fue invalidada, rechazando confirmación`);
             throw new common_1.BadRequestException('Esta compra ya fue invalidada. Crea una nueva compra para participar.');
         }
         await this.prisma.$transaction(async (tx) => {
@@ -192,7 +178,6 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
         WHERE purchase_id = ${purchaseId}::uuid
       `;
             const reservedNumbers = reservedTickets.map((r) => r.ticket_number);
-            this.logger.debug(`Tickets reservados para purchase=${purchaseId}: ${reservedNumbers.join(', ')}`);
             await tx.$queryRaw `
         SELECT id FROM public.raffles WHERE id = ${raffleId}::uuid FOR UPDATE
       `;
@@ -233,13 +218,11 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                     });
                 }
                 await tx.luckyPass.createMany({ data: luckyPassData });
-                this.logger.debug(`Generados ${count} LuckyPasses para userPack ${userPack.id}`);
             }
             if (reservedNumbers.length > 0) {
                 await tx.$executeRaw `
           DELETE FROM public.ticket_reservations WHERE purchase_id = ${purchaseId}::uuid
         `;
-                this.logger.debug(`Reservas liberadas para purchase=${purchaseId}`);
             }
             const raffle = await tx.raffle.findUnique({ where: { id: raffleId } });
             const totalQuantity = userPacks.reduce((sum, up) => sum + up.quantity, 0);
@@ -284,7 +267,6 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                     });
                 }
             }
-            this.logger.log(`Pago confirmado: purchase=${purchaseId}, luckyPasses=${totalLuckyPasses}, packsSold=${totalQuantity}`);
         });
         const purchaseWithDetails = await this.prisma.purchase.findUnique({
             where: { id: purchaseId },
@@ -326,7 +308,6 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 ticketNumbers,
             })
                 .catch((err) => {
-                this.logger.error(`Error enviando email de compra: ${err}`);
             });
         }
         return (0, purchase_mapper_1.mapPurchaseToDto)(purchaseWithDetails);
@@ -346,7 +327,6 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
         return paymentTx?.purchase ?? null;
     }
     async createFreePurchase(userId, createDto) {
-        this.logger.debug(`Creando compra gratuita: userId=${userId}, raffleId=${createDto.raffleId}, packId=${createDto.packId}`);
         if (!createDto.raffleId) {
             throw new common_1.BadRequestException('El ID de la rifa es requerido');
         }
@@ -421,7 +401,6 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
                 provider: 'Rifalovers',
                 status: 'approved',
             });
-            this.logger.log(`Compra gratuita creada exitosamente: ${result.purchase.id}`);
             return {
                 id: result.purchase.id,
                 raffleId: raffle.id,
@@ -441,12 +420,10 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
         catch (error) {
             const msg = error instanceof Error ? error.message : 'Unknown error';
             const stack = error instanceof Error ? error.stack : undefined;
-            this.logger.error(`Error creando compra gratuita: ${msg}`, stack);
             throw error;
         }
     }
     async getRecentPurchases() {
-        this.logger.debug('Obteniendo compras recientes para ticker');
         const purchases = await this.prisma.purchase.findMany({
             where: { status: 'paid', paidAt: { not: null } },
             orderBy: { paidAt: 'desc' },
@@ -486,7 +463,7 @@ let PurchasesService = PurchasesService_1 = class PurchasesService {
     }
 };
 exports.PurchasesService = PurchasesService;
-exports.PurchasesService = PurchasesService = PurchasesService_1 = __decorate([
+exports.PurchasesService = PurchasesService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [purchases_repository_1.PurchasesRepository,
         packs_repository_1.PacksRepository,

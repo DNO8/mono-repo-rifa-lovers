@@ -41,16 +41,14 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var FlowService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FlowService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const crypto = __importStar(require("crypto"));
-let FlowService = FlowService_1 = class FlowService {
+let FlowService = class FlowService {
     constructor(configService) {
         this.configService = configService;
-        this.logger = new common_1.Logger(FlowService_1.name);
         this.apiKey = this.configService.get('FLOW_API_KEY') || '';
         this.secretKey = this.configService.get('FLOW_SECRET_KEY') || '';
         this.baseUrl = this.configService.get('FLOW_BASE_URL') || 'https://sandbox.flow.cl/api';
@@ -63,7 +61,6 @@ let FlowService = FlowService_1 = class FlowService {
                 flowOrder: parseInt(`99${Date.now().toString().slice(-6)}`),
             };
         }
-        this.logger.debug(`Creando orden de pago Flow: ${commerceOrder}, $${amount}`);
         const params = {
             apiKey: this.apiKey,
             commerceOrder,
@@ -75,17 +72,12 @@ let FlowService = FlowService_1 = class FlowService {
             urlReturn: returnUrl,
         };
         const signature = this.generateSignature(params);
-        this.logger.debug(`Flow API Key: ${this.apiKey.substring(0, 10)}...`);
-        this.logger.debug(`Flow Base URL: ${this.baseUrl}`);
-        this.logger.debug(`Signature: ${signature.substring(0, 20)}...`);
         const body = new URLSearchParams();
         for (const [key, value] of Object.entries(params)) {
             body.append(key, String(value));
         }
         body.append('s', signature);
-        this.logger.debug(`Request body: ${body.toString().substring(0, 100)}...`);
         try {
-            this.logger.debug(`Sending request to: ${this.baseUrl}/payment/create`);
             const response = await fetch(`${this.baseUrl}/payment/create`, {
                 method: 'POST',
                 headers: {
@@ -98,11 +90,9 @@ let FlowService = FlowService_1 = class FlowService {
                 throw new Error(`Flow API error: ${response.status} - ${errorText}`);
             }
             const data = (await response.json());
-            this.logger.log(`Orden Flow creada: ${data.flowOrder}, token: ${data.token}`);
             return data;
         }
         catch (error) {
-            this.logger.error(`Error creando orden Flow: ${error instanceof Error ? error.message : String(error)}`);
             throw error;
         }
     }
@@ -129,7 +119,6 @@ let FlowService = FlowService_1 = class FlowService {
                 },
             };
         }
-        this.logger.debug(`Consultando estado de pago: ${token}`);
         const params = { apiKey: this.apiKey, token };
         const signature = this.generateSignature(params);
         const url = new URL(`${this.baseUrl}/payment/getStatus`);
@@ -143,11 +132,9 @@ let FlowService = FlowService_1 = class FlowService {
                 throw new Error(`Flow API error: ${response.status} - ${errorText}`);
             }
             const data = (await response.json());
-            this.logger.debug(`Flow payment status: order=${data.commerceOrder}, status=${data.status}`);
             return data;
         }
         catch (error) {
-            this.logger.error(`Error consultando estado Flow: ${error instanceof Error ? error.message : String(error)}`);
             throw error;
         }
     }
@@ -161,7 +148,7 @@ let FlowService = FlowService_1 = class FlowService {
     }
 };
 exports.FlowService = FlowService;
-exports.FlowService = FlowService = FlowService_1 = __decorate([
+exports.FlowService = FlowService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], FlowService);

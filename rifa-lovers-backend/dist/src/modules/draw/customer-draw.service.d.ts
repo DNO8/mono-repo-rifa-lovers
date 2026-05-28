@@ -35,7 +35,6 @@ export interface CustomerDrawResult {
 export declare class CustomerDrawService {
     private readonly drawService;
     private readonly rafflesRepository;
-    private readonly logger;
     constructor(drawService: DrawService, rafflesRepository: RafflesRepository);
     checkCustomerDrawAvailability(raffleId: string, customerUserId: string): Promise<CustomerDrawAvailability>;
     executeCustomerDraw(raffleId: string, customerUserId: string): Promise<CustomerDrawResult>;

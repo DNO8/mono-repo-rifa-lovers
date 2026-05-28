@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common'
+import { Injectable , NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../../database/prisma.service'
 import { RaffleStatus, UserRole, PurchaseStatus } from '@prisma/client'
 import { CreatePackDto, UpdatePackDto, CreateOrganizationDto } from './dto'
@@ -56,7 +56,6 @@ export interface PackWithStats {
 
 @Injectable()
 export class OperatorService {
-  private readonly logger = new Logger(OperatorService.name)
 
   constructor(
     private readonly prisma: PrismaService,
@@ -113,7 +112,6 @@ export class OperatorService {
       data: { organizationId: org.id },
     })
 
-    this.logger.log(`Operador ${userId} creo organizacion ${org.id}`)
     return org
   }
 
@@ -209,7 +207,6 @@ export class OperatorService {
 
   async createRaffle(userId: string, dto: CreateRaffleDto): Promise<RaffleWithStats> {
     const orgId = await this.assertOrganization(userId)
-    this.logger.log(`Operador ${userId} creando rifa: ${dto.title}`)
 
     const prizes = dto.prizes ?? []
     const goalPacks = dto.goalPacks

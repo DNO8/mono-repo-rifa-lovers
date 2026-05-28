@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var LuckyPassService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LuckyPassService = void 0;
 const common_1 = require("@nestjs/common");
@@ -16,30 +15,25 @@ const lucky_pass_repository_1 = require("./lucky-pass.repository");
 const raffles_repository_1 = require("../raffles/raffles.repository");
 const prisma_service_1 = require("../../database/prisma.service");
 const lucky_pass_mapper_1 = require("./mappers/lucky-pass.mapper");
-let LuckyPassService = LuckyPassService_1 = class LuckyPassService {
+let LuckyPassService = class LuckyPassService {
     constructor(luckyPassRepository, rafflesRepository, prisma) {
         this.luckyPassRepository = luckyPassRepository;
         this.rafflesRepository = rafflesRepository;
         this.prisma = prisma;
-        this.logger = new common_1.Logger(LuckyPassService_1.name);
     }
     async findByUser(userId) {
-        this.logger.debug(`Buscando lucky passes del usuario: ${userId}`);
         const passes = await this.luckyPassRepository.findByUser(userId, {
             raffle: true,
         });
-        this.logger.debug(`Encontrados ${passes.length} lucky passes para el usuario ${userId}`);
         return passes.map((pass) => (0, lucky_pass_mapper_1.mapLuckyPassToDto)(pass));
     }
     async getSummary(userId) {
-        this.logger.debug(`Obteniendo resumen de lucky passes para usuario: ${userId}`);
         const [total, active, used, winners,] = await Promise.all([
             this.luckyPassRepository.countByUserAndStatus(userId),
             this.luckyPassRepository.countByUserAndStatus(userId, 'active'),
             this.luckyPassRepository.countByUserAndStatus(userId, 'used'),
             this.luckyPassRepository.countWinnersByUser(userId),
         ]);
-        this.logger.debug(`Resumen lucky passes usuario ${userId}: total=${total}, activos=${active}, ganadores=${winners}`);
         return {
             totalPasses: total,
             activePasses: active,
@@ -49,16 +43,13 @@ let LuckyPassService = LuckyPassService_1 = class LuckyPassService {
         };
     }
     async findById(id) {
-        this.logger.debug(`Buscando lucky pass por ID: ${id}`);
         const pass = await this.luckyPassRepository.findUnique({ id }, { raffle: true });
         if (!pass) {
-            this.logger.warn(`Lucky pass no encontrado: ${id}`);
             throw new common_1.NotFoundException(`Lucky pass con ID ${id} no encontrado`);
         }
         return (0, lucky_pass_mapper_1.mapLuckyPassToDto)(pass);
     }
     async findByRaffle(raffleId) {
-        this.logger.debug(`Buscando lucky passes de rifa: ${raffleId}`);
         const passes = await this.luckyPassRepository.findByRaffle(raffleId, {
             user: {
                 select: {
@@ -102,9 +93,7 @@ let LuckyPassService = LuckyPassService_1 = class LuckyPassService {
         return { available: !isReserved };
     }
     async markAsWinner(id) {
-        this.logger.debug(`Marcando lucky pass ${id} como ganador`);
         const pass = await this.luckyPassRepository.markAsWinner(id);
-        this.logger.log(`Lucky pass ${id} marcado como ganador`);
         const passWithRaffle = await this.luckyPassRepository.findUnique({ id: pass.id }, { raffle: true });
         if (!passWithRaffle) {
             throw new common_1.NotFoundException('Error al recuperar el lucky pass actualizado');
@@ -113,7 +102,7 @@ let LuckyPassService = LuckyPassService_1 = class LuckyPassService {
     }
 };
 exports.LuckyPassService = LuckyPassService;
-exports.LuckyPassService = LuckyPassService = LuckyPassService_1 = __decorate([
+exports.LuckyPassService = LuckyPassService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [lucky_pass_repository_1.LuckyPassRepository,
         raffles_repository_1.RafflesRepository,

@@ -6,7 +6,6 @@ export declare class UsersService {
     private readonly prisma;
     private readonly resendService;
     private readonly config;
-    private readonly logger;
     constructor(prisma: PrismaService, resendService: ResendService, config: ConfigService);
     findAll(params: {
         skip?: number;

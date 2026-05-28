@@ -59,7 +59,6 @@ export interface PromotedRoleData {
 }
 export declare class ResendService {
     private readonly config;
-    private readonly logger;
     private readonly resend;
     constructor(config: ConfigService);
     private getFromEmail;

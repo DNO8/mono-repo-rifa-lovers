@@ -41,7 +41,6 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var JobsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobsService = void 0;
 const common_1 = require("@nestjs/common");
@@ -53,7 +52,7 @@ const resend_service_1 = require("../email/resend.service");
 const flow_service_1 = require("../payments/flow.service");
 const purchases_service_1 = require("../purchases/purchases.service");
 const cron = __importStar(require("node-cron"));
-let JobsService = JobsService_1 = class JobsService {
+let JobsService = class JobsService {
     constructor(prisma, raffleSchedulerService, ticketReservationsRepository, resendService, flowService, purchasesService) {
         this.prisma = prisma;
         this.raffleSchedulerService = raffleSchedulerService;
@@ -61,11 +60,9 @@ let JobsService = JobsService_1 = class JobsService {
         this.resendService = resendService;
         this.flowService = flowService;
         this.purchasesService = purchasesService;
-        this.logger = new common_1.Logger(JobsService_1.name);
         this.tasks = [];
     }
     onModuleInit() {
-        this.logger.log('Inicializando jobs automáticos...');
         this.tasks.push(cron.schedule('*/5 * * * *', () => {
             void this.autoSoldOut();
         }));
@@ -84,22 +81,12 @@ let JobsService = JobsService_1 = class JobsService {
         this.tasks.push(cron.schedule('* * * * *', () => {
             void this.expireTicketReservations();
         }));
-        this.logger.log('✅ Jobs automáticos iniciados:');
-        this.logger.log('   • Auto SOLD_OUT: cada 5 minutos');
-        this.logger.log('   • Auto CLOSED: cada 5 minutos');
-        this.logger.log('   • Check Pending Payments: cada 3 minutos');
-        this.logger.log('   • Expire Purchases: cada 15 minutos');
-        this.logger.log('   • Close by EndDate: cada minuto');
-        this.logger.log('   • Expire Ticket Reservations: cada minuto');
     }
     onModuleDestroy() {
-        this.logger.log('Deteniendo jobs automáticos...');
         for (const task of this.tasks)
             void task.stop();
-        this.logger.log('✅ Jobs detenidos');
     }
     async autoSoldOut() {
-        this.logger.log('[JOB] Ejecutando Auto SOLD_OUT...');
         try {
             const rafflesToUpdate = await this.prisma.$queryRaw `
         SELECT r.id, r.title, rp.packs_sold, r.goal_packs
@@ -109,7 +96,6 @@ let JobsService = JobsService_1 = class JobsService {
           AND rp.packs_sold >= r.goal_packs
       `;
             if (rafflesToUpdate.length === 0) {
-                this.logger.log('[JOB] Auto SOLD_OUT: No hay rifas para actualizar');
                 return;
             }
             for (const raffle of rafflesToUpdate) {
@@ -117,16 +103,12 @@ let JobsService = JobsService_1 = class JobsService {
                     where: { id: raffle.id },
                     data: { status: client_1.RaffleStatus.sold_out },
                 });
-                this.logger.log(`[JOB] Rifa "${raffle.title || 'Sin título'}" (${raffle.id}) marcada como SOLD_OUT (${raffle.packs_sold}/${raffle.goal_packs} packs)`);
             }
-            this.logger.log(`[JOB] Auto SOLD_OUT completado: ${rafflesToUpdate.length} rifas actualizadas`);
         }
         catch (error) {
-            this.logger.error('[JOB] Error en Auto SOLD_OUT:', error);
         }
     }
     async autoClosed() {
-        this.logger.log('[JOB] Ejecutando Auto CLOSED...');
         try {
             const now = new Date();
             const rafflesToClose = await this.prisma.raffle.findMany({
@@ -146,7 +128,6 @@ let JobsService = JobsService_1 = class JobsService {
                 },
             });
             if (rafflesToClose.length === 0) {
-                this.logger.log('[JOB] Auto CLOSED: No hay rifas para cerrar');
                 return;
             }
             for (const raffle of rafflesToClose) {
@@ -154,16 +135,12 @@ let JobsService = JobsService_1 = class JobsService {
                     where: { id: raffle.id },
                     data: { status: client_1.RaffleStatus.closed },
                 });
-                this.logger.log(`[JOB] Rifa "${raffle.title || 'Sin título'}" (${raffle.id}) cerrada automáticamente (estaba: ${raffle.status})`);
             }
-            this.logger.log(`[JOB] Auto CLOSED completado: ${rafflesToClose.length} rifas cerradas`);
         }
         catch (error) {
-            this.logger.error('[JOB] Error en Auto CLOSED:', error);
         }
     }
     async expirePendingPurchases() {
-        this.logger.log('[JOB] Ejecutando expiración de purchases...');
         try {
             const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
             const purchasesToExpire = await this.prisma.purchase.findMany({
@@ -188,7 +165,6 @@ let JobsService = JobsService_1 = class JobsService {
                 },
             });
             if (purchasesToExpire.length === 0) {
-                this.logger.log('[JOB] No hay purchases para expirar');
                 return;
             }
             const CONCURRENCY = 5;
@@ -205,14 +181,11 @@ let JobsService = JobsService_1 = class JobsService {
                     }
                     else {
                         results.errors++;
-                        this.logger.error(`[JOB] Error procesando purchase: ${result.reason}`);
                     }
                 });
             }
-            this.logger.log(`[JOB] Expiración completada: ${purchasesToExpire.length} procesadas — confirmadas=${results.confirmed}, failed=${results.failed}, errores=${results.errors}`);
         }
         catch (error) {
-            this.logger.error('[JOB] Error en expiración de purchases:', error);
         }
     }
     async processExpiredPurchase(purchase) {
@@ -222,72 +195,13 @@ let JobsService = JobsService_1 = class JobsService {
             try {
                 const paymentStatus = await this.flowService.getPaymentStatus(token);
                 flowStatus = paymentStatus.status;
-                this.logger.log(`[JOB] Flow status para purchase ${purchase.id}: ${flowStatus}`);
             }
             catch (err) {
-                this.logger.error(`[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
             }
         }
-        if (flowStatus === 2) {
-            this.logger.log(`[JOB] Purchase ${purchase.id} está pagada en Flow. Confirmando...`);
-            try {
-                await this.purchasesService.confirmPayment(purchase.id, {
-                    providerTransactionId: token ?? 'unknown',
-                    provider: 'flow',
-                    status: 'approved',
-                });
-                return 'confirmed';
-            }
-            catch (err) {
-                this.logger.error(`[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
-                throw err;
-            }
-        }
-        try {
-            await this.prisma.purchase.update({
-                where: { id: purchase.id },
-                data: { status: client_1.PurchaseStatus.failed },
-            });
-            await this.prisma.paymentTransaction.updateMany({
-                where: { purchaseId: purchase.id },
-                data: { status: 'rejected', idempotencyKey: null },
-            });
-        }
-        catch (dbErr) {
-            this.logger.error(`[JOB] Error actualizando purchase ${purchase.id} a failed: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
-            throw dbErr;
-        }
-        try {
-            const user = purchase.user;
-            if (user?.email) {
-                if (flowStatus === 3 || flowStatus === 4) {
-                    void this.resendService.sendFailedPaymentEmail({
-                        toEmail: user.email,
-                        toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
-                        purchaseId: purchase.id,
-                        raffleName: purchase.raffle?.title ?? null,
-                        amount: Number(purchase.totalAmount ?? 0),
-                    });
-                }
-                else {
-                    void this.resendService.sendIncompletePaymentEmail({
-                        toEmail: user.email,
-                        toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
-                        purchaseId: purchase.id,
-                        raffleName: purchase.raffle?.title ?? null,
-                        amount: Number(purchase.totalAmount ?? 0),
-                    });
-                }
-            }
-        }
-        catch (err) {
-            this.logger.error(`Error enviando email desde job: ${err instanceof Error ? err.message : String(err)}`);
-        }
-        this.logger.log(`[JOB] Purchase ${purchase.id} marcada como failed (Flow status: ${flowStatus})`);
         return 'failed';
     }
     async checkPendingPaymentsStatus() {
-        this.logger.log('[JOB] Ejecutando verificación temprana de pagos pendientes...');
         try {
             const now = Date.now();
             const threeMinutesAgo = new Date(now - 3 * 60 * 1000);
@@ -317,7 +231,6 @@ let JobsService = JobsService_1 = class JobsService {
             if (purchasesToCheck.length === 0) {
                 return;
             }
-            this.logger.log(`[JOB] Verificando ${purchasesToCheck.length} pagos pendientes con Flow...`);
             for (const purchase of purchasesToCheck) {
                 const token = purchase.paymentTransactions[0]?.providerTransactionId;
                 if (!token)
@@ -326,14 +239,11 @@ let JobsService = JobsService_1 = class JobsService {
                 try {
                     const paymentStatus = await this.flowService.getPaymentStatus(token);
                     flowStatus = paymentStatus.status;
-                    this.logger.log(`[JOB] Flow status temprano para purchase ${purchase.id}: ${flowStatus}`);
                 }
                 catch (err) {
-                    this.logger.error(`[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
                     continue;
                 }
                 if (flowStatus === 2) {
-                    this.logger.log(`[JOB] Purchase ${purchase.id} pagada en Flow. Confirmando...`);
                     try {
                         await this.purchasesService.confirmPayment(purchase.id, {
                             providerTransactionId: token,
@@ -342,11 +252,9 @@ let JobsService = JobsService_1 = class JobsService {
                         });
                     }
                     catch (err) {
-                        this.logger.error(`[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`);
                     }
                 }
                 else if (flowStatus === 3 || flowStatus === 4) {
-                    this.logger.log(`[JOB] Purchase ${purchase.id} rechazada/anulada en Flow. Marcando failed...`);
                     try {
                         await this.prisma.purchase.update({
                             where: { id: purchase.id },
@@ -358,7 +266,6 @@ let JobsService = JobsService_1 = class JobsService {
                         });
                     }
                     catch (dbErr) {
-                        this.logger.error(`[JOB] Error actualizando purchase ${purchase.id}: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
                         continue;
                     }
                     const user = purchase.user;
@@ -373,40 +280,32 @@ let JobsService = JobsService_1 = class JobsService {
                     }
                 }
             }
-            this.logger.log(`[JOB] Verificación temprana completada: ${purchasesToCheck.length} purchases revisadas`);
         }
         catch (error) {
-            this.logger.error('[JOB] Error en verificación temprana de pagos:', error);
         }
     }
     async closeExpiredRafflesByEndDate() {
         try {
             const result = await this.raffleSchedulerService.closeExpiredRaffles();
             if (result.closed > 0) {
-                this.logger.log(`✅ Auto-cierre por endDate: ${result.closed} rifas cerradas`);
             }
             if (result.errors.length > 0) {
-                this.logger.error(`❌ Errores en auto-cierre: ${result.errors.join(', ')}`);
             }
         }
         catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Error ejecutando auto-cierre por endDate: ${message}`);
         }
     }
     async expireTicketReservations() {
         try {
             const deleted = await this.ticketReservationsRepository.deleteExpired();
             if (deleted > 0) {
-                this.logger.log(`[JOB] Expiradas ${deleted} reservas de tickets vencidas`);
             }
         }
         catch (error) {
-            this.logger.error('[JOB] Error expirando reservas de tickets:', error);
         }
     }
     async runJobManually(jobName) {
-        this.logger.log(`[JOB MANUAL] Ejecutando ${jobName} manualmente...`);
         try {
             switch (jobName) {
                 case 'sold_out':
@@ -423,7 +322,6 @@ let JobsService = JobsService_1 = class JobsService {
             }
         }
         catch (error) {
-            this.logger.error(`[JOB MANUAL] Error ejecutando ${jobName}:`, error);
             return { success: false, message: `Error: ${error}` };
         }
     }
@@ -446,7 +344,7 @@ let JobsService = JobsService_1 = class JobsService {
     }
 };
 exports.JobsService = JobsService;
-exports.JobsService = JobsService = JobsService_1 = __decorate([
+exports.JobsService = JobsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         raffle_scheduler_service_1.RaffleSchedulerService,

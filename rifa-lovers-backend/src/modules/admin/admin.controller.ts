@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Logger } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
 import { AdminService, Participant, KpiData, RaffleWithStats } from './admin.service'
@@ -11,7 +11,6 @@ import { JobsService } from '../jobs/jobs.service'
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), new RolesGuard([UserRole.admin, UserRole.operator]))
 export class AdminController {
-  private readonly logger = new Logger(AdminController.name)
 
   constructor(
     private readonly adminService: AdminService,
@@ -26,13 +25,11 @@ export class AdminController {
     @Body() dto: CreateRaffleDto,
     @CurrentUser('id') adminId: string,
   ) {
-    this.logger.log(`POST /admin/raffles - Admin: ${adminId}`)
     return this.adminService.createRaffle(adminId, dto)
   }
 
   @Get('raffles')
   async getAllRaffles(): Promise<RaffleWithStats[]> {
-    this.logger.log('GET /admin/raffles')
     return this.adminService.getAllRaffles()
   }
 
@@ -41,7 +38,6 @@ export class AdminController {
     @Param('id') raffleId: string,
     @Body() dto: UpdateRaffleDto,
   ) {
-    this.logger.log(`PATCH /admin/raffles/${raffleId}`)
     return this.adminService.updateRaffle(raffleId, dto)
   }
 
@@ -50,7 +46,6 @@ export class AdminController {
     @Param('id') raffleId: string,
     @Body() dto: UpdateRaffleStatusDto,
   ) {
-    this.logger.log(`PATCH /admin/raffles/${raffleId}/status`)
     return this.adminService.updateRaffleStatus(raffleId, dto)
   }
 
@@ -58,19 +53,16 @@ export class AdminController {
 
   @Get('raffles/:id/detail')
   async getRaffleById(@Param('id') raffleId: string) {
-    this.logger.log(`GET /admin/raffles/${raffleId}/detail`)
     return this.adminService.getRaffleDetail(raffleId)
   }
 
   @Get('raffles/:id/participants')
   async getRaffleParticipants(@Param('id') raffleId: string): Promise<Participant[]> {
-    this.logger.log(`GET /admin/raffles/${raffleId}/participants`)
     return this.adminService.getRaffleParticipants(raffleId)
   }
 
   @Get('raffles/:id/draw/status')
   async getDrawStatus(@Param('id') raffleId: string) {
-    this.logger.log(`GET /admin/raffles/${raffleId}/draw/status`)
     const canExecute = await this.drawService.canExecuteDraw(raffleId)
     const results = await this.drawService.getDrawResults(raffleId)
     return {
@@ -85,7 +77,6 @@ export class AdminController {
     @CurrentUser('id') operatorId: string,
     @Body('prizeId') prizeId?: string,
   ) {
-    this.logger.log(`POST /admin/raffles/${raffleId}/draw - Operator: ${operatorId}${prizeId ? ` for prize ${prizeId}` : ''}`)
     return this.drawService.executeDraw(raffleId, operatorId, prizeId)
   }
 
@@ -94,7 +85,6 @@ export class AdminController {
     @Param('id') raffleId: string,
     @CurrentUser('id') operatorId: string,
   ) {
-    this.logger.log(`POST /admin/raffles/${raffleId}/draw/reset - Operator: ${operatorId}`)
     return this.drawService.resetDraw(raffleId, operatorId)
   }
 
@@ -102,7 +92,6 @@ export class AdminController {
 
   @Get('kpis')
   async getKpis(): Promise<KpiData> {
-    this.logger.log('GET /admin/kpis')
     return this.adminService.getKpis()
   }
 
@@ -113,7 +102,6 @@ export class AdminController {
     @Query('skip') skip?: string,
     @Query('take') take?: string,
   ) {
-    this.logger.log('GET /admin/users')
     const skipNum = skip ? parseInt(skip, 10) : 0
     const takeNum = take ? parseInt(take, 10) : 50
     return this.adminService.getAllUsers(skipNum, takeNum)
@@ -124,7 +112,6 @@ export class AdminController {
     @Param('id') userId: string,
     @Body() dto: UpdateUserRoleDto,
   ) {
-    this.logger.log(`PATCH /admin/users/${userId}/role`)
     return this.adminService.updateUserRole(userId, dto)
   }
 
@@ -133,7 +120,6 @@ export class AdminController {
     @Param('id') userId: string,
     @Body() dto: UpdateUserStatusDto,
   ) {
-    this.logger.log(`PATCH /admin/users/${userId}/block`)
     return this.adminService.updateUserStatus(userId, dto)
   }
 
@@ -141,7 +127,6 @@ export class AdminController {
 
   @Get('jobs/status')
   async getJobsStatus() {
-    this.logger.log('GET /admin/jobs/status')
     return this.jobsService.getJobsStatus()
   }
 
@@ -149,7 +134,6 @@ export class AdminController {
   async runJobManually(
     @Param('jobName') jobName: 'sold_out' | 'closed' | 'expire_purchases',
   ) {
-    this.logger.log(`POST /admin/jobs/run/${jobName}`)
     return this.jobsService.runJobManually(jobName)
   }
 }

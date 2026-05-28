@@ -2,7 +2,6 @@ import { NewsletterService } from './newsletter.service';
 import { SubscribeDto, SendCampaignDto } from './dto';
 export declare class NewsletterController {
     private readonly newsletterService;
-    private readonly logger;
     constructor(newsletterService: NewsletterService);
     checkSubscription(email: string): Promise<{
         subscribed: boolean;

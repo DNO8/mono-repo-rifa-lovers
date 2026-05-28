@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Injectable , NotFoundException } from '@nestjs/common'
 import { LuckyPassRepository } from './lucky-pass.repository'
 import { RafflesRepository } from '../raffles/raffles.repository'
 import { PrismaService } from '../../database/prisma.service'
@@ -11,7 +11,6 @@ type LuckyPassWithRaffle = LuckyPass & { raffle: Raffle | null }
 
 @Injectable()
 export class LuckyPassService {
-  private readonly logger = new Logger(LuckyPassService.name)
 
   constructor(
     private readonly luckyPassRepository: LuckyPassRepository,
@@ -20,19 +19,16 @@ export class LuckyPassService {
   ) {}
 
   async findByUser(userId: string): Promise<LuckyPassResponseDto[]> {
-    this.logger.debug(`Buscando lucky passes del usuario: ${userId}`)
 
     const passes = await this.luckyPassRepository.findByUser(userId, {
       raffle: true,
     })
 
-    this.logger.debug(`Encontrados ${passes.length} lucky passes para el usuario ${userId}`)
 
     return passes.map((pass) => mapLuckyPassToDto(pass as LuckyPassWithRaffle))
   }
 
   async getSummary(userId: string): Promise<LuckyPassSummaryDto> {
-    this.logger.debug(`Obteniendo resumen de lucky passes para usuario: ${userId}`)
 
     const [
       total,
@@ -46,7 +42,6 @@ export class LuckyPassService {
       this.luckyPassRepository.countWinnersByUser(userId),
     ])
 
-    this.logger.debug(`Resumen lucky passes usuario ${userId}: total=${total}, activos=${active}, ganadores=${winners}`)
 
     return {
       totalPasses: total,
@@ -58,7 +53,6 @@ export class LuckyPassService {
   }
 
   async findById(id: string): Promise<LuckyPassResponseDto> {
-    this.logger.debug(`Buscando lucky pass por ID: ${id}`)
 
     const pass = await this.luckyPassRepository.findUnique(
       { id },
@@ -66,7 +60,6 @@ export class LuckyPassService {
     )
 
     if (!pass) {
-      this.logger.warn(`Lucky pass no encontrado: ${id}`)
       throw new NotFoundException(`Lucky pass con ID ${id} no encontrado`)
     }
 
@@ -74,7 +67,6 @@ export class LuckyPassService {
   }
 
   async findByRaffle(raffleId: string): Promise<LuckyPassResponseDto[]> {
-    this.logger.debug(`Buscando lucky passes de rifa: ${raffleId}`)
 
     const passes = await this.luckyPassRepository.findByRaffle(raffleId, {
       user: {
@@ -125,11 +117,9 @@ export class LuckyPassService {
   }
 
   async markAsWinner(id: string): Promise<LuckyPassResponseDto> {
-    this.logger.debug(`Marcando lucky pass ${id} como ganador`)
 
     const pass = await this.luckyPassRepository.markAsWinner(id)
 
-    this.logger.log(`Lucky pass ${id} marcado como ganador`)
 
     // Obtener el pass actualizado con relaciones
     const passWithRaffle = await this.luckyPassRepository.findUnique(

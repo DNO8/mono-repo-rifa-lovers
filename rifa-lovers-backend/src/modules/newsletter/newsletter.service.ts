@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { NewsletterRepository } from './newsletter.repository'
 import { ResendService } from '../email/resend.service'
 import { SubscribeDto } from './dto/subscribe.dto'
@@ -6,7 +6,6 @@ import { SendCampaignDto } from './dto/send-campaign.dto'
 
 @Injectable()
 export class NewsletterService {
-  private readonly logger = new Logger(NewsletterService.name)
 
   constructor(
     private readonly newsletterRepository: NewsletterRepository,
@@ -23,16 +22,13 @@ export class NewsletterService {
 
     if (existing && existing.isActive) {
       // Idempotent: return existing subscriber instead of error
-      this.logger.log(`Suscripción idempotente: ${dto.email} ya está suscrito`)
       return existing
     }
 
     if (existing && !existing.isActive) {
-      this.logger.log(`Reactivando suscripción: ${dto.email}`)
       return this.newsletterRepository.reactivateSubscriber(dto.email, dto.name)
     }
 
-    this.logger.log(`Nueva suscripción: ${dto.email}`)
     return this.newsletterRepository.createSubscriber({
       email: dto.email,
       name: dto.name,
@@ -45,7 +41,6 @@ export class NewsletterService {
       return { message: 'No estás suscrito al newsletter' }
     }
 
-    this.logger.log(`Desuscribiendo: ${email}`)
     await this.newsletterRepository.deactivateSubscriber(email)
     return { message: 'Te has desuscrito exitosamente' }
   }
@@ -67,7 +62,6 @@ export class NewsletterService {
       return { message: 'No hay suscriptores activos', recipientCount: 0 }
     }
 
-    this.logger.log(`Enviando campaña "${dto.subject}" a ${subscribers.length} suscriptores`)
 
     let sentCount = 0
     const errors: string[] = []
@@ -84,7 +78,6 @@ export class NewsletterService {
         sentCount++
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        this.logger.error(`Error enviando a ${subscriber.email}: ${msg}`)
         errors.push(subscriber.email)
       }
     }
@@ -97,7 +90,6 @@ export class NewsletterService {
       sentAt: new Date(),
     })
 
-    this.logger.log(`Campaña enviada: ${sentCount}/${subscribers.length} exitosos`)
 
     return {
       campaignId: campaign.id,

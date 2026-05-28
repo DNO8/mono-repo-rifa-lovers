@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var AuthController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
@@ -22,13 +21,12 @@ const supabase_service_1 = require("../../config/supabase.service");
 const config_1 = require("@nestjs/config");
 const recaptcha_service_1 = require("../../common/services/recaptcha.service");
 const decorators_1 = require("../../common/decorators");
-let AuthController = AuthController_1 = class AuthController {
+let AuthController = class AuthController {
     constructor(authService, supabaseService, config, recaptchaService) {
         this.authService = authService;
         this.supabaseService = supabaseService;
         this.config = config;
         this.recaptchaService = recaptchaService;
-        this.logger = new common_1.Logger(AuthController_1.name);
     }
     async register(registerDto) {
         if (!registerDto.acceptTerms) {
@@ -93,22 +91,18 @@ let AuthController = AuthController_1 = class AuthController {
             userId = userData.user.id;
         }
         else if (userError) {
-            this.logger.debug(`getUser failed for JWT token, falling back to OTP: ${userError.message}`);
         }
         if (!userId) {
             const { data: verifyData, error: verifyError } = await this.supabaseService.verifyOTP(email, token, 'recovery');
             if (verifyError || !verifyData?.user) {
-                this.logger.warn(`Invalid or expired recovery token for password reset: ${email}`);
                 return { success: false, message: 'Token inválido o expirado.' };
             }
             userId = verifyData.user.id;
         }
         const { error: updateError } = await this.supabaseService.updateUser(userId, { password });
         if (updateError) {
-            this.logger.error(`Failed to update password for user ${userId}: ${updateError.message}`);
             return { success: false, message: 'Error al actualizar la contraseña. Intenta de nuevo.' };
         }
-        this.logger.log(`Password successfully updated for user: ${userId}`);
         return { success: true, message: 'Contraseña actualizada exitosamente.' };
     }
 };
@@ -180,7 +174,7 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "resetPassword", null);
-exports.AuthController = AuthController = AuthController_1 = __decorate([
+exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService,
         supabase_service_1.SupabaseService,

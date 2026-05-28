@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Resend } from 'resend'
 
@@ -70,16 +70,13 @@ export interface PromotedRoleData {
 
 @Injectable()
 export class ResendService {
-  private readonly logger = new Logger(ResendService.name)
   private readonly resend: Resend | null = null
 
   constructor(private readonly config: ConfigService) {
     const apiKey = this.config.get<string>('RESEND_API_KEY')
     if (apiKey) {
       this.resend = new Resend(apiKey)
-      this.logger.log('Resend SDK inicializado')
     } else {
-      this.logger.warn('RESEND_API_KEY no configurada — emails deshabilitados')
     }
   }
 
@@ -91,7 +88,6 @@ export class ResendService {
 
   async sendWinnerEmail(data: WinnerEmailData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Ganador: ${data.toEmail} — ${data.prizeName}`)
       return
     }
 
@@ -116,19 +112,15 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando email a ${data.toEmail}: ${error.message}`)
         return
       }
 
-      this.logger.log(`Email ganador enviado a ${data.toEmail}`)
     } catch (err) {
-      this.logger.error(`Error enviando email a ${data.toEmail}: ${err}`)
     }
   }
 
   async sendContactFormToAdmin(data: ContactFormData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Contacto de ${data.email} — ${data.name}`)
       return
     }
 
@@ -151,19 +143,15 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando contacto: ${error.message}`)
         return
       }
 
-      this.logger.log(`Email de contacto enviado — ${data.email}`)
     } catch (err) {
-      this.logger.error(`Error enviando contacto: ${err}`)
     }
   }
 
   async sendContactConfirmationToUser(data: ContactFormData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Confirmación a ${data.email}`)
       return
     }
 
@@ -183,19 +171,15 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando confirmación: ${error.message}`)
         return
       }
 
-      this.logger.log(`Confirmación enviada a ${data.email}`)
     } catch (err) {
-      this.logger.error(`Error enviando confirmación: ${err}`)
     }
   }
 
   async sendPurchaseConfirmation(data: PurchaseConfirmationData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Compra confirmada: ${data.toEmail} — ${data.purchaseId}`)
       return
     }
 
@@ -223,13 +207,10 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando confirmación de compra a ${data.toEmail}: ${error.message}`)
         return
       }
 
-      this.logger.log(`Confirmación de compra enviada a ${data.toEmail} — ${data.purchaseId}`)
     } catch (err) {
-      this.logger.error(`Error enviando confirmación de compra a ${data.toEmail}: ${err}`)
     }
   }
 
@@ -424,7 +405,6 @@ export class ResendService {
 
   async sendFailedPaymentEmail(data: FailedPaymentData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Pago fallido: ${data.toEmail} — ${data.purchaseId}`)
       return
     }
 
@@ -453,19 +433,15 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando email de pago fallido a ${data.toEmail}: ${error.message}`)
         return
       }
 
-      this.logger.log(`Email de pago fallido enviado a ${data.toEmail}`)
     } catch (err) {
-      this.logger.error(`Error enviando email de pago fallido a ${data.toEmail}: ${err}`)
     }
   }
 
   async sendIncompletePaymentEmail(data: IncompletePaymentData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Pago incompleto: ${data.toEmail} — ${data.purchaseId}`)
       return
     }
 
@@ -494,19 +470,15 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando email de pago incompleto a ${data.toEmail}: ${error.message}`)
         return
       }
 
-      this.logger.log(`Email de pago incompleto enviado a ${data.toEmail}`)
     } catch (err) {
-      this.logger.error(`Error enviando email de pago incompleto a ${data.toEmail}: ${err}`)
     }
   }
 
   async sendPendingPaymentEmail(data: PendingPaymentData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Pago pendiente: ${data.toEmail} — ${data.purchaseId}`)
       return
     }
 
@@ -535,13 +507,10 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando email de pago pendiente a ${data.toEmail}: ${error.message}`)
         return
       }
 
-      this.logger.log(`Email de pago pendiente enviado a ${data.toEmail}`)
     } catch (err) {
-      this.logger.error(`Error enviando email de pago pendiente a ${data.toEmail}: ${err}`)
     }
   }
 
@@ -664,7 +633,6 @@ export class ResendService {
 
   async sendNewsletterEmail(data: NewsletterEmailData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Newsletter a ${data.toEmail}: ${data.subject}`)
       return
     }
 
@@ -686,20 +654,16 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando newsletter a ${data.toEmail}: ${error.message}`)
         throw new Error(error.message)
       }
 
-      this.logger.log(`Newsletter enviado a ${data.toEmail}`)
     } catch (err) {
-      this.logger.error(`Error enviando newsletter a ${data.toEmail}: ${err}`)
       throw err
     }
   }
 
   async sendPromotedRoleEmail(data: PromotedRoleData): Promise<void> {
     if (!this.resend) {
-      this.logger.warn(`[EMAIL SKIP] Rol promovido: ${data.toEmail} — ${data.role}`)
       return
     }
 
@@ -722,13 +686,10 @@ export class ResendService {
       })
 
       if (error) {
-        this.logger.error(`Error enviando email de rol promovido a ${data.toEmail}: ${error.message}`)
         return
       }
 
-      this.logger.log(`Email de rol promovido enviado a ${data.toEmail}`)
     } catch (err) {
-      this.logger.error(`Error enviando email de rol promovido a ${data.toEmail}: ${err}`)
     }
   }
 

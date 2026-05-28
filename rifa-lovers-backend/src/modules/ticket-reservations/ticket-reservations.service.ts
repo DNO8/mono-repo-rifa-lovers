@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Logger,
   ConflictException,
 } from '@nestjs/common'
 import { PrismaService } from '../../database/prisma.service'
@@ -11,8 +10,6 @@ const RESERVATION_TTL_MINUTES = 15
 
 @Injectable()
 export class TicketReservationsService {
-  private readonly logger = new Logger(TicketReservationsService.name)
-
   constructor(
     private readonly reservationsRepository: TicketReservationsRepository,
     private readonly prisma: PrismaService,
@@ -24,8 +21,6 @@ export class TicketReservationsService {
     ticketNumbers: number[],
     purchaseId: string,
   ): Promise<TicketReservationResponseDto[]> {
-    this.logger.debug(`Reservando tickets ${ticketNumbers.join(', ')} para user=${userId}, raffle=${raffleId}`)
-
     const expiresAt = new Date(Date.now() + RESERVATION_TTL_MINUTES * 60 * 1000)
 
     return this.prisma.$transaction(async (tx) => {
@@ -84,8 +79,6 @@ export class TicketReservationsService {
         WHERE purchase_id = ${purchaseId}::uuid
       `
 
-      this.logger.log(`Reservados ${rows.length} tickets para purchase=${purchaseId}`)
-
       return rows.map((r) => ({
         id: r.id,
         raffleId: r.raffle_id,
@@ -109,9 +102,7 @@ export class TicketReservationsService {
   }
 
   async release(purchaseId: string): Promise<void> {
-    this.logger.debug(`Liberando reservas para purchase=${purchaseId}`)
     await this.reservationsRepository.deleteByPurchase(purchaseId)
-    this.logger.log(`Reservas liberadas para purchase=${purchaseId}`)
   }
 
   async convertToLuckyPasses(
@@ -124,12 +115,10 @@ export class TicketReservationsService {
     const reservations = await this.reservationsRepository.findByPurchase(purchaseId, tx)
 
     if (reservations.length === 0) {
-      this.logger.debug(`No hay reservas para purchase=${purchaseId}`)
       return []
     }
 
     const ticketNumbers = reservations.map((r) => r.ticketNumber)
-    this.logger.debug(`Convirtiendo reservas ${ticketNumbers.join(', ')} a LuckyPasses`)
 
     await this.reservationsRepository.deleteByPurchase(purchaseId, tx)
 

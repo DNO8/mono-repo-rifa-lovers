@@ -6,7 +6,6 @@ export declare class LuckyPassService {
     private readonly luckyPassRepository;
     private readonly rafflesRepository;
     private readonly prisma;
-    private readonly logger;
     constructor(luckyPassRepository: LuckyPassRepository, rafflesRepository: RafflesRepository, prisma: PrismaService);
     findByUser(userId: string): Promise<LuckyPassResponseDto[]>;
     getSummary(userId: string): Promise<LuckyPassSummaryDto>;

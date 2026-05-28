@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var TicketReservationsController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TicketReservationsController = void 0;
 const common_1 = require("@nestjs/common");
@@ -20,10 +19,9 @@ const throttler_1 = require("@nestjs/throttler");
 const ticket_reservations_service_1 = require("./ticket-reservations.service");
 const dto_1 = require("./dto");
 const decorators_1 = require("../../common/decorators");
-let TicketReservationsController = TicketReservationsController_1 = class TicketReservationsController {
+let TicketReservationsController = class TicketReservationsController {
     constructor(reservationsService) {
         this.reservationsService = reservationsService;
-        this.logger = new common_1.Logger(TicketReservationsController_1.name);
     }
     async reserve(userId, dto) {
         return this.reservationsService.reserve(userId, dto.raffleId, dto.ticketNumbers, dto.purchaseId);
@@ -72,7 +70,7 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], TicketReservationsController.prototype, "release", null);
-exports.TicketReservationsController = TicketReservationsController = TicketReservationsController_1 = __decorate([
+exports.TicketReservationsController = TicketReservationsController = __decorate([
     (0, common_1.Controller)('ticket-reservations'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
     __metadata("design:paramtypes", [ticket_reservations_service_1.TicketReservationsService])

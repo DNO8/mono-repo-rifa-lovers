@@ -6,7 +6,6 @@ export declare class AdminController {
     private readonly adminService;
     private readonly drawService;
     private readonly jobsService;
-    private readonly logger;
     constructor(adminService: AdminService, drawService: DrawService, jobsService: JobsService);
     createRaffle(dto: CreateRaffleDto, adminId: string): Promise<RaffleWithStats>;
     getAllRaffles(): Promise<RaffleWithStats[]>;

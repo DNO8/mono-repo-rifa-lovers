@@ -10,7 +10,6 @@ export declare class PurchasesService {
     private readonly rafflesRepository;
     private readonly prisma;
     private readonly resendService;
-    private readonly logger;
     constructor(purchasesRepository: PurchasesRepository, packsRepository: PacksRepository, rafflesRepository: RafflesRepository, prisma: PrismaService, resendService: ResendService);
     findByUser(userId: string): Promise<PurchaseResponseDto[]>;
     create(userId: string, createDto: CreatePurchaseDto): Promise<CreatePurchaseResponseDto>;

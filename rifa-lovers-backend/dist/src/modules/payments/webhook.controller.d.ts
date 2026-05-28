@@ -5,7 +5,6 @@ export declare class WebhookController {
     private readonly configService;
     private readonly flowService;
     private readonly purchasesService;
-    private readonly logger;
     constructor(configService: ConfigService, flowService: FlowService, purchasesService: PurchasesService);
     handleFlowWebhook(token: string): Promise<{
         message: string;

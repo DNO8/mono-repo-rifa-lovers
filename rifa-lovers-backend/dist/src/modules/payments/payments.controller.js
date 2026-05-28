@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var PaymentsController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsController = void 0;
 const common_1 = require("@nestjs/common");
@@ -24,7 +23,7 @@ const users_service_1 = require("../users/users.service");
 const resend_service_1 = require("../email/resend.service");
 const decorators_1 = require("../../common/decorators");
 const prisma_service_1 = require("../../database/prisma.service");
-let PaymentsController = PaymentsController_1 = class PaymentsController {
+let PaymentsController = class PaymentsController {
     constructor(configService, flowService, purchasesService, usersService, resendService, prisma) {
         this.configService = configService;
         this.flowService = flowService;
@@ -32,10 +31,8 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         this.usersService = usersService;
         this.resendService = resendService;
         this.prisma = prisma;
-        this.logger = new common_1.Logger(PaymentsController_1.name);
     }
     async initiatePayment(userId, dto) {
-        this.logger.debug(`Iniciando pago para purchase: ${dto.purchaseId}, user: ${userId}`);
         if (dto.idempotencyKey) {
             const existingTransaction = await this.prisma.paymentTransaction.findFirst({
                 where: {
@@ -46,7 +43,6 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
                 },
             });
             if (existingTransaction) {
-                this.logger.warn(`Intento de pago duplicado con idempotencyKey: ${dto.idempotencyKey}`);
                 throw new common_1.ConflictException('Ya existe un pago en proceso para esta solicitud');
             }
         }
@@ -60,7 +56,6 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         }
         const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
         const flowOrder = await this.flowService.createPaymentOrder(purchase.id, `Rifa Lovers - ${purchase.raffleName}`, purchase.totalAmount, user.email, `${backendUrl}/payments/return`, `${backendUrl}/webhooks/flow`);
-        this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`);
         const updateResult = await this.prisma.paymentTransaction.updateMany({
             where: { purchaseId: purchase.id },
             data: {
@@ -69,10 +64,8 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
             },
         });
         if (updateResult.count === 0) {
-            this.logger.error(`No se encontró PaymentTransaction para actualizar: purchaseId=${purchase.id}`);
             throw new common_1.BadRequestException('No se encontró la transacción de pago asociada a esta compra');
         }
-        this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`);
         const paymentUrl = `${flowOrder.url}?token=${flowOrder.token}`;
         try {
             void this.resendService.sendPendingPaymentEmail({
@@ -84,7 +77,6 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
             });
         }
         catch (err) {
-            this.logger.error(`Error enviando email de pago pendiente: ${err instanceof Error ? err.message : String(err)}`);
         }
         return {
             purchaseId: purchase.id,
@@ -95,11 +87,9 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
     }
     async handleFlowReturn(token, res) {
         const frontendUrl = this.configService.get('FRONTEND_URL') || 'http://localhost:5173';
-        this.logger.debug(`Flow return recibido con token: ${token}`);
         if (token) {
             const purchase = await this.purchasesService.findByProviderTransactionId(token);
             if (!purchase) {
-                this.logger.warn(`Token de Flow no encontrado en BD: ${token}`);
                 const redirectUrl = `${frontendUrl}/payment/return?error=not_found`;
                 res.setHeader('Content-Type', 'text/html');
                 res.send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"><script>window.location.replace("${redirectUrl}");</script></head><body></body></html>`);
@@ -113,7 +103,6 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         res.send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"><script>window.location.replace("${redirectUrl}");</script></head><body></body></html>`);
     }
     async retryPayment(userId, purchaseId) {
-        this.logger.debug(`Retry de pago para purchase: ${purchaseId}, user: ${userId}`);
         if (!purchaseId) {
             throw new common_1.NotFoundException('purchaseId requerido');
         }
@@ -133,7 +122,6 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         }
         const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
         const flowOrder = await this.flowService.createPaymentOrder(purchase.id, `Rifa Lovers - ${purchase.raffleName}`, purchase.totalAmount, user.email, `${backendUrl}/payments/return`, `${backendUrl}/webhooks/flow`);
-        this.logger.log(`Retry Flow creado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`);
         await this.prisma.paymentTransaction.updateMany({
             where: { purchaseId: purchase.id },
             data: { providerTransactionId: flowOrder.token, idempotencyKey: null },
@@ -147,13 +135,11 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
         };
     }
     async verifyFlowPaymentStatus(token) {
-        this.logger.debug(`Verificando estado de pago en Flow con token: ${token}`);
         if (!token) {
             throw new common_1.NotFoundException('Token requerido');
         }
         const purchase = await this.purchasesService.findByProviderTransactionId(token);
         if (!purchase) {
-            this.logger.error(`No se encontró compra con providerTransactionId: ${token}`);
             throw new common_1.NotFoundException('Compra no encontrada');
         }
         const MAX_RETRIES = 5;
@@ -164,7 +150,6 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
             const paymentStatus = await this.flowService.getPaymentStatus(token);
             finalStatus = paymentStatus.status;
             flowOrderId = paymentStatus.flowOrder;
-            this.logger.log(`Flow status intento ${attempt + 1}/${MAX_RETRIES}: order=${paymentStatus.commerceOrder}, status=${finalStatus}`);
             if (finalStatus !== 1) {
                 break;
             }
@@ -179,16 +164,13 @@ let PaymentsController = PaymentsController_1 = class PaymentsController {
                     provider: 'flow',
                     status: 'paid',
                 });
-                this.logger.log(`Pago confirmado tras verificación manual: ${purchase.id}`);
             }
             catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
-                this.logger.error(`Error confirmando pago verificado: ${msg}`);
             }
         }
         if (finalStatus === 3 || finalStatus === 4) {
             await this.purchasesService.updateStatus(purchase.id, 'failed');
-            this.logger.log(`Pago marcado como failed por Flow status ${finalStatus}: ${purchase.id}`);
         }
         const updatedPurchase = await this.purchasesService.findById(purchase.id);
         return {
@@ -236,7 +218,7 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "verifyFlowPaymentStatus", null);
-exports.PaymentsController = PaymentsController = PaymentsController_1 = __decorate([
+exports.PaymentsController = PaymentsController = __decorate([
     (0, common_1.Controller)('payments'),
     __metadata("design:paramtypes", [config_1.ConfigService,
         flow_service_1.FlowService,

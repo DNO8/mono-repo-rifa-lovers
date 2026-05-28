@@ -11,22 +11,18 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var PacksController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PacksController = void 0;
 const common_1 = require("@nestjs/common");
 const packs_service_1 = require("./packs.service");
-let PacksController = PacksController_1 = class PacksController {
+let PacksController = class PacksController {
     constructor(packsService) {
         this.packsService = packsService;
-        this.logger = new common_1.Logger(PacksController_1.name);
     }
     async findAll() {
-        this.logger.debug('GET /packs - Listando todos los packs');
         return this.packsService.findAll();
     }
     async findById(id) {
-        this.logger.debug(`GET /packs/${id} - Buscando pack por ID`);
         return this.packsService.findById(id);
     }
 };
@@ -44,7 +40,7 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], PacksController.prototype, "findById", null);
-exports.PacksController = PacksController = PacksController_1 = __decorate([
+exports.PacksController = PacksController = __decorate([
     (0, common_1.Controller)('packs'),
     __metadata("design:paramtypes", [packs_service_1.PacksService])
 ], PacksController);

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger, BadRequestException, HttpCode } from '@nestjs/common'
+import { Controller, Post, Body , BadRequestException, HttpCode } from '@nestjs/common'
 import { SkipThrottle, Throttle } from '@nestjs/throttler'
 import { ConfigService } from '@nestjs/config'
 import { FlowService } from './flow.service'
@@ -6,7 +6,6 @@ import { PurchasesService } from '../purchases/purchases.service'
 
 @Controller('webhooks')
 export class WebhookController {
-  private readonly logger = new Logger(WebhookController.name)
 
   constructor(
     private readonly configService: ConfigService,
@@ -23,10 +22,8 @@ export class WebhookController {
   @HttpCode(200)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   async handleFlowWebhook(@Body('token') token: string) {
-    this.logger.debug(`Recibido webhook de Flow con token: ${token}`)
 
     if (!token) {
-      this.logger.error('Webhook recibido sin token')
       throw new BadRequestException('Token requerido')
     }
 
@@ -34,14 +31,10 @@ export class WebhookController {
     const paymentStatus = await this.flowService.getPaymentStatus(token)
     const { commerceOrder, status, amount } = paymentStatus
 
-    this.logger.log(
-      `Flow payment status: order=${commerceOrder}, status=${status}, amount=${amount}`,
-    )
 
     // Buscar la compra por providerTransactionId (token de Flow) en PaymentTransaction
     const purchase = await this.purchasesService.findByProviderTransactionId(token)
     if (!purchase) {
-      this.logger.error(`No se encontró compra con providerTransactionId: ${token}`)
       throw new BadRequestException('Compra no encontrada')
     }
 
@@ -49,7 +42,6 @@ export class WebhookController {
 
     // Guarda de seguridad: si la compra ya fue invalidada, ignorar el webhook
     if (purchase.status === 'failed') {
-      this.logger.warn(`Compra ${purchase.id} ya fue invalidada. Ignorando webhook de Flow.`)
       return { message: 'Compra ya invalidada' }
     }
 
@@ -62,11 +54,9 @@ export class WebhookController {
             provider: 'flow',
             status: 'paid',
           })
-          this.logger.log(`Pago confirmado para compra: ${purchase.id}`)
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err)
           const stack = err instanceof Error ? err.stack : undefined
-          this.logger.error(`ERROR en confirmPayment para ${purchase.id}: ${msg}`, stack)
           // Propagar error a Flow para que reintente el webhook
           throw new BadRequestException(
             `Error procesando confirmación de pago: ${msg}`,
@@ -78,11 +68,9 @@ export class WebhookController {
       case 4: {
         // Pago rechazado o anulado
         await this.purchasesService.updateStatus(purchase.id, 'failed')
-        this.logger.log(`Pago rechazado/anulado para compra: ${purchase.id}`)
         break
       }
       default: {
-        this.logger.warn(`Estado de pago no procesable: ${status} para orden ${purchase.id}`)
       }
     }
 
@@ -107,7 +95,6 @@ export class WebhookController {
     if (!token) {
       throw new BadRequestException('Token requerido')
     }
-    this.logger.warn(`[DEV] Trigger manual de webhook con token: ${token}`)
     return this.handleFlowWebhook(token)
   }
 }

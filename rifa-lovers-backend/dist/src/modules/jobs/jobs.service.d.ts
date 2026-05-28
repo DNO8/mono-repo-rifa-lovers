@@ -12,7 +12,6 @@ export declare class JobsService implements OnModuleInit, OnModuleDestroy {
     private readonly resendService;
     private readonly flowService;
     private readonly purchasesService;
-    private readonly logger;
     private tasks;
     constructor(prisma: PrismaService, raffleSchedulerService: RaffleSchedulerService, ticketReservationsRepository: TicketReservationsRepository, resendService: ResendService, flowService: FlowService, purchasesService: PurchasesService);
     onModuleInit(): void;

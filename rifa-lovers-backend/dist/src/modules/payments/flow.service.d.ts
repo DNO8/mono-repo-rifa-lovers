@@ -27,7 +27,6 @@ export interface FlowPaymentStatus {
 }
 export declare class FlowService {
     private readonly configService;
-    private readonly logger;
     private readonly apiKey;
     private readonly secretKey;
     private readonly baseUrl;

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import * as crypto from 'crypto'
 
@@ -34,7 +34,6 @@ export interface FlowPaymentStatus {
 
 @Injectable()
 export class FlowService {
-  private readonly logger = new Logger(FlowService.name)
   private readonly apiKey: string
   private readonly secretKey: string
   private readonly baseUrl: string
@@ -65,7 +64,6 @@ export class FlowService {
       }
     }
 
-    this.logger.debug(`Creando orden de pago Flow: ${commerceOrder}, $${amount}`)
 
     const params: Record<string, string | number> = {
       apiKey: this.apiKey,
@@ -81,9 +79,6 @@ export class FlowService {
     const signature = this.generateSignature(params)
     
     // Log para debug
-    this.logger.debug(`Flow API Key: ${this.apiKey.substring(0, 10)}...`)
-    this.logger.debug(`Flow Base URL: ${this.baseUrl}`)
-    this.logger.debug(`Signature: ${signature.substring(0, 20)}...`)
     
     const body = new URLSearchParams()
     for (const [key, value] of Object.entries(params)) {
@@ -91,10 +86,8 @@ export class FlowService {
     }
     body.append('s', signature)
 
-    this.logger.debug(`Request body: ${body.toString().substring(0, 100)}...`)
 
     try {
-      this.logger.debug(`Sending request to: ${this.baseUrl}/payment/create`)
       const response = await fetch(`${this.baseUrl}/payment/create`, {
         method: 'POST',
         headers: {
@@ -109,11 +102,9 @@ export class FlowService {
       }
 
       const data = (await response.json()) as FlowOrderResponse
-      this.logger.log(`Orden Flow creada: ${data.flowOrder}, token: ${data.token}`)
 
       return data
     } catch (error: unknown) {
-      this.logger.error(`Error creando orden Flow: ${error instanceof Error ? error.message : String(error)}`)
       throw error
     }
   }
@@ -146,7 +137,6 @@ export class FlowService {
       }
     }
 
-    this.logger.debug(`Consultando estado de pago: ${token}`)
 
     const params: Record<string, string> = { apiKey: this.apiKey, token }
     const signature = this.generateSignature(params)
@@ -165,10 +155,8 @@ export class FlowService {
       }
 
       const data = (await response.json()) as FlowPaymentStatus
-      this.logger.debug(`Flow payment status: order=${data.commerceOrder}, status=${data.status}`)
       return data
     } catch (error: unknown) {
-      this.logger.error(`Error consultando estado Flow: ${error instanceof Error ? error.message : String(error)}`)
       throw error
     }
   }

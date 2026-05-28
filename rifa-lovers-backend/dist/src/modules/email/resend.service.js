@@ -8,24 +8,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var ResendService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResendService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const resend_1 = require("resend");
-let ResendService = ResendService_1 = class ResendService {
+let ResendService = class ResendService {
     constructor(config) {
         this.config = config;
-        this.logger = new common_1.Logger(ResendService_1.name);
         this.resend = null;
         const apiKey = this.config.get('RESEND_API_KEY');
         if (apiKey) {
             this.resend = new resend_1.Resend(apiKey);
-            this.logger.log('Resend SDK inicializado');
         }
         else {
-            this.logger.warn('RESEND_API_KEY no configurada — emails deshabilitados');
         }
     }
     getFromEmail(type) {
@@ -35,7 +31,6 @@ let ResendService = ResendService_1 = class ResendService {
     }
     async sendWinnerEmail(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Ganador: ${data.toEmail} — ${data.prizeName}`);
             return;
         }
         const from = this.getFromEmail('noreply');
@@ -56,18 +51,14 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando email a ${data.toEmail}: ${error.message}`);
                 return;
             }
-            this.logger.log(`Email ganador enviado a ${data.toEmail}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando email a ${data.toEmail}: ${err}`);
         }
     }
     async sendContactFormToAdmin(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Contacto de ${data.email} — ${data.name}`);
             return;
         }
         const from = this.getFromEmail('contact');
@@ -86,18 +77,14 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando contacto: ${error.message}`);
                 return;
             }
-            this.logger.log(`Email de contacto enviado — ${data.email}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando contacto: ${err}`);
         }
     }
     async sendContactConfirmationToUser(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Confirmación a ${data.email}`);
             return;
         }
         const from = this.getFromEmail('contact');
@@ -113,18 +100,14 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando confirmación: ${error.message}`);
                 return;
             }
-            this.logger.log(`Confirmación enviada a ${data.email}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando confirmación: ${err}`);
         }
     }
     async sendPurchaseConfirmation(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Compra confirmada: ${data.toEmail} — ${data.purchaseId}`);
             return;
         }
         const from = this.getFromEmail('noreply');
@@ -148,13 +131,10 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando confirmación de compra a ${data.toEmail}: ${error.message}`);
                 return;
             }
-            this.logger.log(`Confirmación de compra enviada a ${data.toEmail} — ${data.purchaseId}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando confirmación de compra a ${data.toEmail}: ${err}`);
         }
     }
     buildPurchaseConfirmationTemplate(params) {
@@ -319,7 +299,6 @@ let ResendService = ResendService_1 = class ResendService {
     }
     async sendFailedPaymentEmail(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Pago fallido: ${data.toEmail} — ${data.purchaseId}`);
             return;
         }
         const from = this.getFromEmail('noreply');
@@ -344,18 +323,14 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando email de pago fallido a ${data.toEmail}: ${error.message}`);
                 return;
             }
-            this.logger.log(`Email de pago fallido enviado a ${data.toEmail}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando email de pago fallido a ${data.toEmail}: ${err}`);
         }
     }
     async sendIncompletePaymentEmail(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Pago incompleto: ${data.toEmail} — ${data.purchaseId}`);
             return;
         }
         const from = this.getFromEmail('noreply');
@@ -380,18 +355,14 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando email de pago incompleto a ${data.toEmail}: ${error.message}`);
                 return;
             }
-            this.logger.log(`Email de pago incompleto enviado a ${data.toEmail}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando email de pago incompleto a ${data.toEmail}: ${err}`);
         }
     }
     async sendPendingPaymentEmail(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Pago pendiente: ${data.toEmail} — ${data.purchaseId}`);
             return;
         }
         const from = this.getFromEmail('noreply');
@@ -416,13 +387,10 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando email de pago pendiente a ${data.toEmail}: ${error.message}`);
                 return;
             }
-            this.logger.log(`Email de pago pendiente enviado a ${data.toEmail}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando email de pago pendiente a ${data.toEmail}: ${err}`);
         }
     }
     buildFailedPaymentTemplate(params) {
@@ -526,7 +494,6 @@ let ResendService = ResendService_1 = class ResendService {
     }
     async sendNewsletterEmail(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Newsletter a ${data.toEmail}: ${data.subject}`);
             return;
         }
         const from = this.getFromEmail('noreply');
@@ -545,19 +512,15 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando newsletter a ${data.toEmail}: ${error.message}`);
                 throw new Error(error.message);
             }
-            this.logger.log(`Newsletter enviado a ${data.toEmail}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando newsletter a ${data.toEmail}: ${err}`);
             throw err;
         }
     }
     async sendPromotedRoleEmail(data) {
         if (!this.resend) {
-            this.logger.warn(`[EMAIL SKIP] Rol promovido: ${data.toEmail} — ${data.role}`);
             return;
         }
         const from = this.getFromEmail('contact');
@@ -576,13 +539,10 @@ let ResendService = ResendService_1 = class ResendService {
                 html,
             });
             if (error) {
-                this.logger.error(`Error enviando email de rol promovido a ${data.toEmail}: ${error.message}`);
                 return;
             }
-            this.logger.log(`Email de rol promovido enviado a ${data.toEmail}`);
         }
         catch (err) {
-            this.logger.error(`Error enviando email de rol promovido a ${data.toEmail}: ${err}`);
         }
     }
     buildPromotedRoleTemplate(params) {
@@ -679,7 +639,7 @@ let ResendService = ResendService_1 = class ResendService {
     }
 };
 exports.ResendService = ResendService;
-exports.ResendService = ResendService = ResendService_1 = __decorate([
+exports.ResendService = ResendService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], ResendService);

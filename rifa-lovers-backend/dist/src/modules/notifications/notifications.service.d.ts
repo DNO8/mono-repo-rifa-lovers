@@ -8,7 +8,6 @@ export interface WinnerEmailData {
 }
 export declare class NotificationsService {
     private readonly resendService;
-    private readonly logger;
     constructor(resendService: ResendService);
     sendWinnerEmail(data: WinnerEmailData): Promise<void>;
 }

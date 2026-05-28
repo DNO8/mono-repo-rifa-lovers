@@ -4,7 +4,6 @@ import { TicketReservationResponseDto } from './dto';
 export declare class TicketReservationsService {
     private readonly reservationsRepository;
     private readonly prisma;
-    private readonly logger;
     constructor(reservationsRepository: TicketReservationsRepository, prisma: PrismaService);
     reserve(userId: string, raffleId: string, ticketNumbers: number[], purchaseId: string): Promise<TicketReservationResponseDto[]>;
     getActiveReservationsForPurchase(purchaseId: string): Promise<TicketReservationResponseDto[]>;

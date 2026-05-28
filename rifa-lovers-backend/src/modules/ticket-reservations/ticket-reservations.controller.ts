@@ -6,8 +6,7 @@ import {
   Body,
   Param,
   ParseUUIDPipe,
-  UseGuards,
-  Logger,
+  UseGuards ,
 } from '@nestjs/common'
 import { AuthGuard } from '@nestjs/passport'
 import { Throttle } from '@nestjs/throttler'
@@ -18,7 +17,6 @@ import { CurrentUser, Idempotent } from '../../common/decorators'
 @Controller('ticket-reservations')
 @UseGuards(AuthGuard('jwt'))
 export class TicketReservationsController {
-  private readonly logger = new Logger(TicketReservationsController.name)
 
   constructor(private readonly reservationsService: TicketReservationsService) {}
 

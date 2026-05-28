@@ -8,21 +8,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var TicketReservationsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TicketReservationsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../database/prisma.service");
 const ticket_reservations_repository_1 = require("./ticket-reservations.repository");
 const RESERVATION_TTL_MINUTES = 15;
-let TicketReservationsService = TicketReservationsService_1 = class TicketReservationsService {
+let TicketReservationsService = class TicketReservationsService {
     constructor(reservationsRepository, prisma) {
         this.reservationsRepository = reservationsRepository;
         this.prisma = prisma;
-        this.logger = new common_1.Logger(TicketReservationsService_1.name);
     }
     async reserve(userId, raffleId, ticketNumbers, purchaseId) {
-        this.logger.debug(`Reservando tickets ${ticketNumbers.join(', ')} para user=${userId}, raffle=${raffleId}`);
         const expiresAt = new Date(Date.now() + RESERVATION_TTL_MINUTES * 60 * 1000);
         return this.prisma.$transaction(async (tx) => {
             await tx.$executeRaw `
@@ -62,7 +59,6 @@ let TicketReservationsService = TicketReservationsService_1 = class TicketReserv
         SELECT * FROM public.ticket_reservations
         WHERE purchase_id = ${purchaseId}::uuid
       `;
-            this.logger.log(`Reservados ${rows.length} tickets para purchase=${purchaseId}`);
             return rows.map((r) => ({
                 id: r.id,
                 raffleId: r.raffle_id,
@@ -83,18 +79,14 @@ let TicketReservationsService = TicketReservationsService_1 = class TicketReserv
         return rows.map(toDto);
     }
     async release(purchaseId) {
-        this.logger.debug(`Liberando reservas para purchase=${purchaseId}`);
         await this.reservationsRepository.deleteByPurchase(purchaseId);
-        this.logger.log(`Reservas liberadas para purchase=${purchaseId}`);
     }
     async convertToLuckyPasses(purchaseId, userId, userPackId, raffleId, tx) {
         const reservations = await this.reservationsRepository.findByPurchase(purchaseId, tx);
         if (reservations.length === 0) {
-            this.logger.debug(`No hay reservas para purchase=${purchaseId}`);
             return [];
         }
         const ticketNumbers = reservations.map((r) => r.ticketNumber);
-        this.logger.debug(`Convirtiendo reservas ${ticketNumbers.join(', ')} a LuckyPasses`);
         await this.reservationsRepository.deleteByPurchase(purchaseId, tx);
         return ticketNumbers.map((n) => ({ ticketNumber: n }));
     }
@@ -121,7 +113,7 @@ let TicketReservationsService = TicketReservationsService_1 = class TicketReserv
     }
 };
 exports.TicketReservationsService = TicketReservationsService;
-exports.TicketReservationsService = TicketReservationsService = TicketReservationsService_1 = __decorate([
+exports.TicketReservationsService = TicketReservationsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [ticket_reservations_repository_1.TicketReservationsRepository,
         prisma_service_1.PrismaService])

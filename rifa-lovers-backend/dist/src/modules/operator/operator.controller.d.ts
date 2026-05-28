@@ -3,7 +3,6 @@ import { CreatePackDto, UpdatePackDto, CreateOrganizationDto } from './dto';
 import { CreateRaffleDto, UpdateRaffleDto, UpdateRaffleStatusDto } from '../admin/dto';
 export declare class OperatorController {
     private readonly operatorService;
-    private readonly logger;
     constructor(operatorService: OperatorService);
     getOrganization(userId: string): Promise<{
         id: string;

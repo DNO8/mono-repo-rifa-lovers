@@ -8,19 +8,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var UsersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../../database/prisma.service");
 const resend_service_1 = require("../email/resend.service");
-let UsersService = UsersService_1 = class UsersService {
+let UsersService = class UsersService {
     constructor(prisma, resendService, config) {
         this.prisma = prisma;
         this.resendService = resendService;
         this.config = config;
-        this.logger = new common_1.Logger(UsersService_1.name);
     }
     async findAll(params) {
         const { skip, take, cursor, where, orderBy } = params;
@@ -57,7 +55,6 @@ let UsersService = UsersService_1 = class UsersService {
                 });
             }
             catch (err) {
-                this.logger.error(`Error enviando email de rol promovido: ${err instanceof Error ? err.message : String(err)}`);
             }
         }
         return user;
@@ -76,7 +73,7 @@ let UsersService = UsersService_1 = class UsersService {
     }
 };
 exports.UsersService = UsersService;
-exports.UsersService = UsersService = UsersService_1 = __decorate([
+exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         resend_service_1.ResendService,

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Logger, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards , UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { Throttle } from '@nestjs/throttler'
 import { AuthGuard } from '@nestjs/passport'
@@ -12,7 +12,6 @@ import { RolesGuard } from '../users/guards/roles.guard'
 @Controller('operator')
 @UseGuards(AuthGuard('jwt'), new RolesGuard([UserRole.operator, UserRole.admin]))
 export class OperatorController {
-  private readonly logger = new Logger(OperatorController.name)
 
   constructor(private readonly operatorService: OperatorService) {}
 

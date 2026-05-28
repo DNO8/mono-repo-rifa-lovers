@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var RafflesService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RafflesService = void 0;
 const common_1 = require("@nestjs/common");
@@ -16,17 +15,14 @@ const raffles_repository_1 = require("./raffles.repository");
 const packs_repository_1 = require("../packs/packs.repository");
 const pack_mapper_1 = require("../packs/mappers/pack.mapper");
 const entities_1 = require("./entities");
-let RafflesService = RafflesService_1 = class RafflesService {
+let RafflesService = class RafflesService {
     constructor(rafflesRepository, packsRepository) {
         this.rafflesRepository = rafflesRepository;
         this.packsRepository = packsRepository;
-        this.logger = new common_1.Logger(RafflesService_1.name);
     }
     async findActive() {
-        this.logger.debug('Buscando rifa activa');
         const raffle = await this.rafflesRepository.findActiveWithProgress();
         if (!raffle) {
-            this.logger.debug('No se encontró rifa activa');
             return null;
         }
         const raffleEntity = new entities_1.RaffleEntity({
@@ -42,7 +38,6 @@ let RafflesService = RafflesService_1 = class RafflesService {
             createdAt: raffle.createdAt,
             updatedAt: raffle.updatedAt,
         });
-        this.logger.debug(`Rifa activa encontrada: ${raffleEntity.id}`);
         return {
             id: raffleEntity.id,
             title: raffleEntity.title,
@@ -69,10 +64,8 @@ let RafflesService = RafflesService_1 = class RafflesService {
         };
     }
     async getActiveProgress() {
-        this.logger.debug('Obteniendo progreso de rifa activa');
         const raffle = await this.rafflesRepository.findActiveWithProgress();
         if (!raffle) {
-            this.logger.debug('No hay rifa activa, retornando progreso vacío');
             return {
                 raffleId: '',
                 packsSold: 0,
@@ -81,7 +74,6 @@ let RafflesService = RafflesService_1 = class RafflesService {
             };
         }
         const progress = raffle.progress;
-        this.logger.debug(`Progreso rifa ${raffle.id}: ${progress?.packsSold ?? 0} packs vendidos`);
         const packsSold = progress?.packsSold ?? 0;
         const percentageToGoal = raffle.goalPacks > 0 ? Math.min((packsSold / raffle.goalPacks) * 100, 100) : 0;
         return {
@@ -92,15 +84,12 @@ let RafflesService = RafflesService_1 = class RafflesService {
         };
     }
     async getPacksByRaffle(raffleId) {
-        this.logger.debug(`Obteniendo packs para rifa ${raffleId}`);
         const packs = await this.packsRepository.findMany({ raffleId }, { price: 'asc' });
         return packs.map(pack_mapper_1.mapPackToDto);
     }
     async getProgressByRaffle(raffleId) {
-        this.logger.debug(`Obteniendo progreso para rifa ${raffleId}`);
         const raffle = await this.rafflesRepository.findUnique({ id: raffleId }, { progress: true });
         if (!raffle) {
-            this.logger.warn(`Rifa no encontrada: ${raffleId}`);
             throw new common_1.NotFoundException(`Rifa con ID ${raffleId} no encontrada`);
         }
         const progress = raffle.progress;
@@ -114,7 +103,6 @@ let RafflesService = RafflesService_1 = class RafflesService {
         };
     }
     async findById(id) {
-        this.logger.debug(`Buscando rifa por ID: ${id}`);
         const raffle = await this.rafflesRepository.findUnique({ id }, {
             progress: true,
             _count: {
@@ -125,7 +113,6 @@ let RafflesService = RafflesService_1 = class RafflesService {
             },
         });
         if (!raffle) {
-            this.logger.warn(`Rifa no encontrada: ${id}`);
             throw new common_1.NotFoundException(`Rifa con ID ${id} no encontrada`);
         }
         return {
@@ -141,7 +128,6 @@ let RafflesService = RafflesService_1 = class RafflesService {
         };
     }
     async findByStatus(status) {
-        this.logger.debug(`Buscando rifas con estado: ${status}`);
         const raffles = await this.rafflesRepository.findByStatus(status);
         return raffles.map((raffle) => ({
             id: raffle.id,
@@ -156,7 +142,6 @@ let RafflesService = RafflesService_1 = class RafflesService {
         }));
     }
     async getPublicRaffles() {
-        this.logger.debug('Obteniendo rifas públicas (activas + última cerrada)');
         const raffles = await this.rafflesRepository.findPublicRaffles();
         return raffles.map((raffle) => ({
             id: raffle.id,
@@ -184,7 +169,6 @@ let RafflesService = RafflesService_1 = class RafflesService {
         }));
     }
     async getUserRaffles(userId) {
-        this.logger.debug(`Buscando rifas del usuario ${userId}`);
         const raffles = await this.rafflesRepository.findUserRaffles(userId);
         return raffles.map((raffle) => ({
             id: raffle.id,
@@ -200,7 +184,7 @@ let RafflesService = RafflesService_1 = class RafflesService {
     }
 };
 exports.RafflesService = RafflesService;
-exports.RafflesService = RafflesService = RafflesService_1 = __decorate([
+exports.RafflesService = RafflesService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [raffles_repository_1.RafflesRepository,
         packs_repository_1.PacksRepository])

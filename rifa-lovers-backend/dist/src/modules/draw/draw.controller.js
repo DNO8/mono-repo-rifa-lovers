@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var DrawController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DrawController = void 0;
 const common_1 = require("@nestjs/common");
@@ -21,13 +20,11 @@ const client_1 = require("@prisma/client");
 const draw_service_1 = require("./draw.service");
 const decorators_1 = require("../../common/decorators");
 const roles_guard_1 = require("../users/guards/roles.guard");
-let DrawController = DrawController_1 = class DrawController {
+let DrawController = class DrawController {
     constructor(drawService) {
         this.drawService = drawService;
-        this.logger = new common_1.Logger(DrawController_1.name);
     }
     async executeDraw(raffleId, adminUserId) {
-        this.logger.log(`Admin ${adminUserId} ejecutando sorteo para rifa ${raffleId}`);
         return this.drawService.executeDraw(raffleId, adminUserId);
     }
     async checkDrawAvailability(raffleId) {
@@ -94,7 +91,7 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DrawController.prototype, "getDrawResultsAlt", null);
-exports.DrawController = DrawController = DrawController_1 = __decorate([
+exports.DrawController = DrawController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [draw_service_1.DrawService])
 ], DrawController);

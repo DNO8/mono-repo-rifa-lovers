@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, HttpCode, HttpStatus, Res, Logger, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, HttpCode, HttpStatus, Res, BadRequestException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, AuthResponseDto } from './dto';
@@ -10,8 +10,6 @@ import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(
     private readonly authService: AuthService,
     private readonly supabaseService: SupabaseService,
@@ -152,7 +150,7 @@ export class AuthController {
     if (userData?.user) {
       userId = userData.user.id
     } else if (userError) {
-      this.logger.debug(`getUser failed for JWT token, falling back to OTP: ${userError.message}`)
+      // Intentionally empty — do not log fallback strategy
     }
 
     // Fallback: if getUser didn't work, try OTP verification (legacy flow)
@@ -163,7 +161,6 @@ export class AuthController {
         'recovery',
       )
       if (verifyError || !verifyData?.user) {
-        this.logger.warn(`Invalid or expired recovery token for password reset: ${email}`)
         return { success: false, message: 'Token inválido o expirado.' }
       }
       userId = verifyData.user.id
@@ -173,11 +170,9 @@ export class AuthController {
     const { error: updateError } = await this.supabaseService.updateUser(userId, { password })
 
     if (updateError) {
-      this.logger.error(`Failed to update password for user ${userId}: ${updateError.message}`)
       return { success: false, message: 'Error al actualizar la contraseña. Intenta de nuevo.' }
     }
 
-    this.logger.log(`Password successfully updated for user: ${userId}`)
     return { success: true, message: 'Contraseña actualizada exitosamente.' }
   }
 }

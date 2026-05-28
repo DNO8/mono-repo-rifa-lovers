@@ -8,7 +8,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var OperatorService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OperatorService = void 0;
 const common_1 = require("@nestjs/common");
@@ -17,13 +16,12 @@ const client_1 = require("@prisma/client");
 const draw_service_1 = require("../draw/draw.service");
 const newsletter_service_1 = require("../newsletter/newsletter.service");
 const supabase_service_1 = require("../../config/supabase.service");
-let OperatorService = OperatorService_1 = class OperatorService {
+let OperatorService = class OperatorService {
     constructor(prisma, drawService, newsletterService, supabaseService) {
         this.prisma = prisma;
         this.drawService = drawService;
         this.newsletterService = newsletterService;
         this.supabaseService = supabaseService;
-        this.logger = new common_1.Logger(OperatorService_1.name);
     }
     async assertOrganization(userId) {
         const user = await this.prisma.user.findUnique({
@@ -66,7 +64,6 @@ let OperatorService = OperatorService_1 = class OperatorService {
             where: { id: userId },
             data: { organizationId: org.id },
         });
-        this.logger.log(`Operador ${userId} creo organizacion ${org.id}`);
         return org;
     }
     async getOrganization(userId) {
@@ -140,7 +137,6 @@ let OperatorService = OperatorService_1 = class OperatorService {
     }
     async createRaffle(userId, dto) {
         const orgId = await this.assertOrganization(userId);
-        this.logger.log(`Operador ${userId} creando rifa: ${dto.title}`);
         const prizes = dto.prizes ?? [];
         const goalPacks = dto.goalPacks;
         const segmentSize = Math.floor(goalPacks / prizes.length);
@@ -468,7 +464,7 @@ let OperatorService = OperatorService_1 = class OperatorService {
     }
 };
 exports.OperatorService = OperatorService;
-exports.OperatorService = OperatorService = OperatorService_1 = __decorate([
+exports.OperatorService = OperatorService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         draw_service_1.DrawService,

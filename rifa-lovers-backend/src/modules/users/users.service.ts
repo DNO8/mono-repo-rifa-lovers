@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import { ResendService } from '../email/resend.service';
@@ -6,7 +6,6 @@ import { User, UserRole, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger(UsersService.name)
 
   constructor(
     private readonly prisma: PrismaService,
@@ -59,7 +58,6 @@ export class UsersService {
           frontendUrl: this.config.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
         })
       } catch (err) {
-        this.logger.error(`Error enviando email de rol promovido: ${err instanceof Error ? err.message : String(err)}`)
       }
     }
 

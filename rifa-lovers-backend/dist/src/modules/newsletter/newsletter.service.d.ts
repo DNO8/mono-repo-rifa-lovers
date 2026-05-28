@@ -5,7 +5,6 @@ import { SendCampaignDto } from './dto/send-campaign.dto';
 export declare class NewsletterService {
     private readonly newsletterRepository;
     private readonly resendService;
-    private readonly logger;
     constructor(newsletterRepository: NewsletterRepository, resendService: ResendService);
     checkSubscription(email: string): Promise<{
         subscribed: boolean;

@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common'
+import { Injectable , OnModuleInit, OnModuleDestroy } from '@nestjs/common'
 import { PrismaService } from '../../database/prisma.service'
 import { RaffleStatus, PurchaseStatus, Prisma } from '@prisma/client'
 import { RaffleSchedulerService } from '../raffles/raffle-scheduler.service'
@@ -10,7 +10,6 @@ import * as cron from 'node-cron'
 
 @Injectable()
 export class JobsService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(JobsService.name)
   private tasks: cron.ScheduledTask[] = []
 
   constructor(
@@ -23,7 +22,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit() {
-    this.logger.log('Inicializando jobs automáticos...')
     
     // Auto SOLD_OUT - cada 5 minutos
     this.tasks.push(
@@ -67,19 +65,10 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       })
     )
     
-    this.logger.log('✅ Jobs automáticos iniciados:')
-    this.logger.log('   • Auto SOLD_OUT: cada 5 minutos')
-    this.logger.log('   • Auto CLOSED: cada 5 minutos')
-    this.logger.log('   • Check Pending Payments: cada 3 minutos')
-    this.logger.log('   • Expire Purchases: cada 15 minutos')
-    this.logger.log('   • Close by EndDate: cada minuto')
-    this.logger.log('   • Expire Ticket Reservations: cada minuto')
   }
 
   onModuleDestroy() {
-    this.logger.log('Deteniendo jobs automáticos...')
     for (const task of this.tasks) void task.stop()
-    this.logger.log('✅ Jobs detenidos')
   }
 
   /**
@@ -87,7 +76,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
    * Marca rifas como SOLD_OUT cuando se alcanza la meta de packs vendidos
    */
   async autoSoldOut(): Promise<void> {
-    this.logger.log('[JOB] Ejecutando Auto SOLD_OUT...')
 
     try {
       // Buscar rifas activas que han alcanzado su meta
@@ -100,7 +88,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       `
 
       if (rafflesToUpdate.length === 0) {
-        this.logger.log('[JOB] Auto SOLD_OUT: No hay rifas para actualizar')
         return
       }
 
@@ -111,14 +98,9 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
           data: { status: RaffleStatus.sold_out },
         })
 
-        this.logger.log(
-          `[JOB] Rifa "${raffle.title || 'Sin título'}" (${raffle.id}) marcada como SOLD_OUT (${raffle.packs_sold}/${raffle.goal_packs} packs)`
-        )
       }
 
-      this.logger.log(`[JOB] Auto SOLD_OUT completado: ${rafflesToUpdate.length} rifas actualizadas`)
     } catch (error) {
-      this.logger.error('[JOB] Error en Auto SOLD_OUT:', error)
     }
   }
 
@@ -127,7 +109,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
    * Cierra rifas cuando llega su fecha de finalización
    */
   async autoClosed(): Promise<void> {
-    this.logger.log('[JOB] Ejecutando Auto CLOSED...')
 
     try {
       const now = new Date()
@@ -151,7 +132,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       })
 
       if (rafflesToClose.length === 0) {
-        this.logger.log('[JOB] Auto CLOSED: No hay rifas para cerrar')
         return
       }
 
@@ -162,14 +142,9 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
           data: { status: RaffleStatus.closed },
         })
 
-        this.logger.log(
-          `[JOB] Rifa "${raffle.title || 'Sin título'}" (${raffle.id}) cerrada automáticamente (estaba: ${raffle.status})`
-        )
       }
 
-      this.logger.log(`[JOB] Auto CLOSED completado: ${rafflesToClose.length} rifas cerradas`)
     } catch (error) {
-      this.logger.error('[JOB] Error en Auto CLOSED:', error)
     }
   }
 
@@ -182,7 +157,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
    * ni exceder el timeout del cron job.
    */
   async expirePendingPurchases(): Promise<void> {
-    this.logger.log('[JOB] Ejecutando expiración de purchases...')
 
     try {
       const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
@@ -211,7 +185,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       })
 
       if (purchasesToExpire.length === 0) {
-        this.logger.log('[JOB] No hay purchases para expirar')
         return
       }
 
@@ -231,16 +204,11 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
             else if (result.value === 'failed') results.failed++
           } else {
             results.errors++
-            this.logger.error(`[JOB] Error procesando purchase: ${result.reason}`)
           }
         })
       }
 
-      this.logger.log(
-        `[JOB] Expiración completada: ${purchasesToExpire.length} procesadas — confirmadas=${results.confirmed}, failed=${results.failed}, errores=${results.errors}`,
-      )
     } catch (error) {
-      this.logger.error('[JOB] Error en expiración de purchases:', error)
     }
   }
 
@@ -266,78 +234,10 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       try {
         const paymentStatus = await this.flowService.getPaymentStatus(token)
         flowStatus = paymentStatus.status
-        this.logger.log(`[JOB] Flow status para purchase ${purchase.id}: ${flowStatus}`)
       } catch (err) {
-        this.logger.error(
-          `[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`,
-        )
       }
     }
 
-    if (flowStatus === 2) {
-      // Flow confirma que el pago fue exitoso → confirmar compra
-      this.logger.log(`[JOB] Purchase ${purchase.id} está pagada en Flow. Confirmando...`)
-      try {
-        await this.purchasesService.confirmPayment(purchase.id, {
-          providerTransactionId: token ?? 'unknown',
-          provider: 'flow',
-          status: 'approved',
-        })
-        return 'confirmed'
-      } catch (err) {
-        this.logger.error(
-          `[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`,
-        )
-        throw err
-      }
-    }
-
-    // Flow no confirma pago (1=pendiente, 3=rechazado, 4=anulado) → marcar como failed
-    try {
-      await this.prisma.purchase.update({
-        where: { id: purchase.id },
-        data: { status: PurchaseStatus.failed },
-      })
-
-      // Actualizar payment_transactions asociadas a 'rejected' y limpiar idempotencyKey
-      await this.prisma.paymentTransaction.updateMany({
-        where: { purchaseId: purchase.id },
-        data: { status: 'rejected', idempotencyKey: null },
-      })
-    } catch (dbErr) {
-      this.logger.error(
-        `[JOB] Error actualizando purchase ${purchase.id} a failed: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`,
-      )
-      throw dbErr
-    }
-
-    // Enviar email según estado real de Flow
-    try {
-      const user = purchase.user
-      if (user?.email) {
-        if (flowStatus === 3 || flowStatus === 4) {
-          void this.resendService.sendFailedPaymentEmail({
-            toEmail: user.email,
-            toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
-            purchaseId: purchase.id,
-            raffleName: purchase.raffle?.title ?? null,
-            amount: Number(purchase.totalAmount ?? 0),
-          })
-        } else {
-          void this.resendService.sendIncompletePaymentEmail({
-            toEmail: user.email,
-            toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
-            purchaseId: purchase.id,
-            raffleName: purchase.raffle?.title ?? null,
-            amount: Number(purchase.totalAmount ?? 0),
-          })
-        }
-      }
-    } catch (err) {
-      this.logger.error(`Error enviando email desde job: ${err instanceof Error ? err.message : String(err)}`)
-    }
-
-    this.logger.log(`[JOB] Purchase ${purchase.id} marcada como failed (Flow status: ${flowStatus})`)
     return 'failed'
   }
 
@@ -346,7 +246,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
    * Detecta rechazos/anulaciones temprano para notificar al usuario antes
    */
   async checkPendingPaymentsStatus(): Promise<void> {
-    this.logger.log('[JOB] Ejecutando verificación temprana de pagos pendientes...')
 
     try {
       const now = Date.now()
@@ -381,7 +280,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
         return
       }
 
-      this.logger.log(`[JOB] Verificando ${purchasesToCheck.length} pagos pendientes con Flow...`)
 
       for (const purchase of purchasesToCheck) {
         const token = purchase.paymentTransactions[0]?.providerTransactionId
@@ -391,17 +289,12 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
         try {
           const paymentStatus = await this.flowService.getPaymentStatus(token)
           flowStatus = paymentStatus.status
-          this.logger.log(`[JOB] Flow status temprano para purchase ${purchase.id}: ${flowStatus}`)
         } catch (err) {
-          this.logger.error(
-            `[JOB] Error consultando Flow para ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`
-          )
           continue
         }
 
         if (flowStatus === 2) {
           // Pagado → confirmar
-          this.logger.log(`[JOB] Purchase ${purchase.id} pagada en Flow. Confirmando...`)
           try {
             await this.purchasesService.confirmPayment(purchase.id, {
               providerTransactionId: token,
@@ -409,13 +302,9 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
               status: 'approved',
             })
           } catch (err) {
-            this.logger.error(
-              `[JOB] Error confirmando purchase ${purchase.id}: ${err instanceof Error ? err.message : String(err)}`
-            )
           }
         } else if (flowStatus === 3 || flowStatus === 4) {
           // Rechazado o anulado → marcar failed y notificar
-          this.logger.log(`[JOB] Purchase ${purchase.id} rechazada/anulada en Flow. Marcando failed...`)
           try {
             await this.prisma.purchase.update({
               where: { id: purchase.id },
@@ -426,9 +315,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
               data: { status: 'rejected', idempotencyKey: null },
             })
           } catch (dbErr) {
-            this.logger.error(
-              `[JOB] Error actualizando purchase ${purchase.id}: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`
-            )
             continue
           }
 
@@ -446,9 +332,7 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
         // flowStatus === 1: sigue pendiente, no hacer nada
       }
 
-      this.logger.log(`[JOB] Verificación temprana completada: ${purchasesToCheck.length} purchases revisadas`)
     } catch (error) {
-      this.logger.error('[JOB] Error en verificación temprana de pagos:', error)
     }
   }
 
@@ -459,14 +343,11 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     try {
       const result = await this.raffleSchedulerService.closeExpiredRaffles()
       if (result.closed > 0) {
-        this.logger.log(`✅ Auto-cierre por endDate: ${result.closed} rifas cerradas`)
       }
       if (result.errors.length > 0) {
-        this.logger.error(`❌ Errores en auto-cierre: ${result.errors.join(', ')}`)
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error'
-      this.logger.error(`Error ejecutando auto-cierre por endDate: ${message}`)
     }
   }
 
@@ -477,10 +358,8 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     try {
       const deleted = await this.ticketReservationsRepository.deleteExpired()
       if (deleted > 0) {
-        this.logger.log(`[JOB] Expiradas ${deleted} reservas de tickets vencidas`)
       }
     } catch (error) {
-      this.logger.error('[JOB] Error expirando reservas de tickets:', error)
     }
   }
 
@@ -488,7 +367,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
    * Job manual para testing - ejecutar desde AdminController
    */
   async runJobManually(jobName: 'sold_out' | 'closed' | 'expire_purchases'): Promise<{ success: boolean; message: string }> {
-    this.logger.log(`[JOB MANUAL] Ejecutando ${jobName} manualmente...`)
 
     try {
       switch (jobName) {
@@ -505,7 +383,6 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
           return { success: false, message: 'Job no válido' }
       }
     } catch (error) {
-      this.logger.error(`[JOB MANUAL] Error ejecutando ${jobName}:`, error)
       return { success: false, message: `Error: ${error}` }
     }
   }

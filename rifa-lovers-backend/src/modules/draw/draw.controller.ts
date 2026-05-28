@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, UseGuards, Logger, HttpCode } from '@nestjs/common'
+import { Controller, Post, Get, Param, UseGuards , HttpCode } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
@@ -8,7 +8,6 @@ import { RolesGuard } from '../users/guards/roles.guard'
 
 @Controller()
 export class DrawController {
-  private readonly logger = new Logger(DrawController.name)
 
   constructor(private readonly drawService: DrawService) {}
 
@@ -25,7 +24,6 @@ export class DrawController {
     @Param('id') raffleId: string,
     @CurrentUser('id') adminUserId: string,
   ): Promise<DrawResult> {
-    this.logger.log(`Admin ${adminUserId} ejecutando sorteo para rifa ${raffleId}`)
     return this.drawService.executeDraw(raffleId, adminUserId)
   }
 

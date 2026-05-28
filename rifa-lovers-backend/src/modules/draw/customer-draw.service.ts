@@ -1,4 +1,4 @@
-import { Injectable, Logger, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable , ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common'
 import { DrawService } from './draw.service'
 import { RafflesRepository } from '../raffles/raffles.repository'
 import { DrawWinner, DrawDiscarded, UserDetails, RaffleWithOrg } from './interfaces/draw-result.interface'
@@ -40,7 +40,6 @@ export interface CustomerDrawResult {
 
 @Injectable()
 export class CustomerDrawService {
-  private readonly logger = new Logger(CustomerDrawService.name)
 
   constructor(
     private readonly drawService: DrawService,
@@ -54,7 +53,6 @@ export class CustomerDrawService {
     raffleId: string,
     customerUserId: string,
   ): Promise<CustomerDrawAvailability> {
-    this.logger.debug(`Customer ${customerUserId} verificando disponibilidad de sorteo para rifa ${raffleId}`)
 
     // 1. Validar que la rifa existe
     const raffle = await this.rafflesRepository.findUnique({ id: raffleId })
@@ -133,7 +131,6 @@ export class CustomerDrawService {
     raffleId: string,
     customerUserId: string,
   ): Promise<CustomerDrawResult> {
-    this.logger.log(`Customer ${customerUserId} ejecutando sorteo para rifa ${raffleId}`)
 
     // 1. Verificar disponibilidad
     const availability = await this.checkCustomerDrawAvailability(raffleId, customerUserId)

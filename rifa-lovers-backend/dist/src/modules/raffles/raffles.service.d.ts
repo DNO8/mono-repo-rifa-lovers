@@ -5,7 +5,6 @@ import { RaffleStatus } from '@prisma/client';
 export declare class RafflesService {
     private readonly rafflesRepository;
     private readonly packsRepository;
-    private readonly logger;
     constructor(rafflesRepository: RafflesRepository, packsRepository: PacksRepository);
     findActive(): Promise<RaffleResponseDto | null>;
     getActiveProgress(): Promise<RaffleProgressDto>;

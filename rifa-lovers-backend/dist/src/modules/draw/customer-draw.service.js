@@ -8,20 +8,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var CustomerDrawService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomerDrawService = void 0;
 const common_1 = require("@nestjs/common");
 const draw_service_1 = require("./draw.service");
 const raffles_repository_1 = require("../raffles/raffles.repository");
-let CustomerDrawService = CustomerDrawService_1 = class CustomerDrawService {
+let CustomerDrawService = class CustomerDrawService {
     constructor(drawService, rafflesRepository) {
         this.drawService = drawService;
         this.rafflesRepository = rafflesRepository;
-        this.logger = new common_1.Logger(CustomerDrawService_1.name);
     }
     async checkCustomerDrawAvailability(raffleId, customerUserId) {
-        this.logger.debug(`Customer ${customerUserId} verificando disponibilidad de sorteo para rifa ${raffleId}`);
         const raffle = await this.rafflesRepository.findUnique({ id: raffleId });
         if (!raffle) {
             throw new common_1.NotFoundException('Rifa no encontrada');
@@ -75,7 +72,6 @@ let CustomerDrawService = CustomerDrawService_1 = class CustomerDrawService {
         };
     }
     async executeCustomerDraw(raffleId, customerUserId) {
-        this.logger.log(`Customer ${customerUserId} ejecutando sorteo para rifa ${raffleId}`);
         const availability = await this.checkCustomerDrawAvailability(raffleId, customerUserId);
         if (!availability.canDraw) {
             throw new common_1.BadRequestException(availability.reason);
@@ -135,7 +131,7 @@ let CustomerDrawService = CustomerDrawService_1 = class CustomerDrawService {
     }
 };
 exports.CustomerDrawService = CustomerDrawService;
-exports.CustomerDrawService = CustomerDrawService = CustomerDrawService_1 = __decorate([
+exports.CustomerDrawService = CustomerDrawService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [draw_service_1.DrawService,
         raffles_repository_1.RafflesRepository])

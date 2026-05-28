@@ -41,7 +41,6 @@ export declare class AdminService {
     private readonly prisma;
     private readonly resendService;
     private readonly configService;
-    private readonly logger;
     constructor(prisma: PrismaService, resendService: ResendService, configService: ConfigService);
     createRaffle(adminId: string, dto: CreateRaffleDto): Promise<RaffleWithStats>;
     updateRaffle(raffleId: string, dto: UpdateRaffleDto): Promise<{

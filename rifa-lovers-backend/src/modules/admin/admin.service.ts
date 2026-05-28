@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common'
+import { Injectable , NotFoundException, BadRequestException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../../database/prisma.service'
 import { RaffleStatus, UserStatus, Prisma } from '@prisma/client'
@@ -44,7 +44,6 @@ export interface Participant {
 
 @Injectable()
 export class AdminService {
-  private readonly logger = new Logger(AdminService.name)
 
   constructor(
     private readonly prisma: PrismaService,
@@ -55,7 +54,6 @@ export class AdminService {
   // ==================== GESTIÓN DE RIFAS ====================
 
   async createRaffle(adminId: string, dto: CreateRaffleDto): Promise<RaffleWithStats> {
-    this.logger.log(`Admin ${adminId} creando rifa: ${dto.title}`)
 
     const prizes = dto.prizes ?? []
     const goalPacks = dto.goalPacks
@@ -112,7 +110,6 @@ export class AdminService {
       return raffle
     })
 
-    this.logger.log(`Rifa creada: ${result.id} con ${prizes.length} premio(s)`)
     return {
       id: result.id,
       title: result.title,
@@ -130,7 +127,6 @@ export class AdminService {
   }
 
   async updateRaffle(raffleId: string, dto: UpdateRaffleDto) {
-    this.logger.log(`Actualizando rifa: ${raffleId}`)
 
     const existing = await this.prisma.raffle.findUnique({
       where: { id: raffleId },
@@ -154,12 +150,10 @@ export class AdminService {
       data: updateData,
     })
 
-    this.logger.log(`Rifa actualizada: ${raffle.id}`)
     return raffle
   }
 
   async updateRaffleStatus(raffleId: string, dto: UpdateRaffleStatusDto) {
-    this.logger.log(`Cambiando estado de rifa ${raffleId} a: ${dto.status}`)
 
     const raffle = await this.prisma.raffle.findUnique({
       where: { id: raffleId },
@@ -189,12 +183,10 @@ export class AdminService {
       data: { status: dto.status },
     })
 
-    this.logger.log(`Estado actualizado: ${raffle.status} → ${dto.status}`)
     return updated
   }
 
   async getRaffleDetail(raffleId: string) {
-    this.logger.log(`Obteniendo detalle de rifa: ${raffleId}`)
 
     const raffle = await this.prisma.raffle.findUnique({
       where: { id: raffleId },
@@ -227,7 +219,6 @@ export class AdminService {
   }
 
   async getRaffleParticipants(raffleId: string) {
-    this.logger.log(`Obteniendo participantes de rifa: ${raffleId}`)
 
     // Verificar que la rifa existe
     const raffle = await this.prisma.raffle.findUnique({
@@ -328,7 +319,6 @@ export class AdminService {
   // ==================== KPIs ====================
 
   async getKpis(): Promise<KpiData> {
-    this.logger.log('Obteniendo KPIs')
 
     const [
       totalSalesAgg,
@@ -405,7 +395,6 @@ export class AdminService {
   // ==================== GESTIÓN DE USUARIOS ====================
 
   async updateUserRole(userId: string, dto: UpdateUserRoleDto) {
-    this.logger.log(`Cambiando rol de usuario ${userId} a: ${dto.role}`)
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -430,16 +419,13 @@ export class AdminService {
           frontendUrl: this.configService.get('FRONTEND_URL') ?? 'https://rifalovers.cl',
         })
       } catch (err) {
-        this.logger.error(`Error enviando email de rol promovido: ${err instanceof Error ? err.message : String(err)}`)
       }
     }
 
-    this.logger.log(`Rol actualizado: ${user.role} → ${dto.role}`)
     return updated
   }
 
   async updateUserStatus(userId: string, dto: UpdateUserStatusDto) {
-    this.logger.log(`Cambiando estado de usuario ${userId} a: ${dto.status}`)
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -454,7 +440,6 @@ export class AdminService {
       data: { status: dto.status },
     })
 
-    this.logger.log(`Estado actualizado: ${user.status} → ${dto.status}`)
     return updated
   }
 

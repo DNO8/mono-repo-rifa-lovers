@@ -16,7 +16,6 @@ export declare class PaymentsController {
     private readonly usersService;
     private readonly resendService;
     private readonly prisma;
-    private readonly logger;
     constructor(configService: ConfigService, flowService: FlowService, purchasesService: PurchasesService, usersService: UsersService, resendService: ResendService, prisma: PrismaService);
     initiatePayment(userId: string, dto: InitiatePaymentDto): Promise<{
         purchaseId: string;

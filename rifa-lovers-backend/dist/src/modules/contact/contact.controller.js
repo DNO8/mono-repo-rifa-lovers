@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var ContactController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContactController = void 0;
 const common_1 = require("@nestjs/common");
@@ -20,14 +19,12 @@ const contact_service_1 = require("./contact.service");
 const recaptcha_service_1 = require("../../common/services/recaptcha.service");
 const contact_form_dto_1 = require("./dto/contact-form.dto");
 const decorators_1 = require("../../common/decorators");
-let ContactController = ContactController_1 = class ContactController {
+let ContactController = class ContactController {
     constructor(contactService, recaptchaService) {
         this.contactService = contactService;
         this.recaptchaService = recaptchaService;
-        this.logger = new common_1.Logger(ContactController_1.name);
     }
     async submitContactForm(dto) {
-        this.logger.log(`Contact form received: name="${dto.name}" email="${dto.email}" messageLength=${dto.message?.length}`);
         if (dto.recaptchaToken) {
             const isHuman = await this.recaptchaService.verify(dto.recaptchaToken);
             if (!isHuman) {
@@ -49,7 +46,7 @@ __decorate([
     __metadata("design:paramtypes", [contact_form_dto_1.ContactFormDto]),
     __metadata("design:returntype", Promise)
 ], ContactController.prototype, "submitContactForm", null);
-exports.ContactController = ContactController = ContactController_1 = __decorate([
+exports.ContactController = ContactController = __decorate([
     (0, common_1.Controller)('contact'),
     __metadata("design:paramtypes", [contact_service_1.ContactService,
         recaptcha_service_1.RecaptchaService])

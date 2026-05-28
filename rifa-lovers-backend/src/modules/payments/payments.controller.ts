@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger, NotFoundException, UseGuards, Res, ConflictException, BadRequestException } from '@nestjs/common'
+import { Controller, Post, Body , NotFoundException, UseGuards, Res, ConflictException, BadRequestException } from '@nestjs/common'
 import { Throttle } from '@nestjs/throttler'
 import type { Response } from 'express'
 import { ConfigService } from '@nestjs/config'
@@ -17,7 +17,6 @@ interface InitiatePaymentDto {
 
 @Controller('payments')
 export class PaymentsController {
-  private readonly logger = new Logger(PaymentsController.name)
 
   constructor(
     private readonly configService: ConfigService,
@@ -36,7 +35,6 @@ export class PaymentsController {
     @CurrentUser('id') userId: string,
     @Body() dto: InitiatePaymentDto,
   ) {
-    this.logger.debug(`Iniciando pago para purchase: ${dto.purchaseId}, user: ${userId}`)
 
     // 1. Validar idempotencyKey si se proporciona
     if (dto.idempotencyKey) {
@@ -50,7 +48,6 @@ export class PaymentsController {
       })
 
       if (existingTransaction) {
-        this.logger.warn(`Intento de pago duplicado con idempotencyKey: ${dto.idempotencyKey}`)
         throw new ConflictException('Ya existe un pago en proceso para esta solicitud')
       }
     }
@@ -79,7 +76,6 @@ export class PaymentsController {
       `${backendUrl}/webhooks/flow`,       // urlConfirmation (donde Flow notifica el pago)
     )
 
-    this.logger.log(`Pago iniciado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`)
 
     // Actualizar PaymentTransaction existente con el token de Flow y idempotencyKey
     const updateResult = await this.prisma.paymentTransaction.updateMany({
@@ -91,15 +87,11 @@ export class PaymentsController {
     })
 
     if (updateResult.count === 0) {
-      this.logger.error(
-        `No se encontró PaymentTransaction para actualizar: purchaseId=${purchase.id}`,
-      )
       throw new BadRequestException(
         'No se encontró la transacción de pago asociada a esta compra',
       )
     }
 
-    this.logger.debug(`PaymentTransaction actualizada con token: ${flowOrder.token}`)
 
     const paymentUrl = `${flowOrder.url}?token=${flowOrder.token}`
 
@@ -113,7 +105,6 @@ export class PaymentsController {
         amount: Number(purchase.totalAmount ?? 0),
       })
     } catch (err) {
-      this.logger.error(`Error enviando email de pago pendiente: ${err instanceof Error ? err.message : String(err)}`)
     }
 
     // Flow docs: la URL de redirección = url + "?token=" + token
@@ -131,13 +122,11 @@ export class PaymentsController {
     @Res() res: Response,
   ): Promise<void> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173'
-    this.logger.debug(`Flow return recibido con token: ${token}`)
 
     // Validate token exists in our database before redirecting
     if (token) {
       const purchase = await this.purchasesService.findByProviderTransactionId(token)
       if (!purchase) {
-        this.logger.warn(`Token de Flow no encontrado en BD: ${token}`)
         const redirectUrl = `${frontendUrl}/payment/return?error=not_found`
         res.setHeader('Content-Type', 'text/html')
         res.send(`<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"><script>window.location.replace("${redirectUrl}");</script></head><body></body></html>`)
@@ -163,7 +152,6 @@ export class PaymentsController {
     @CurrentUser('id') userId: string,
     @Body('purchaseId') purchaseId: string,
   ) {
-    this.logger.debug(`Retry de pago para purchase: ${purchaseId}, user: ${userId}`)
 
     if (!purchaseId) {
       throw new NotFoundException('purchaseId requerido')
@@ -197,7 +185,6 @@ export class PaymentsController {
       `${backendUrl}/webhooks/flow`,
     )
 
-    this.logger.log(`Retry Flow creado: purchase=${purchase.id}, flowOrder=${flowOrder.flowOrder}`)
 
     // Actualizar PaymentTransaction con el nuevo token
     await this.prisma.paymentTransaction.updateMany({
@@ -218,7 +205,6 @@ export class PaymentsController {
   @Post('verify-flow-status')
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   async verifyFlowPaymentStatus(@Body('token') token: string) {
-    this.logger.debug(`Verificando estado de pago en Flow con token: ${token}`)
 
     if (!token) {
       throw new NotFoundException('Token requerido')
@@ -227,7 +213,6 @@ export class PaymentsController {
     // Buscar la compra por providerTransactionId (token de Flow) en PaymentTransaction
     const purchase = await this.purchasesService.findByProviderTransactionId(token)
     if (!purchase) {
-      this.logger.error(`No se encontró compra con providerTransactionId: ${token}`)
       throw new NotFoundException('Compra no encontrada')
     }
 
@@ -243,9 +228,6 @@ export class PaymentsController {
       finalStatus = paymentStatus.status
       flowOrderId = paymentStatus.flowOrder
 
-      this.logger.log(
-        `Flow status intento ${attempt + 1}/${MAX_RETRIES}: order=${paymentStatus.commerceOrder}, status=${finalStatus}`,
-      )
 
       if (finalStatus !== 1) {
         // Estado definitivo encontrado (2=pagada, 3=rechazada, 4=anulada)
@@ -266,17 +248,14 @@ export class PaymentsController {
           provider: 'flow',
           status: 'paid',
         })
-        this.logger.log(`Pago confirmado tras verificación manual: ${purchase.id}`)
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        this.logger.error(`Error confirmando pago verificado: ${msg}`)
       }
     }
 
     // Si Flow indica que el pago fue rechazado o anulado, actualizar el estado de la compra
     if (finalStatus === 3 || finalStatus === 4) {
       await this.purchasesService.updateStatus(purchase.id, 'failed')
-      this.logger.log(`Pago marcado como failed por Flow status ${finalStatus}: ${purchase.id}`)
     }
 
     // Re-fetch purchase to return the latest status

@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const contact_controller_1 = require("./contact.controller");
 const contact_service_1 = require("./contact.service");
 const email_module_1 = require("../email/email.module");
+const recaptcha_service_1 = require("../../common/services/recaptcha.service");
 let ContactModule = class ContactModule {
 };
 exports.ContactModule = ContactModule;
@@ -18,7 +19,7 @@ exports.ContactModule = ContactModule = __decorate([
     (0, common_1.Module)({
         imports: [email_module_1.EmailModule],
         controllers: [contact_controller_1.ContactController],
-        providers: [contact_service_1.ContactService],
+        providers: [contact_service_1.ContactService, recaptcha_service_1.RecaptchaService],
     })
 ], ContactModule);
 //# sourceMappingURL=contact.module.js.map

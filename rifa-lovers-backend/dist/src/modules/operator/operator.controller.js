@@ -16,6 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OperatorController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
+const throttler_1 = require("@nestjs/throttler");
 const passport_1 = require("@nestjs/passport");
 const client_1 = require("@prisma/client");
 const operator_service_1 = require("./operator.service");
@@ -99,6 +100,7 @@ __decorate([
 ], OperatorController.prototype, "getOrganization", null);
 __decorate([
     (0, common_1.Post)('organization'),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -121,6 +123,7 @@ __decorate([
 ], OperatorController.prototype, "getRaffles", null);
 __decorate([
     (0, common_1.Post)('raffles'),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -129,6 +132,7 @@ __decorate([
 ], OperatorController.prototype, "createRaffle", null);
 __decorate([
     (0, common_1.Patch)('raffles/:id'),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -138,6 +142,7 @@ __decorate([
 ], OperatorController.prototype, "updateRaffle", null);
 __decorate([
     (0, common_1.Patch)('raffles/:id/status'),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -148,6 +153,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('raffles/:id/upload-cover'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60000 } }),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.UploadedFile)()),
@@ -165,6 +171,7 @@ __decorate([
 ], OperatorController.prototype, "getPacks", null);
 __decorate([
     (0, common_1.Post)('raffles/:id/packs'),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -174,6 +181,7 @@ __decorate([
 ], OperatorController.prototype, "createPack", null);
 __decorate([
     (0, common_1.Patch)('packs/:id'),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
@@ -207,6 +215,7 @@ __decorate([
 ], OperatorController.prototype, "getDrawStatus", null);
 __decorate([
     (0, common_1.Post)('raffles/:id/draw'),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)('prizeId')),
@@ -223,6 +232,7 @@ __decorate([
 ], OperatorController.prototype, "getNewsletterCampaigns", null);
 __decorate([
     (0, common_1.Post)('newsletter/send'),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

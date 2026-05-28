@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Delete, Body, Query, UseGuards, Logger } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
 import { NewsletterService } from './newsletter.service'
 import { SubscribeDto, SendCampaignDto } from './dto'
-import { CurrentUser } from '../../common/decorators'
+import { CurrentUser, Idempotent } from '../../common/decorators'
 import { RolesGuard } from '../users/guards/roles.guard'
 
 @Controller('newsletter')
@@ -21,6 +22,8 @@ export class NewsletterController {
   }
 
   @Post('subscribe')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Idempotent()
   async subscribe(@Body() dto: SubscribeDto) {
     this.logger.log(`POST /newsletter/subscribe — ${dto.email}`)
     return this.newsletterService.subscribe(dto)

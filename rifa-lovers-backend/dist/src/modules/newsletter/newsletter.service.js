@@ -27,7 +27,8 @@ let NewsletterService = NewsletterService_1 = class NewsletterService {
     async subscribe(dto) {
         const existing = await this.newsletterRepository.findSubscriberByEmail(dto.email);
         if (existing && existing.isActive) {
-            throw new common_1.ConflictException('Este correo ya está suscrito al newsletter');
+            this.logger.log(`Suscripción idempotente: ${dto.email} ya está suscrito`);
+            return existing;
         }
         if (existing && !existing.isActive) {
             this.logger.log(`Reactivando suscripción: ${dto.email}`);

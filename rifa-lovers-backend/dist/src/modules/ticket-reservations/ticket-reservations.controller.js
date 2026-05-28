@@ -43,6 +43,7 @@ exports.TicketReservationsController = TicketReservationsController;
 __decorate([
     (0, common_1.Post)(),
     (0, throttler_1.Throttle)({ default: { limit: 20, ttl: 60000 } }),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

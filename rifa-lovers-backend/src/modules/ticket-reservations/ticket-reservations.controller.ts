@@ -13,7 +13,7 @@ import { AuthGuard } from '@nestjs/passport'
 import { Throttle } from '@nestjs/throttler'
 import { TicketReservationsService } from './ticket-reservations.service'
 import { ReserveTicketsDto, TicketReservationResponseDto } from './dto'
-import { CurrentUser } from '../../common/decorators'
+import { CurrentUser, Idempotent } from '../../common/decorators'
 
 @Controller('ticket-reservations')
 @UseGuards(AuthGuard('jwt'))
@@ -24,6 +24,7 @@ export class TicketReservationsController {
 
   @Post()
   @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Idempotent()
   async reserve(
     @CurrentUser('id') userId: string,
     @Body() dto: ReserveTicketsDto,

@@ -33,4 +33,9 @@ __decorate([
     (0, class_validator_1.MaxLength)(2000, { message: 'El mensaje no puede exceder 2000 caracteres' }),
     __metadata("design:type", String)
 ], ContactFormDto.prototype, "message", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ContactFormDto.prototype, "recaptchaToken", void 0);
 //# sourceMappingURL=contact-form.dto.js.map

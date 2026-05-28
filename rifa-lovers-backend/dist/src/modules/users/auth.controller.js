@@ -21,6 +21,7 @@ const dto_1 = require("./dto");
 const supabase_service_1 = require("../../config/supabase.service");
 const config_1 = require("@nestjs/config");
 const recaptcha_service_1 = require("../../common/services/recaptcha.service");
+const decorators_1 = require("../../common/decorators");
 let AuthController = AuthController_1 = class AuthController {
     constructor(authService, supabaseService, config, recaptchaService) {
         this.authService = authService;
@@ -116,6 +117,7 @@ __decorate([
     (0, common_1.Post)('register'),
     (0, throttler_1.Throttle)({ auth: { limit: 5, ttl: 900000 } }),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [dto_1.RegisterDto]),

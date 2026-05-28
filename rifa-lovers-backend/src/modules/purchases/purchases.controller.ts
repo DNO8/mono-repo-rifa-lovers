@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, UseGuards, Sse } from '@nestjs/comm
 import { AuthGuard } from '@nestjs/passport'
 import { interval, Observable, switchMap, map } from 'rxjs'
 import { PurchasesService } from './purchases.service'
-import { CurrentUser } from '../../common/decorators'
+import { CurrentUser, Idempotent } from '../../common/decorators'
 import { CreatePurchaseDto, PurchaseResponseDto } from './dto'
 // MessageEvent type for SSE
 interface MessageEvent {
@@ -27,6 +27,7 @@ export class PurchasesController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
+  @Idempotent()
   async create(
     @CurrentUser('id') userId: string,
     @Body() createDto: CreatePurchaseDto,
@@ -36,6 +37,7 @@ export class PurchasesController {
 
   @Post('free')
   @UseGuards(AuthGuard('jwt'))
+  @Idempotent()
   async createFree(
     @CurrentUser('id') userId: string,
     @Body() createDto: CreatePurchaseDto,

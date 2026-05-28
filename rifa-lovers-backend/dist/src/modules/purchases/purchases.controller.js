@@ -59,6 +59,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -68,6 +69,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('free'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, decorators_1.CurrentUser)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

@@ -5,6 +5,7 @@ import { RegisterDto, LoginDto, AuthResponseDto } from './dto';
 import { SupabaseService } from '../../config/supabase.service';
 import { ConfigService } from '@nestjs/config';
 import { RecaptchaService } from '../../common/services/recaptcha.service';
+import { Idempotent } from '../../common/decorators';
 import type { Response } from 'express';
 
 @Controller('auth')
@@ -21,6 +22,7 @@ export class AuthController {
   @Post('register')
   @Throttle({ auth: { limit: 5, ttl: 900000 } })
   @HttpCode(HttpStatus.CREATED)
+  @Idempotent()
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     // Validate terms acceptance
     if (!registerDto.acceptTerms) {

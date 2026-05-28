@@ -3,7 +3,7 @@ import { Throttle } from '@nestjs/throttler'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
 import { DrawService, DrawResult, AdminDrawResult } from './draw.service'
-import { CurrentUser } from '../../common/decorators'
+import { CurrentUser, Idempotent } from '../../common/decorators'
 import { RolesGuard } from '../users/guards/roles.guard'
 
 @Controller()
@@ -20,6 +20,7 @@ export class DrawController {
   @HttpCode(201)
   @UseGuards(AuthGuard('jwt'), new RolesGuard([UserRole.admin, UserRole.operator]))
   @Throttle({ admin: { limit: 5, ttl: 60000 } })
+  @Idempotent()
   async executeDraw(
     @Param('id') raffleId: string,
     @CurrentUser('id') adminUserId: string,

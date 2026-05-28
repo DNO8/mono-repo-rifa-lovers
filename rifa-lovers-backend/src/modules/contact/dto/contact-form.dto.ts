@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator'
+import { IsEmail, IsString, IsNotEmpty, MinLength, MaxLength, IsOptional } from 'class-validator'
 
 export class ContactFormDto {
   @IsString()
@@ -16,4 +16,8 @@ export class ContactFormDto {
   @MinLength(10, { message: 'El mensaje debe tener al menos 10 caracteres' })
   @MaxLength(2000, { message: 'El mensaje no puede exceder 2000 caracteres' })
   message: string
+
+  @IsOptional()
+  @IsString()
+  recaptchaToken?: string
 }

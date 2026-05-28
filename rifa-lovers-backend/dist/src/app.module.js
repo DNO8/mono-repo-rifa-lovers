@@ -33,6 +33,8 @@ const tasks_module_1 = require("./modules/tasks/tasks.module");
 const all_exceptions_filter_1 = require("./common/filters/all-exceptions.filter");
 const throttler_config_1 = require("./config/throttler.config");
 const recaptcha_service_1 = require("./common/services/recaptcha.service");
+const idempotency_guard_1 = require("./common/guards/idempotency.guard");
+const idempotency_interceptor_1 = require("./common/interceptors/idempotency.interceptor");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -68,6 +70,8 @@ exports.AppModule = AppModule = __decorate([
         providers: [
             app_service_1.AppService,
             recaptcha_service_1.RecaptchaService,
+            idempotency_guard_1.IdempotencyGuard,
+            idempotency_interceptor_1.IdempotencyInterceptor,
             {
                 provide: core_1.APP_FILTER,
                 useClass: all_exceptions_filter_1.AllExceptionsFilter,

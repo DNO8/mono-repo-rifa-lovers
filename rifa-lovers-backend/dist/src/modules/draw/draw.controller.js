@@ -57,6 +57,7 @@ __decorate([
     (0, common_1.HttpCode)(201),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), new roles_guard_1.RolesGuard([client_1.UserRole.admin, client_1.UserRole.operator])),
     (0, throttler_1.Throttle)({ admin: { limit: 5, ttl: 60000 } }),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, decorators_1.CurrentUser)('id')),
     __metadata("design:type", Function),

@@ -24,12 +24,14 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { throttlerConfig } from './config/throttler.config';
 import { RecaptchaService } from './common/services/recaptcha.service';
+import { IdempotencyGuard } from './common/guards/idempotency.guard'
+import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor'
 
 @Module({
   imports: [
     // Fase 13 - Hardening: Rate Limiting
     ThrottlerModule.forRoot(throttlerConfig),
-    
+
     // Fase 13 - Hardening: Logging con Pino
     LoggerModule.forRoot({
       pinoHttp: {
@@ -37,7 +39,7 @@ import { RecaptchaService } from './common/services/recaptcha.service';
         redact: ['req.headers.authorization', 'req.headers.cookie'],
       },
     }),
-    
+
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     UsersModule,
@@ -60,6 +62,8 @@ import { RecaptchaService } from './common/services/recaptcha.service';
   providers: [
     AppService,
     RecaptchaService,
+    IdempotencyGuard,
+    IdempotencyInterceptor,
     // Fase 13 - Hardening: Filtro de excepciones global
     {
       provide: APP_FILTER,

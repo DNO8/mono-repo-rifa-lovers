@@ -1,11 +1,12 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Logger, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
+import { Throttle } from '@nestjs/throttler'
 import { AuthGuard } from '@nestjs/passport'
 import { UserRole } from '@prisma/client'
 import { OperatorService } from './operator.service'
 import { CreatePackDto, UpdatePackDto, CreateOrganizationDto } from './dto'
 import { CreateRaffleDto, UpdateRaffleDto, UpdateRaffleStatusDto } from '../admin/dto'
-import { CurrentUser } from '../../common/decorators'
+import { CurrentUser, Idempotent } from '../../common/decorators'
 import { RolesGuard } from '../users/guards/roles.guard'
 
 @Controller('operator')
@@ -23,6 +24,7 @@ export class OperatorController {
   }
 
   @Post('organization')
+  @Idempotent()
   async createOrganization(
     @CurrentUser('id') userId: string,
     @Body() dto: CreateOrganizationDto,
@@ -45,6 +47,7 @@ export class OperatorController {
   }
 
   @Post('raffles')
+  @Idempotent()
   async createRaffle(
     @CurrentUser('id') userId: string,
     @Body() dto: CreateRaffleDto,
@@ -53,6 +56,7 @@ export class OperatorController {
   }
 
   @Patch('raffles/:id')
+  @Idempotent()
   async updateRaffle(
     @CurrentUser('id') userId: string,
     @Param('id') raffleId: string,
@@ -62,6 +66,7 @@ export class OperatorController {
   }
 
   @Patch('raffles/:id/status')
+  @Idempotent()
   async updateRaffleStatus(
     @CurrentUser('id') userId: string,
     @Param('id') raffleId: string,
@@ -72,6 +77,7 @@ export class OperatorController {
 
   @Post('raffles/:id/upload-cover')
   @UseInterceptors(FileInterceptor('file'))
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async uploadCover(
     @CurrentUser('id') userId: string,
     @Param('id') raffleId: string,
@@ -99,6 +105,7 @@ export class OperatorController {
   }
 
   @Post('raffles/:id/packs')
+  @Idempotent()
   async createPack(
     @CurrentUser('id') userId: string,
     @Param('id') raffleId: string,
@@ -108,6 +115,7 @@ export class OperatorController {
   }
 
   @Patch('packs/:id')
+  @Idempotent()
   async updatePack(
     @CurrentUser('id') userId: string,
     @Param('id') packId: string,
@@ -143,6 +151,7 @@ export class OperatorController {
   }
 
   @Post('raffles/:id/draw')
+  @Idempotent()
   async executeDraw(
     @CurrentUser('id') userId: string,
     @Param('id') raffleId: string,
@@ -159,6 +168,7 @@ export class OperatorController {
   }
 
   @Post('newsletter/send')
+  @Idempotent()
   async sendNewsletter(
     @CurrentUser('id') userId: string,
     @Body() dto: { subject: string; body: string },

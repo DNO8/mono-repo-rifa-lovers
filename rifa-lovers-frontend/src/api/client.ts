@@ -10,11 +10,13 @@ import { FetchHttpClient, ApiError } from './clients/http-client'
 import { AuthDecorator } from './clients/auth.decorator'
 import { RefreshDecorator } from './clients/refresh.decorator'
 import { LoggingDecorator } from './clients/logging.decorator'
+import { IdempotencyDecorator } from './clients/idempotency.decorator'
 import type { HttpClient } from './clients/http-client'
 
 function createApiClient(): HttpClient {
   const base = new FetchHttpClient()
-  const withAuth = new AuthDecorator(base)
+  const withIdempotency = new IdempotencyDecorator(base)
+  const withAuth = new AuthDecorator(withIdempotency)
   const withRefresh = new RefreshDecorator(withAuth)
   const withLogging = new LoggingDecorator(withRefresh)
   return withLogging

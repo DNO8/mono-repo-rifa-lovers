@@ -7,7 +7,7 @@ import { FlowService } from './flow.service'
 import { PurchasesService } from '../purchases/purchases.service'
 import { UsersService } from '../users/users.service'
 import { ResendService } from '../email/resend.service'
-import { CurrentUser } from '../../common/decorators'
+import { CurrentUser, Idempotent } from '../../common/decorators'
 import { PrismaService } from '../../database/prisma.service'
 
 interface InitiatePaymentDto {
@@ -31,6 +31,7 @@ export class PaymentsController {
   @Post('initiate')
   @UseGuards(AuthGuard('jwt'))
   @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Idempotent()
   async initiatePayment(
     @CurrentUser('id') userId: string,
     @Body() dto: InitiatePaymentDto,

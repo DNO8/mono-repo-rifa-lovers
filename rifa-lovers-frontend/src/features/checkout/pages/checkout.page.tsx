@@ -9,6 +9,7 @@ import { createPurchase } from '@/api/purchases.api'
 import { initiatePayment } from '@/api/payments.api'
 import { ApiError } from '@/api/client'
 import { toastError, getErrorMessage } from '@/lib/errors'
+import { preventResubmit } from '@/lib/prevent-resubmit'
 import { useActiveRaffle } from '@/hooks/use-raffles'
 import { usePacks } from '@/hooks/use-packs'
 import { Spinner } from '@/components/ui/spinner'
@@ -89,6 +90,7 @@ export default function CheckoutPage() {
 
       // 5. Guardar purchaseId para la página de retorno y redirigir a Flow
       sessionStorage.setItem('pending_purchase_id', purchase.id)
+      preventResubmit()
       toast.success('Redirigiendo a plataforma de pago...')
       window.location.href = payment.paymentUrl
     } catch (err: unknown) {

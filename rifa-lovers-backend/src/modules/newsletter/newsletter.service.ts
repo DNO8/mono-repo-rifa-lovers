@@ -1,4 +1,4 @@
-import { Injectable, Logger, ConflictException } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { NewsletterRepository } from './newsletter.repository'
 import { ResendService } from '../email/resend.service'
 import { SubscribeDto } from './dto/subscribe.dto'
@@ -22,7 +22,9 @@ export class NewsletterService {
     const existing = await this.newsletterRepository.findSubscriberByEmail(dto.email)
 
     if (existing && existing.isActive) {
-      throw new ConflictException('Este correo ya está suscrito al newsletter')
+      // Idempotent: return existing subscriber instead of error
+      this.logger.log(`Suscripción idempotente: ${dto.email} ya está suscrito`)
+      return existing
     }
 
     if (existing && !existing.isActive) {

@@ -1,5 +1,6 @@
 import { apiClient } from './client'
 import { ENDPOINTS } from './endpoints'
+import type { HttpRequestOptions } from './clients/http-client'
 import type { CreateRaffleRequest, UpdateRaffleRequest, UpdateRaffleStatusRequest, RaffleWithStats } from './admin.api'
 
 // ==================== TYPES ====================
@@ -159,8 +160,12 @@ export async function getOperatorDrawStatus(raffleId: string): Promise<DrawStatu
   return apiClient.get<DrawStatusResponse>(ENDPOINTS.operator.drawStatus(raffleId))
 }
 
-export async function executeOperatorDraw(raffleId: string, prizeId?: string): Promise<{ winners: { luckyPassId: string; prizeName: string; userName: string; userEmail: string; passNumber: number }[]; drawnAt: string }> {
-  return apiClient.post(ENDPOINTS.operator.drawExecute(raffleId), { prizeId })
+export async function executeOperatorDraw(
+  raffleId: string,
+  prizeId?: string,
+  options?: HttpRequestOptions,
+): Promise<{ winners: { luckyPassId: string; prizeName: string; userName: string; userEmail: string; passNumber: number }[]; drawnAt: string }> {
+  return apiClient.post(ENDPOINTS.operator.drawExecute(raffleId), { prizeId }, options)
 }
 
 // ==================== NEWSLETTER ====================

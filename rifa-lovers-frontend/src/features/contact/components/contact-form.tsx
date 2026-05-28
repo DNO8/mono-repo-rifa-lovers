@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { Send } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -7,20 +7,43 @@ import { apiClient } from '@/api/client'
 import { toastError } from '@/lib/errors'
 import { ENDPOINTS } from '@/api/endpoints'
 
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY
+
+async function executeRecaptcha(action: string): Promise<string | undefined> {
+  if (!window.grecaptcha?.enterprise) return undefined
+  try {
+    return await window.grecaptcha.enterprise.execute(RECAPTCHA_SITE_KEY, { action })
+  } catch {
+    return undefined
+  }
+}
+
 export function ContactForm() {
   const [submitted, setSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    const siteKey = RECAPTCHA_SITE_KEY
+    if (!siteKey) return
+    if (document.querySelector(`script[src*="${siteKey}"]`)) return
+
+    const script = document.createElement('script')
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`
+    script.async = true
+    script.defer = true
+    document.head.appendChild(script)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     const formData = new FormData(e.currentTarget)
-    
+
     // Get and trim values
     const name = String(formData.get('name') || '').trim()
     const email = String(formData.get('email') || '').trim()
     const message = String(formData.get('message') || '').trim()
-    
+
     // Frontend validation
     if (!name || name.length < 2) {
       toast.error('El nombre debe tener al menos 2 caracteres')
@@ -37,9 +60,10 @@ export function ContactForm() {
       setIsLoading(false)
       return
     }
-    
+
     try {
-      const payload = { name, email, message }
+      const recaptchaToken = await executeRecaptcha('contact_form')
+      const payload = { name, email, message, recaptchaToken }
       await apiClient.post(ENDPOINTS.contact, payload)
       toast.success('¡Mensaje enviado! Te responderemos pronto.')
       setSubmitted(true)

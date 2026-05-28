@@ -15,6 +15,7 @@ var NewsletterController_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NewsletterController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const passport_1 = require("@nestjs/passport");
 const client_1 = require("@prisma/client");
 const newsletter_service_1 = require("./newsletter.service");
@@ -61,6 +62,8 @@ __decorate([
 ], NewsletterController.prototype, "checkSubscription", null);
 __decorate([
     (0, common_1.Post)('subscribe'),
+    (0, throttler_1.Throttle)({ default: { limit: 10, ttl: 60000 } }),
+    (0, decorators_1.Idempotent)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [dto_1.SubscribeDto]),

@@ -87,8 +87,8 @@ export class OperatorService {
       select: { id: true, role: true, organizationId: true },
     })
     if (!user) throw new NotFoundException('Usuario no encontrado')
-    if (user.role !== UserRole.operator) {
-      throw new ForbiddenException('Solo operadores pueden crear una organizacion')
+    if (user.role !== UserRole.operator && user.role !== UserRole.admin) {
+      throw new ForbiddenException('Solo operadores o admins pueden crear una organizacion')
     }
     if (user.organizationId) {
       throw new BadRequestException('Ya tienes una organizacion asignada')

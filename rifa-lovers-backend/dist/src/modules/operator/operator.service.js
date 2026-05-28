@@ -45,8 +45,8 @@ let OperatorService = class OperatorService {
         });
         if (!user)
             throw new common_1.NotFoundException('Usuario no encontrado');
-        if (user.role !== client_1.UserRole.operator) {
-            throw new common_1.ForbiddenException('Solo operadores pueden crear una organizacion');
+        if (user.role !== client_1.UserRole.operator && user.role !== client_1.UserRole.admin) {
+            throw new common_1.ForbiddenException('Solo operadores o admins pueden crear una organizacion');
         }
         if (user.organizationId) {
             throw new common_1.BadRequestException('Ya tienes una organizacion asignada');

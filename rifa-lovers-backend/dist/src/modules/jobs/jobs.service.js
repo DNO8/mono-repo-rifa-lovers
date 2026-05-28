@@ -199,6 +199,57 @@ let JobsService = class JobsService {
             catch (err) {
             }
         }
+        if (flowStatus === 2) {
+            try {
+                await this.purchasesService.confirmPayment(purchase.id, {
+                    providerTransactionId: token ?? 'unknown',
+                    provider: 'flow',
+                    status: 'approved',
+                });
+                return 'confirmed';
+            }
+            catch (err) {
+                throw err;
+            }
+        }
+        try {
+            await this.prisma.purchase.update({
+                where: { id: purchase.id },
+                data: { status: client_1.PurchaseStatus.failed },
+            });
+            await this.prisma.paymentTransaction.updateMany({
+                where: { purchaseId: purchase.id },
+                data: { status: 'rejected', idempotencyKey: null },
+            });
+        }
+        catch (dbErr) {
+            throw dbErr;
+        }
+        try {
+            const user = purchase.user;
+            if (user?.email) {
+                if (flowStatus === 3 || flowStatus === 4) {
+                    void this.resendService.sendFailedPaymentEmail({
+                        toEmail: user.email,
+                        toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                        purchaseId: purchase.id,
+                        raffleName: purchase.raffle?.title ?? null,
+                        amount: Number(purchase.totalAmount ?? 0),
+                    });
+                }
+                else {
+                    void this.resendService.sendIncompletePaymentEmail({
+                        toEmail: user.email,
+                        toName: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Participante',
+                        purchaseId: purchase.id,
+                        raffleName: purchase.raffle?.title ?? null,
+                        amount: Number(purchase.totalAmount ?? 0),
+                    });
+                }
+            }
+        }
+        catch (err) {
+        }
         return 'failed';
     }
     async checkPendingPaymentsStatus() {

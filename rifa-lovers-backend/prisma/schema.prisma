@@ -375,9 +375,9 @@ model IdempotencyRecord {
   id           String   @id @default(uuid()) @db.Uuid
   key          String   @unique @db.VarChar(255)
   endpoint     String   @db.VarChar(255)
-  httpMethod   String   @db.VarChar(10)
-  statusCode   Int
-  responseBody String?  @db.Text
+  httpMethod   String   @db.VarChar(10) @map("http_method")
+  statusCode   Int      @map("status_code")
+  responseBody String?  @db.Text @map("response_body")
   createdAt    DateTime @default(now()) @map("created_at")
   expiresAt    DateTime @map("expires_at")
 
